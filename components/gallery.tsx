@@ -10,24 +10,24 @@ export function Gallery() {
 
   const images = [
     {
-      src: "/placeholder.svg?height=600&width=400",
-      alt: "Art piece 1",
-      title: "Ethereal Dreams",
+      src: "/PA.jpg?height=600&width=400",
+      alt: "Psychedelics Anonymous",
+      title: "Psychedelics Anonymous",
+    },
+    {
+      src: "/PP.png?height=600&width=400",
+      alt: "PsyPay",
+      title: "PsyPay",
     },
     {
       src: "/placeholder.svg?height=600&width=400",
-      alt: "Art piece 2",
-      title: "Urban Symphony",
+      alt: "Sprout",
+      title: "Sprout",
     },
     {
       src: "/placeholder.svg?height=600&width=400",
-      alt: "Art piece 3",
-      title: "Digital Nostalgia",
-    },
-    {
-      src: "/placeholder.svg?height=600&width=400",
-      alt: "Art piece 4",
-      title: "Abstract Reality",
+      alt: "Morf",
+      title: "Morf",
     },
   ]
 
