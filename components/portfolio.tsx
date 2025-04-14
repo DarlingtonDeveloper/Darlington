@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
+import { RainbowButton } from "@/components/ui/rainbow-button"
 
 
 export function Portfolio() {
@@ -120,14 +120,13 @@ export function Portfolio() {
       <div className="container mx-auto px-4">
         <div className="mb-12 flex flex-wrap justify-center gap-4">
           {categories.map((category) => (
-            <Button
+            <RainbowButton
               key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
               onClick={() => setSelectedCategory(category)}
-              className="text-sm capitalize"
+              className={`text-sm capitalize ${selectedCategory === category ? 'opacity-100' : 'opacity-70 hover:opacity-90'}`}
             >
               {category}
-            </Button>
+            </RainbowButton>
           ))}
         </div>
         <motion.div layout className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
