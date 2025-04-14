@@ -53,11 +53,12 @@ export function SparklesSection() {
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                 <div className="text-center px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 mb-8">
+                    <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 mb-5">
                         Connect With Us
                     </h2>
-                    <span className="flex items-center whitespace-pre justify-center">
-                        <span className="flex items-center">Connect with me on </span>
+
+                    <div className="flex items-center justify-center mb-6 text-lg md:text-xl text-neutral-300">
+                        <span className="mr-2">Connect with me on</span>
                         <TextRotate
                             texts={[
                                 "Github.",
@@ -66,7 +67,7 @@ export function SparklesSection() {
                                 "Instagram.",
                                 "HashNode."
                             ]}
-                            mainClassName="text-white px-2 sm:px-2 md:px-3 bg-[#4FC3F7] overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg flex items-center"
+                            mainClassName="text-white px-2 sm:px-2 md:px-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden py-0.5 sm:py-1 md:py-1.5 justify-center rounded-lg flex items-center font-medium"
                             staggerFrom="first"
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
@@ -77,13 +78,13 @@ export function SparklesSection() {
                             transition={{ type: "spring", damping: 30, stiffness: 400 }}
                             rotationInterval={3000}
                         />
-                    </span>
+                    </div>
 
                     {/* Social Icons */}
                     <SocialIcons
                         icons={socialIcons}
                         iconSize={32}
-                        className="mt-6"
+                        className="mt-4"
                     />
                 </div>
             </div>
