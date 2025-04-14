@@ -17,12 +17,12 @@ interface SocialIconsProps {
 export function SocialIcons({
     icons,
     className,
-    iconSize = 24
+    iconSize = 32
 }: SocialIconsProps) {
-    const buttonSize = "size-12 sm:size-14"
+    const buttonSize = "size-16 sm:size-20"
 
     return (
-        <div className={cn("flex items-center justify-center gap-4", className)}>
+        <div className={cn("flex items-center justify-center gap-6", className)}>
             {icons.map(({ Icon, href, className }, index) => (
                 <div
                     key={index}
@@ -30,7 +30,7 @@ export function SocialIcons({
                         buttonSize,
                         "rounded-full flex items-center justify-center",
                         "bg-background/10 backdrop-blur-sm hover:bg-background/20",
-                        "border border-white/10 hover:border-white/20",
+                        "border border-white/10 hover:border-white/20 hover:border-2",
                         "transition-all duration-300 ease-in-out",
                         className
                     )}
