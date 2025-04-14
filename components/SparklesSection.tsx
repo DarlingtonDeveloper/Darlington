@@ -32,7 +32,7 @@ export function SparklesSection() {
     ]
 
     return (
-        <div className="w-full h-80 relative mt-8 bg-black rounded-lg overflow-hidden">
+        <div className="w-full h-80 relative bg-black rounded-t-none rounded-b-lg overflow-hidden mt-0 z-20">
             {/* Gradients */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bg-gradient-to-r from-transparent via-indigo-500 to-transparent h-[2px] w-3/4 blur-sm" />
             <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bg-gradient-to-r from-transparent via-indigo-500 to-transparent h-px w-3/4" />
