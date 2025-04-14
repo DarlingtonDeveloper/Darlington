@@ -1,5 +1,6 @@
 'use client'
 
+import { Card } from "@/components/ui/card"
 import dynamic from 'next/dynamic'
 import ClientWrapper from "@/components/ClientWrapper"
 import { Typewriter } from "@/components/ui/typewriter"
@@ -16,12 +17,12 @@ const SplineScene = dynamic(() => import('@/components/ui/spline-scene'), {
 
 export function SplineSceneBasic() {
     return (
-        <div className="w-full h-[500px] bg-black relative overflow-hidden">
+        <Card className="w-full h-[500px] bg-black/[0.96] relative overflow-hidden">
             <ClientWrapper>
                 <div className="flex h-full flex-col md:flex-row">
                     {/* Left content */}
-                    <div className="flex-1 p-8 relative z-10 flex flex-col justify-center">
-                        <h1 className="text-4xl md:text-5xl font-bold flex">
+                    <div className="flex-1 p-8 md:pl-20 lg:pl-32 relative z-10 flex flex-col justify-center">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold flex">
                             <span className="bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
                                 Darlington
                             </span>
@@ -46,6 +47,6 @@ export function SplineSceneBasic() {
                     </div>
                 </div>
             </ClientWrapper>
-        </div>
+        </Card>
     )
 }
