@@ -19,12 +19,6 @@ export function SplineSceneBasic() {
     return (
         <Card className="w-full h-[500px] bg-black/[0.96] relative overflow-hidden">
             <ClientWrapper>
-                <Spotlight
-                    className="absolute"
-                    fill="white"
-                    size={300}
-                />
-
                 <div className="flex h-full flex-col md:flex-row">
                     {/* Left content */}
                     <div className="flex-1 p-8 relative z-10 flex flex-col justify-center">
