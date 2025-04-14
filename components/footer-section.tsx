@@ -72,25 +72,12 @@ function Footerdemo() {
                         <h3 className="mb-4 text-lg font-semibold">Contact Us</h3>
                         <address className="space-y-2 text-sm not-italic">
                             <p>Location: Manchester, UK</p>
-                            <p>Email: mike.s3crypto@gmail.com</p>
+                            <p>Email: mike@darlington.dev</p>
                         </address>
                     </div>
                     <div className="relative">
                         <h3 className="mb-4 text-lg font-semibold">Follow Us</h3>
                         <div className="mb-6 flex space-x-4">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="outline" size="icon" className="rounded-full">
-                                            <Facebook className="h-4 w-4" />
-                                            <span className="sr-only">Facebook</span>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Follow us on Facebook</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
