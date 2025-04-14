@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import Link from "next/link"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +28,39 @@ export function NavBar({ items, className }: NavBarProps) {
 
         const handleScroll = () => {
             setHasScrolled(window.scrollY > 100)
+
+            // Update active tab based on scroll position
+            const scrollPosition = window.scrollY + 100
+
+            // Only check navigation items with hash links
+            const hashItems = items.filter(item => item.url.startsWith('#'))
+
+            // Determine which section is currently in view
+            // Start from the bottom sections and work up for proper highlighting
+            for (let i = hashItems.length - 1; i >= 0; i--) {
+                const item = hashItems[i]
+                const targetId = item.url.substring(1)
+                const element = document.getElementById(targetId)
+
+                if (element) {
+                    const rect = element.getBoundingClientRect()
+                    const elementTop = window.scrollY + rect.top
+
+                    // If we've scrolled to or past this element, make it active
+                    // Add a small offset to trigger the highlight slightly before reaching the section
+                    if (scrollPosition >= elementTop - 150) {
+                        if (activeTab !== item.name) {
+                            setActiveTab(item.name)
+                        }
+                        break
+                    }
+                }
+            }
+
+            // If at the very top of the page, select the first tab
+            if (window.scrollY < 100 && hashItems.length > 0 && activeTab !== hashItems[0].name) {
+                setActiveTab(hashItems[0].name)
+            }
         }
 
         handleResize()
@@ -39,14 +71,18 @@ export function NavBar({ items, className }: NavBarProps) {
             window.removeEventListener("resize", handleResize)
             window.removeEventListener("scroll", handleScroll)
         }
-    }, [])
+    }, [items, activeTab])
+
+    const isExternalLink = (url: string) => {
+        return url.startsWith('http') || url.startsWith('https')
+    }
 
     return (
         <div
             className={cn(
                 isMobile
-                    ? "fixed bottom-0 left-0 right-0 mb-6"
-                    : "fixed top-4 left-0 right-0 z-40",
+                    ? "fixed bottom-0 left-0 right-0 mb-6 z-50"
+                    : "fixed top-4 left-0 right-0 z-50",
                 hasScrolled ? "opacity-100" : "opacity-100",
                 className
             )}
@@ -60,22 +96,60 @@ export function NavBar({ items, className }: NavBarProps) {
                     {items.map((item) => {
                         const Icon = item.icon
                         const isActive = activeTab === item.name
+                        const external = isExternalLink(item.url)
 
                         return (
-                            <Link
+                            <div
                                 key={item.name}
-                                href={item.url}
-                                onClick={() => setActiveTab(item.name)}
                                 className={cn(
                                     "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
                                     "text-foreground/80 hover:text-primary",
                                     isActive && "bg-muted text-primary",
                                 )}
                             >
-                                <span className="hidden md:inline">{item.name}</span>
-                                <span className="md:hidden">
-                                    <Icon size={18} strokeWidth={2.5} />
-                                </span>
+                                {external ? (
+                                    <a
+                                        href={item.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-full h-full"
+                                        onClick={() => setActiveTab(item.name)}
+                                    >
+                                        <span className="hidden md:inline">{item.name}</span>
+                                        <span className="md:hidden">
+                                            <Icon size={18} strokeWidth={2.5} />
+                                        </span>
+                                    </a>
+                                ) : (
+                                    <a
+                                        href={item.url}
+                                        className="block w-full h-full"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            setActiveTab(item.name)
+
+                                            // Handle smooth scrolling for internal links
+                                            if (item.url.startsWith('#')) {
+                                                const targetId = item.url.substring(1)
+                                                const targetElement = document.getElementById(targetId)
+
+                                                if (targetElement) {
+                                                    // Just scroll the element into view - simplest approach
+                                                    targetElement.scrollIntoView({
+                                                        behavior: 'smooth',
+                                                        block: 'start'
+                                                    })
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <span className="hidden md:inline">{item.name}</span>
+                                        <span className="md:hidden">
+                                            <Icon size={18} strokeWidth={2.5} />
+                                        </span>
+                                    </a>
+                                )}
+
                                 {isActive && (
                                     <motion.div
                                         layoutId="lamp"
@@ -94,7 +168,7 @@ export function NavBar({ items, className }: NavBarProps) {
                                         </div>
                                     </motion.div>
                                 )}
-                            </Link>
+                            </div>
                         )
                     })}
                 </div>
