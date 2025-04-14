@@ -4,6 +4,7 @@ import { SparklesCore } from "@/components/ui/sparkles"
 import { SocialIcons } from "@/components/ui/social-icons"
 import { Github, Linkedin, Instagram } from "lucide-react"
 import { XIcon } from "@/components/x-icon"
+import { HashNodeIcon } from "@/components/hashnode-icon"
 import { TextRotate } from "@/components/ui/text-rotate"
 
 export function SparklesSection() {
@@ -27,6 +28,11 @@ export function SparklesSection() {
         {
             Icon: Instagram,
             href: "https://instagram.com/MikeDarmal",
+            className: "hover:scale-105"
+        },
+        {
+            Icon: HashNodeIcon,
+            href: "https://hashnode.com/@darlington",
             className: "hover:scale-105"
         }
     ]
@@ -79,7 +85,7 @@ export function SparklesSection() {
                     {/* Social Icons */}
                     <SocialIcons
                         icons={socialIcons}
-                        iconSize={32}
+                        iconSize={28}
                         className="mt-4"
                     />
                 </div>
