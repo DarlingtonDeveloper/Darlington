@@ -1,6 +1,8 @@
 import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 import { SparklesSection } from "@/components/SparklesSection";
 import { MarqueeDemo } from "@/components/marquee-demo";
+import { Gallery } from "@/components/Gallery";
+import { Portfolio } from "@/components/Portfolio";
 
 export default function Home() {
   return (
@@ -13,6 +15,9 @@ export default function Home() {
           <MarqueeDemo />
         </div>
         <SparklesSection />
+        <Gallery />
+        <Portfolio />
+
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
       </footer>
