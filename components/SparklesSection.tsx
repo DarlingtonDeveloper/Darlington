@@ -11,22 +11,22 @@ export function SparklesSection() {
     const socialIcons = [
         {
             Icon: Github,
-            href: "https://github.com",
+            href: "https://github.com/S3Crypto/",
             className: "hover:scale-105"
         },
         {
             Icon: XIcon,
-            href: "https://x.com",
+            href: "https://x.com/AutoFutureTech",
             className: "hover:scale-105"
         },
         {
             Icon: Linkedin,
-            href: "https://linkedin.com",
+            href: "https://www.linkedin.com/in/michael-darlington-249653143/",
             className: "hover:scale-105"
         },
         {
             Icon: Instagram,
-            href: "https://instagram.com",
+            href: "https://instagram.com/MikeDarmal",
             className: "hover:scale-105"
         }
     ]
@@ -53,11 +53,7 @@ export function SparklesSection() {
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                 <div className="text-center px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 mb-5">
-                        Connect With Us
-                    </h2>
-
-                    <div className="flex items-center justify-center mb-6 text-lg md:text-xl text-neutral-300">
+                    <div className="flex items-center justify-center mb-6 text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
                         <span className="mr-2">Connect with me on</span>
                         <TextRotate
                             texts={[
