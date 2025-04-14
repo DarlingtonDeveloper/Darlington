@@ -116,8 +116,10 @@ export function Portfolio() {
   const filteredWorks = works.filter((work) => (selectedCategory === "all" ? true : work.category === selectedCategory))
 
   return (
-    <section className="bg-black py-20">
-      <div className="container mx-auto px-4">
+    <section className="bg-black py-16">
+      <div className="container mx-auto px-6 md:px-12 lg:px-20">
+        <h2 className="text-3xl font-bold text-center mb-12">Portfolio</h2>
+
         <div className="mb-12 flex flex-wrap justify-center gap-4">
           {categories.map((category) => (
             <RainbowButton
@@ -129,6 +131,7 @@ export function Portfolio() {
             </RainbowButton>
           ))}
         </div>
+
         <motion.div layout className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
             {filteredWorks.map((work) => (

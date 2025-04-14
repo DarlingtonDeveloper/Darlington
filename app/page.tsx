@@ -11,18 +11,29 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-        <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start w-full">
+      <main className="flex flex-col w-full">
+        {/* Hero Section - Full width with no space */}
+        <div className="w-full">
           <SplineSceneBasic />
+        </div>
+
+        {/* Content Sections */}
+        <div className="px-6 md:px-12 lg:px-20 space-y-16 mt-16">
           <Gallery />
+
           <SparklesSection />
+
           <div className="w-full">
-            <h2 className="text-2xl font-bold text-center mb-4">Powered By</h2>
+            <h2 className="text-2xl font-bold text-center mb-8">Powered By</h2>
             <MarqueeDemo />
           </div>
+        </div>
+
+        {/* Portfolio Section - Full width */}
+        <div className="mt-16 w-full">
           <Portfolio />
-        </main>
-      </div>
+        </div>
+      </main>
 
       <Footerdemo />
     </div>
