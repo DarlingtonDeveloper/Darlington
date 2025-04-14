@@ -27,7 +27,7 @@ export function SplineSceneBasic() {
                                 Darlington
                             </span>
                             <Typewriter
-                                text={[".Dev", ".Design", ".Architect"]}
+                                text={[".Architect", ".Developer", ".Designer", ".Engineer"]}
                                 speed={70}
                                 className="bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400"
                                 waitTime={1500}
