@@ -15,14 +15,12 @@ export default function Home() {
         {/* Hero Section - Full width with no space */}
         <div className="w-full">
           <SplineSceneBasic />
+          <SparklesSection />
         </div>
 
         {/* Content Sections */}
         <div className="px-6 md:px-12 lg:px-20 space-y-16 mt-16">
           <Gallery />
-
-          <SparklesSection />
-
           <div className="w-full">
             <h2 className="text-2xl font-bold text-center mb-8">Powered By</h2>
             <MarqueeDemo />

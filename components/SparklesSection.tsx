@@ -57,7 +57,7 @@ export function SparklesSection() {
                         <span className="mr-2">Connect with me on</span>
                         <TextRotate
                             texts={[
-                                "Github.",
+                                "GitHub.",
                                 "X.",
                                 "LinkedIn.",
                                 "Instagram.",

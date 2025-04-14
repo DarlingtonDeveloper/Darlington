@@ -73,8 +73,8 @@ export function Portfolio() {
       id: 9,
       title: "Fraud Detection",
       category: "TypeScript",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2025",
+      image: "/Fraud.png?height=400&width=600",
+      year: "2024",
     },
     {
       id: 10,
@@ -94,7 +94,7 @@ export function Portfolio() {
       id: 12,
       title: "VARCalculator",
       category: "Python",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "/VAR.png?height=400&width=600",
       year: "2024",
     },
     {
