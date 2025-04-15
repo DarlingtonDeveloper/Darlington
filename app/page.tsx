@@ -4,7 +4,6 @@ import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 import { SparklesSection } from "@/components/SparklesSection";
 import { MarqueeDemo } from "@/components/marquee-demo";
 import { Gallery } from "@/components/gallery";
-import { Portfolio } from "@/components/portfolio";
 import { Header } from "@/components/header";
 import { BreadcrumbSchema } from "@/components/json-ld";
 
@@ -72,7 +71,9 @@ export default function Home() {
 
             {/* Portfolio Section */}
             <section id="systems" aria-label="System Architecture Projects" className="pt-16 -mt-16 w-full pb-20">
-              <Portfolio />
+              <div className="container mx-auto px-6 md:px-12 lg:px-20">
+                <PortfolioGrid className="w-full" />
+              </div>
             </section>
           </div>
         </main>
