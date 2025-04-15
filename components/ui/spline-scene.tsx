@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic'
 
 // Use Next.js dynamic import instead of lazy
 // This handles the typing better and provides more options
-const Spline = dynamic(() => import('@splinetool/react-spline'), {
+const Spline = dynamic(() => import('@splinetool/react-spline/Spline'), {
+
     ssr: false,
     loading: () => (
         <div className="w-full h-full flex items-center justify-center">
