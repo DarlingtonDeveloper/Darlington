@@ -1,20 +1,17 @@
 'use client'
 
-import { Suspense, lazy } from 'react'
+import dynamic from 'next/dynamic'
 
-// Define a fallback component 
-const NullComponent = () => null;
-
-// Dynamic import with proper typing
-const Spline = lazy(() =>
-    import('@splinetool/react-spline')
-        .then(mod => ({ default: mod.default }))
-        .catch(() => {
-            console.error('Failed to load Spline component');
-            // Return a module with the same type signature
-            return { default: NullComponent };
-        })
-);
+// Use Next.js dynamic import instead of lazy
+// This handles the typing better and provides more options
+const Spline = dynamic(() => import('@splinetool/react-spline'), {
+    ssr: false,
+    loading: () => (
+        <div className="w-full h-full flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    )
+})
 
 interface SplineSceneProps {
     scene: string;
@@ -23,17 +20,9 @@ interface SplineSceneProps {
 
 export default function SplineScene({ scene, className }: SplineSceneProps) {
     return (
-        <Suspense
-            fallback={
-                <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            }
-        >
-            <Spline
-                scene={scene}
-                className={className}
-            />
-        </Suspense>
+        <Spline
+            scene={scene}
+            className={className}
+        />
     )
 }
