@@ -20,12 +20,12 @@ export function Gallery() {
       title: "PsyPay",
     },
     {
-      src: "/placeholder.svg?height=600&width=400",
-      alt: "Sprout",
-      title: "Sprout",
+      src: "/PAGallery.png?height=600&width=400",
+      alt: "Psychedelics Anonymous Gallery",
+      title: "Psychedelics Anonymous Gallery",
     },
     {
-      src: "/placeholder.svg?height=600&width=400",
+      src: "/Morf.png?height=600&width=400",
       alt: "Morf",
       title: "Morf",
     },
