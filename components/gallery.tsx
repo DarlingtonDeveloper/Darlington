@@ -17,18 +17,20 @@ const ProjectItem = ({ item }: { item: any }) => {
       className="block h-full group"
     >
       <div className="relative h-full overflow-hidden rounded-lg">
-        <Image
-          src={item.src}
-          alt={item.alt}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          priority={item.priority}
-        />
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 sm:p-6">
-          <div className="w-full">
-            <h3 className="text-lg sm:text-xl font-semibold text-white">{item.title}</h3>
-            <div className="w-full h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 mt-2 rounded-full opacity-80"></div>
+        <div className="relative aspect-video w-full h-full">
+          <Image
+            src={item.src}
+            alt={item.alt}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            priority={item.priority}
+          />
+          <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 sm:p-6">
+            <div className="w-full">
+              <h3 className="text-lg sm:text-xl font-semibold text-white">{item.title}</h3>
+              <div className="w-full h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 mt-2 rounded-full opacity-80"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -73,9 +75,9 @@ export function Gallery() {
   ];
 
   return (
-    <section ref={ref} className="w-full">
+    <section ref={ref} className="w-full h-full flex flex-col">
       <motion.h2
-        className="mb-8 md:mb-10 text-center text-2xl sm:text-3xl font-bold tracking-tighter md:text-4xl flex flex-col sm:flex-row items-center justify-center gap-2"
+        className="mb-2 md:mb-4 text-center text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter lg:text-4xl flex flex-col sm:flex-row items-center justify-center gap-2"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.8 }}
@@ -98,39 +100,20 @@ export function Gallery() {
         />
       </motion.h2>
 
-      {/* Mobile Carousel (1 project) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         transition={{ duration: 0.8 }}
-        className="md:hidden px-4"
+        className="px-1 sm:px-4 h-full flex items-center"
       >
         <Carousel
           items={projects}
           renderItem={(item) => <ProjectItem item={item} />}
-          slidesToShow={1}
+          slidesToShow={{ mobile: 1, desktop: 2 }}
           autoPlay={true}
-          interval={5000}
-          showControls={true}
-          showIndicators={true}
-        />
-      </motion.div>
-
-      {/* Desktop Carousel (2 projects) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-        transition={{ duration: 0.8 }}
-        className="hidden md:block px-4"
-      >
-        <Carousel
-          items={projects}
-          renderItem={(item) => <ProjectItem item={item} />}
-          slidesToShow={2}
-          autoPlay={true}
-          interval={5000}
-          showControls={true}
-          showIndicators={true}
+          scrollDuration={30000} // 30 seconds to scroll through all items for a gentle effect
+          gap={24}
+          className="w-full h-[90%] sm:h-auto"
         />
       </motion.div>
     </section>

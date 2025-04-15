@@ -1,19 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, useAnimationControls, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CarouselProps {
     items: any[];
     renderItem: (item: any, index: number) => React.ReactNode;
-    slidesToShow?: number;
+    slidesToShow?: number | { mobile: number; desktop: number };
     autoPlay?: boolean;
-    interval?: number;
-    showControls?: boolean;
-    showIndicators?: boolean;
+    scrollDuration?: number;
     className?: string;
+    gap?: number;
+    dragThreshold?: number;
 }
 
 export function Carousel({
@@ -21,135 +20,166 @@ export function Carousel({
     renderItem,
     slidesToShow = 1,
     autoPlay = true,
-    interval = 5000,
-    showControls = true,
-    showIndicators = true,
-    className
+    scrollDuration = 20000, // Time to scroll through all items
+    className,
+    gap = 16,
+    dragThreshold = 50
 }: CarouselProps) {
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
-    const maxIndex = Math.max(0, items.length - slidesToShow);
+    const [progress, setProgress] = useState(0);
+    const [currentSlidesToShow, setCurrentSlidesToShow] = useState<number>(
+        typeof slidesToShow === 'object' ? slidesToShow.mobile : slidesToShow
+    );
     const containerRef = useRef<HTMLDivElement>(null);
+    const animationControls = useAnimationControls();
+    const dragStartX = useRef(0);
+    const autoScrollRef = useRef<number | null>(null);
+    const lastTimeRef = useRef<number | null>(null);
 
-    // Handle auto play
+    // Handle responsive slidesToShow
     useEffect(() => {
-        if (!autoPlay || isPaused) return;
+        if (typeof slidesToShow === 'object') {
+            const handleResize = () => {
+                const isMobile = window.innerWidth < 768; // Match the md: breakpoint
+                setCurrentSlidesToShow(isMobile ? slidesToShow.mobile : slidesToShow.desktop);
+            };
 
-        const timer = setTimeout(() => {
-            next();
-        }, interval);
+            handleResize(); // Initialize
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
+    }, [slidesToShow]);
 
-        return () => clearTimeout(timer);
-    }, [currentIndex, autoPlay, interval, isPaused]);
+    // Double the items for smoother infinite scrolling
+    const normalizedItems = [...items, ...items];
 
-    // Navigation functions
-    const prev = () => {
-        setCurrentIndex(current => (current <= 0 ? maxIndex : current - 1));
-    };
+    // Calculate width percentage based on slidesToShow and gap
+    const slideWidth = `calc(${100 / currentSlidesToShow}% - ${(gap * (currentSlidesToShow - 1)) / currentSlidesToShow}px)`;
 
-    const next = () => {
-        setCurrentIndex(current => (current >= maxIndex ? 0 : current + 1));
-    };
-
-    const goTo = (index: number) => {
-        setCurrentIndex(Math.min(Math.max(0, index), maxIndex));
-    };
-
-    // Render visible slides
-    const renderVisibleItems = () => {
-        const visibleItems = [];
-
-        for (let i = 0; i < slidesToShow; i++) {
-            const index = (currentIndex + i) % items.length;
-            if (index < items.length) {
-                visibleItems.push(
-                    <div
-                        key={index}
-                        className={cn(
-                            "h-full",
-                            slidesToShow > 1 ? `w-1/${slidesToShow} px-3` : "w-full"
-                        )}
-                    >
-                        {renderItem(items[index], index)}
-                    </div>
-                );
-            }
+    // Auto scroll animation
+    const animateScroll = (timestamp: number) => {
+        if (isPaused) {
+            lastTimeRef.current = timestamp;
+            autoScrollRef.current = requestAnimationFrame(animateScroll);
+            return;
         }
 
-        return visibleItems;
+        if (lastTimeRef.current === null) {
+            lastTimeRef.current = timestamp;
+            autoScrollRef.current = requestAnimationFrame(animateScroll);
+            return;
+        }
+
+        const deltaTime = timestamp - lastTimeRef.current;
+        const progressIncrement = deltaTime / scrollDuration;
+
+        setProgress(prev => {
+            let newProgress = prev + progressIncrement;
+            if (newProgress >= 1) {
+                newProgress = 0; // Reset when we've scrolled through all items
+            }
+
+            // Update the track position
+            const maxPosition = items.length - currentSlidesToShow;
+            const position = newProgress * maxPosition;
+            const trackX = position * (100 / currentSlidesToShow) + position * (gap / currentSlidesToShow);
+
+            animationControls.set({
+                x: `-${trackX}%`
+            });
+
+            return newProgress;
+        });
+
+        lastTimeRef.current = timestamp;
+        autoScrollRef.current = requestAnimationFrame(animateScroll);
+    };
+
+    // Start and stop auto scroll
+    useEffect(() => {
+        if (autoPlay && !isPaused && items.length > currentSlidesToShow) {
+            lastTimeRef.current = null;
+            autoScrollRef.current = requestAnimationFrame(animateScroll);
+        }
+
+        return () => {
+            if (autoScrollRef.current) {
+                cancelAnimationFrame(autoScrollRef.current);
+            }
+        };
+    }, [autoPlay, isPaused, items.length, currentSlidesToShow]);
+
+    // Handle manual navigation
+    const handleDragStart = (_: any, info: PanInfo) => {
+        setIsPaused(true);
+        dragStartX.current = info.point.x;
+    };
+
+    const handleDragEnd = (_: any, info: PanInfo) => {
+        const dragEndX = info.point.x;
+        const dragDifference = dragStartX.current - dragEndX;
+
+        if (Math.abs(dragDifference) > dragThreshold) {
+            // Calculate position based on drag direction and amount
+            const newProgress = progress + ((dragDifference / (containerRef.current?.clientWidth || 500)) * 0.5);
+            setProgress(Math.max(0, Math.min(1, newProgress)));
+
+            // Update the track position
+            const maxPosition = items.length - currentSlidesToShow;
+            const position = newProgress * maxPosition;
+            const trackX = position * (100 / currentSlidesToShow) + position * (gap / currentSlidesToShow);
+
+            animationControls.start({
+                x: `-${trackX}%`,
+                transition: { type: "spring", stiffness: 100, damping: 30 }
+            });
+        }
+
+        setTimeout(() => {
+            setIsPaused(false);
+        }, 1000);
     };
 
     return (
         <div
             ref={containerRef}
-            className={cn("relative rounded-lg overflow-hidden", className)}
+            className={cn("relative overflow-hidden", className)}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
         >
-            {/* Carousel track */}
-            <div className="relative aspect-[4/3] md:aspect-[16/9]">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={currentIndex}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute inset-0 w-full h-full flex"
-                    >
-                        {renderVisibleItems()}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
+            <motion.div
+                className="flex w-full h-full"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                dragElastic={0.2}
+                animate={animationControls}
+                initial={{ x: "0%" }}
+                style={{
+                    touchAction: "pan-y", // Allow vertical scrolling on touch devices
+                }}
+            >
+                {normalizedItems.map((item, index) => {
+                    // Adjust index to get the correct item from the original array
+                    const originalIndex = index % items.length;
 
-            {/* Controls */}
-            {showControls && items.length > slidesToShow && (
-                <>
-                    <button
-                        onClick={prev}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/30 text-white rounded-full backdrop-blur-sm hover:bg-black/50 z-10"
-                        aria-label="Previous slide"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <button
-                        onClick={next}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/30 text-white rounded-full backdrop-blur-sm hover:bg-black/50 z-10"
-                        aria-label="Next slide"
-                    >
-                        <ChevronRight size={20} />
-                    </button>
-                </>
-            )}
-
-            {/* Indicators */}
-            {showIndicators && maxIndex > 0 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
-                    {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => goTo(index)}
-                            className={cn(
-                                "h-2 rounded-full transition-all",
-                                index === currentIndex ? "w-6 bg-white" : "w-2 bg-white/50"
-                            )}
-                            aria-label={`Go to slide ${index + 1}`}
-                        />
-                    ))}
-                </div>
-            )}
-
-            {/* Progress bar */}
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10">
-                <motion.div
-                    className="h-full bg-white"
-                    initial={{ width: 0 }}
-                    animate={{
-                        width: `${((currentIndex + 1) / (maxIndex + 1)) * 100}%`
-                    }}
-                    transition={{ duration: autoPlay ? interval / 1000 : 0 }}
-                />
-            </div>
+                    return (
+                        <div
+                            key={`carousel-item-${index}`}
+                            className="flex-shrink-0"
+                            style={{
+                                width: slideWidth,
+                                marginRight: `${gap}px`
+                            }}
+                        >
+                            {renderItem(item, originalIndex)}
+                        </div>
+                    );
+                })}
+            </motion.div>
         </div>
     );
 }
