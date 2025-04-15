@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 
 // Dynamically import the Spline component with SSR disabled
-const Spline = dynamic(() => import('@splinetool/react-spline'), {
+const Spline = dynamic(() => import('@splinetool/react-spline/next'), {
     ssr: false,
     loading: () => (
         <div className="w-full h-full flex items-center justify-center">
@@ -11,6 +11,7 @@ const Spline = dynamic(() => import('@splinetool/react-spline'), {
         </div>
     ),
 });
+
 
 interface SplineSceneProps {
     scene: string;
