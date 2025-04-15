@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 
 interface ScrollParallaxProps {
@@ -27,19 +27,25 @@ export function ScrollParallax({
     })
 
     // Calculate transform based on direction
-    let transform = {}
-
-    // Adjust the multiplier to control movement amount
+    // Always define all transforms to avoid conditional hook calls
     const moveAmount = 100 * speed
 
+    // Define all transformations unconditionally
+    const yUp = useTransform(scrollYProgress, [0, 1], [moveAmount + offset, -moveAmount + offset])
+    const yDown = useTransform(scrollYProgress, [0, 1], [-moveAmount + offset, moveAmount + offset])
+    const xLeft = useTransform(scrollYProgress, [0, 1], [moveAmount + offset, -moveAmount + offset])
+    const xRight = useTransform(scrollYProgress, [0, 1], [-moveAmount + offset, moveAmount + offset])
+
+    // Select the appropriate transform based on direction
+    let transform = {}
     if (direction === 'up') {
-        transform = { y: useTransform(scrollYProgress, [0, 1], [moveAmount + offset, -moveAmount + offset]) }
+        transform = { y: yUp }
     } else if (direction === 'down') {
-        transform = { y: useTransform(scrollYProgress, [0, 1], [-moveAmount + offset, moveAmount + offset]) }
+        transform = { y: yDown }
     } else if (direction === 'left') {
-        transform = { x: useTransform(scrollYProgress, [0, 1], [moveAmount + offset, -moveAmount + offset]) }
+        transform = { x: xLeft }
     } else if (direction === 'right') {
-        transform = { x: useTransform(scrollYProgress, [0, 1], [-moveAmount + offset, moveAmount + offset]) }
+        transform = { x: xRight }
     }
 
     return (

@@ -66,7 +66,7 @@ export function SparklesSection() {
                 <div className="text-center px-4">
                     {/* Headline with text rotation */}
                     <div className="flex flex-col sm:flex-row items-center justify-center mb-6 text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-                        <span className="whitespace-nowrap mr-2 mb-2 sm:mb-0">Let's build together on</span>
+                        <span className="whitespace-nowrap mr-2 mb-2 sm:mb-0">Let&apos;s build together on</span>
                         <TextRotate
                             texts={[
                                 "GitHub.",
