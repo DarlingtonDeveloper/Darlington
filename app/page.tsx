@@ -21,7 +21,7 @@ export default function Home() {
         {/* Content Sections - Position below the hero which stays fixed */}
         <div className="relative z-30 bg-black">
           <div className="px-6 md:px-12 lg:px-20 space-y-16 pt-16">
-            <div id="featured">
+            <div id="projects">
               <Gallery />
             </div>
             <div className="w-full">
@@ -31,7 +31,7 @@ export default function Home() {
           </div>
 
           {/* Portfolio Section - Full width */}
-          <div id="portfolio" className="mt-16 w-full">
+          <div id="systems" className="mt-16 w-full">
             <Portfolio />
           </div>
 
