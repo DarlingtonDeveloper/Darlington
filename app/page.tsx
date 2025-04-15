@@ -10,12 +10,11 @@ import { BreadcrumbSchema } from "@/components/json-ld";
 
 // Page-specific metadata
 export const metadata: Metadata = {
-  title: "Home", // Will use the title template from layout: "Home | Darlington - Developer & System Architect"
+  title: "Home",
   description: "Portfolio of Darlington, a full-stack developer and system architect specializing in TypeScript, Python, Go and cloud infrastructure.",
   alternates: {
     canonical: "/",
   },
-  // Simplified OpenGraph without image requirement
   openGraph: {
     title: "Darlington | Developer & System Architect",
     description: "Explore my projects and skills in web development, system architecture, and cloud infrastructure.",
