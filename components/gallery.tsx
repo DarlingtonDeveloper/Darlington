@@ -6,9 +6,10 @@ import { useInView } from "framer-motion";
 import { Typewriter } from "@/components/ui/typewriter";
 import { Carousel } from "@/components/ui/carousel";
 import Image from "next/image";
+import { CarouselItem } from "@/components/types";
 
 // Project item rendering component
-const ProjectItem = ({ item }: { item: any }) => {
+const ProjectItem = ({ item }: { item: CarouselItem }) => {
   return (
     <a
       href={item.href}
@@ -43,7 +44,7 @@ export function Gallery() {
   const isInView = useInView(ref, { once: true });
 
   // Project data
-  const projects = [
+  const projects: CarouselItem[] = [
     {
       src: "/PA.jpg",
       alt: "Psychedelics Anonymous",
@@ -106,7 +107,7 @@ export function Gallery() {
         transition={{ duration: 0.8 }}
         className="px-1 sm:px-4 h-full flex items-center"
       >
-        <Carousel
+        <Carousel<CarouselItem>
           items={projects}
           renderItem={(item) => <ProjectItem item={item} />}
           slidesToShow={{ mobile: 1, desktop: 2 }}

@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useAnimationControls, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface CarouselProps {
-    items: any[];
-    renderItem: (item: any, index: number) => React.ReactNode;
+interface CarouselProps<T> {
+    items: T[];
+    renderItem: (item: T, index: number) => React.ReactNode;
     slidesToShow?: number | { mobile: number; desktop: number };
     autoPlay?: boolean;
     scrollDuration?: number;
@@ -15,7 +15,7 @@ interface CarouselProps {
     dragThreshold?: number;
 }
 
-export function Carousel({
+export function Carousel<T>({
     items,
     renderItem,
     slidesToShow = 1,
@@ -24,7 +24,7 @@ export function Carousel({
     className,
     gap = 16,
     dragThreshold = 50
-}: CarouselProps) {
+}: CarouselProps<T>) {
     const [isPaused, setIsPaused] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentSlidesToShow, setCurrentSlidesToShow] = useState<number>(
@@ -57,7 +57,7 @@ export function Carousel({
     const slideWidth = `calc(${100 / currentSlidesToShow}% - ${(gap * (currentSlidesToShow - 1)) / currentSlidesToShow}px)`;
 
     // Auto scroll animation
-    const animateScroll = (timestamp: number) => {
+    const animateScroll = useCallback((timestamp: number) => {
         if (isPaused) {
             lastTimeRef.current = timestamp;
             autoScrollRef.current = requestAnimationFrame(animateScroll);
@@ -93,7 +93,7 @@ export function Carousel({
 
         lastTimeRef.current = timestamp;
         autoScrollRef.current = requestAnimationFrame(animateScroll);
-    };
+    }, [isPaused, items.length, currentSlidesToShow, scrollDuration, gap, animationControls]);
 
     // Start and stop auto scroll
     useEffect(() => {
@@ -107,15 +107,15 @@ export function Carousel({
                 cancelAnimationFrame(autoScrollRef.current);
             }
         };
-    }, [autoPlay, isPaused, items.length, currentSlidesToShow]);
+    }, [autoPlay, isPaused, items.length, currentSlidesToShow, animateScroll]);
 
     // Handle manual navigation
-    const handleDragStart = (_: any, info: PanInfo) => {
+    const handleDragStart = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         setIsPaused(true);
         dragStartX.current = info.point.x;
     };
 
-    const handleDragEnd = (_: any, info: PanInfo) => {
+    const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const dragEndX = info.point.x;
         const dragDifference = dragStartX.current - dragEndX;
 

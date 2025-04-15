@@ -4,23 +4,23 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface InfiniteGridProps {
-    items: any[]; // The cards/items to display 
-    renderItem: (item: any, index: number) => React.ReactNode;
-    columns?: number; // Number of columns in the grid
-    gap?: number; // Gap between grid items in pixels
+interface InfiniteGridProps<T> {
+    items: T[];
+    renderItem: (item: T, index: number) => React.ReactNode;
+    columns?: number;
+    gap?: number;
     className?: string;
     itemClassName?: string;
 }
 
-export function InfiniteGrid({
+export function InfiniteGrid<T>({
     items,
     renderItem,
     columns = 3,
     gap = 16,
     className,
     itemClassName,
-}: InfiniteGridProps) {
+}: InfiniteGridProps<T>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -30,7 +30,6 @@ export function InfiniteGrid({
     // Use motion values for smooth performance
     const dragX = useMotionValue(0);
     const dragY = useMotionValue(0);
-    const [isDragging, setIsDragging] = useState(false);
 
     // Get container dimensions
     useEffect(() => {
@@ -128,9 +127,8 @@ export function InfiniteGrid({
                     drag
                     dragTransition={{ power: 0.2, timeConstant: 200 }}
                     dragMomentum={true}
-                    onDragStart={() => setIsDragging(true)}
+                    onDragStart={() => {/* Could track dragging state if needed */ }}
                     onDragEnd={() => {
-                        setIsDragging(false);
 
                         // Calculate the nearest grid cell to snap to
                         const cellX = Math.round(dragX.get() / (itemWidth + gap));

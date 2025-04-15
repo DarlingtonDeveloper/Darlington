@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { OptimizedImage } from "@/components/optimised-image";
 import { TextRotate } from "@/components/ui/text-rotate";
+import { PortfolioItem } from "@/components/types";
 
 interface PortfolioGridProps {
     className?: string;
@@ -14,7 +15,7 @@ interface PortfolioGridProps {
 
 export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
     // Portfolio items from the existing portfolio component
-    const portfolioItems = [
+    const portfolioItems: PortfolioItem[] = [
         {
             id: 1,
             title: "ArchAngel",
@@ -130,7 +131,7 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
     ];
 
     // Render a portfolio item
-    const renderPortfolioItem = (item: any) => (
+    const renderPortfolioItem = (item: PortfolioItem) => (
         <a
             href={item.href}
             target="_blank"
@@ -203,7 +204,7 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                 <p>Drag in any direction to explore — the grid extends infinitely</p>
             </div>
 
-            <InfiniteGrid
+            <InfiniteGrid<PortfolioItem>
                 items={portfolioItems}
                 renderItem={renderPortfolioItem}
                 columns={3}
