@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { defaultMetadata } from "@/lib/metadata-config";
 import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
+import { Analytics } from "@vercel/analytics/react"
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -81,6 +82,7 @@ export default function RootLayout({
           url="https://darlington.dev"
           description="Portfolio website of Darlington, a developer and system architect specializing in modern web technologies."
         />
+        <Analytics />
 
         {/* Main content */}
         {children}
