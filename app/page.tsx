@@ -4,7 +4,6 @@ import { MarqueeDemo } from "@/components/marquee-demo";
 import { Gallery } from "@/components/gallery";
 import { Portfolio } from "@/components/portfolio";
 import { Header } from "@/components/header";
-import { Footerdemo } from "@/components/footer-section";
 
 export default function Home() {
   return (
@@ -36,8 +35,6 @@ export default function Home() {
           <div id="systems" className="mt-16 pt-16 -mt-16 w-full">
             <Portfolio />
           </div>
-
-          <Footerdemo />
         </div>
       </main>
     </div>

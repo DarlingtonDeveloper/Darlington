@@ -162,7 +162,10 @@ export function Portfolio() {
             <RainbowButton
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`text-sm capitalize ${selectedCategory === category ? 'opacity-100' : 'opacity-70 hover:opacity-90'}`}
+              className={`text-sm capitalize ${selectedCategory === category
+                ? 'opacity-100 font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105 border border-white/20'
+                : 'opacity-70 hover:opacity-90'
+                }`}
             >
               {category}
             </RainbowButton>
