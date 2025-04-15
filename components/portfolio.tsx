@@ -18,89 +18,113 @@ export function Portfolio() {
       id: 1,
       title: "ArchAngel",
       category: "Go",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "/aa.png?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/ArchAngel"
     },
     {
       id: 2,
-      title: "TelexistenceAPI",
-      category: ".NET",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2024",
-      href: "#"
+      title: "This Website",
+      category: "TypeScript",
+      image: "/Darlington.png?height=400&width=600",
+      year: "2025",
+      href: "https://github.com/DarlingtonDeveloper/Darlington"
     },
     {
       id: 3,
-      title: "Fraud Detection",
+      title: "Sprout",
       category: "TypeScript",
-      image: "/Fraud.png?height=400&width=600",
-      year: "2024",
-      href: "#"
+      image: "/Sprout.gif?height=400&width=600",
+      year: "2025",
+      href: "https://github.com/DarlingtonDeveloper/Sprout"
     },
     {
       id: 4,
-      title: "CrewAI",
-      category: "Python",
-      image: "/placeholder.svg?height=400&width=600",
+      title: "EIII",
+      category: "TypeScript",
+      image: "/e3.svg?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/EIII"
     },
     {
       id: 5,
-      title: "Sprout",
-      category: "TypeScript",
-      image: "/placeholder.svg?height=400&width=600",
+      title: "TelexistenceAPI",
+      category: ".NET",
+      image: "/TX.png?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/TelexistenceAPI"
     },
     {
       id: 6,
-      title: "E3",
+      title: "Arise",
       category: "TypeScript",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "/Arise.png?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/Arise"
     },
     {
       id: 7,
-      title: "Arise",
+      title: "Fraud Detection",
       category: "TypeScript",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "/Fraud.png?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/fraud-detection-system"
     },
     {
       id: 8,
-      title: "ConnectFourRL",
+      title: "Resume Optimization System",
       category: "Python",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "/crewai.jpg?height=400&width=600",
       year: "2025",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/resume-optimization-crew"
     },
     {
       id: 9,
-      title: "VARCalculator",
+      title: "Connect Four Reinforcement Learning",
       category: "Python",
-      image: "/VAR.png?height=400&width=600",
+      image: "/c4.jpg?height=400&width=600",
       year: "2024",
-      href: "#"
+      href: "https://github.com/DarlingtonDeveloper/ConnectFourRL"
     },
     {
       id: 10,
-      title: "TAPlotter",
+      title: "Value-At-Risk Calculator",
       category: "Python",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2025",
-      href: "#"
+      image: "/VAR.png?height=400&width=600",
+      year: "2024",
+      href: "https://github.com/DarlingtonDeveloper/VARCalculator"
     },
     {
       id: 11,
-      title: "PageLoadTimeExtension",
+      title: "Technical Analysis Plotter",
+      category: "Python",
+      image: "/TA.png?height=400&width=600",
+      year: "2024",
+      href: "https://github.com/DarlingtonDeveloper/Technical_Analysis_Plotter"
+    },
+    {
+      id: 12,
+      title: "Twitter Sentiment Analysis",
+      category: "Python",
+      image: "/twitter.png?height=400&width=600",
+      year: "2023",
+      href: "https://github.com/DarlingtonDeveloper/Twitter-Keyword-Tracker"
+    },
+    {
+      id: 13,
+      title: "Discord Activity Bot",
+      category: "Python",
+      image: "/discord.jpg?height=400&width=600",
+      year: "2023",
+      href: "https://github.com/DarlingtonDeveloper/Discord-Activity-Bot"
+    },
+    {
+      id: 14,
+      title: "Page Load Time Chrome Extension",
       category: "TypeScript",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2025",
-      href: "#"
+      image: "/ps.png?height=400&width=600",
+      year: "2023",
+      href: "https://github.com/DarlingtonDeveloper/PageLoadTimeExtension"
     }
   ]
 
