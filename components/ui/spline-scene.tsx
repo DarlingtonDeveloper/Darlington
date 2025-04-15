@@ -2,12 +2,19 @@
 
 import { Suspense, lazy } from 'react'
 
-// Dynamically import Spline
-const Spline = lazy(() => import('@splinetool/react-spline'))
+// More efficient dynamic import with explicit handling
+const Spline = lazy(() =>
+    import('@splinetool/react-spline')
+        .then(mod => ({ default: mod.default }))
+        .catch(() => {
+            console.error('Failed to load Spline component');
+            return { default: () => null };
+        })
+);
 
 interface SplineSceneProps {
-    scene: string
-    className?: string
+    scene: string;
+    className?: string;
 }
 
 export default function SplineScene({ scene, className }: SplineSceneProps) {

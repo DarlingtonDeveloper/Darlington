@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
@@ -17,7 +18,7 @@ export function Portfolio() {
       id: 1,
       title: "ArchAngel",
       category: "Go",
-      image: "/aa.png?height=400&width=600",
+      image: "/aa.png",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/ArchAngel"
     },
@@ -25,7 +26,7 @@ export function Portfolio() {
       id: 2,
       title: "This Website",
       category: "TypeScript",
-      image: "/Darlington.png?height=400&width=600",
+      image: "/Darlington.png",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/Darlington"
     },
@@ -201,11 +202,15 @@ export function Portfolio() {
                     <Card className="overflow-hidden bg-zinc-900 relative rounded-xl border-[0.5px] shadow-sm dark:shadow-[0px_0px_27px_0px_rgba(45,45,45,0.3)]">
                       <CardContent className="p-0">
                         <div className="group relative">
-                          <img
-                            src={work.image || "/placeholder.svg"}
-                            alt={work.title}
-                            className="w-full transition-transform duration-500 group-hover:scale-105"
-                          />
+                          <div className="relative aspect-video w-full overflow-hidden">
+                            <Image
+                              src={work.image}
+                              alt={work.title}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                             <h3 className="text-xl font-semibold text-white">{work.title}</h3>
                             <p className="mt-2 text-sm text-gray-300">{work.year}</p>

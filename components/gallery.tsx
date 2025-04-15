@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { useRef } from "react"
 import { useInView } from "framer-motion"
+import Image from "next/image"
 import { Typewriter } from "@/components/ui/typewriter"
 
 export function Gallery() {
@@ -11,25 +12,25 @@ export function Gallery() {
 
   const images = [
     {
-      src: "/PA.jpg?height=600&width=400",
+      src: "/PA.jpg",
       alt: "Psychedelics Anonymous",
       title: "Psychedelics Anonymous",
       href: "https://psychedelicsanonymous.com/"
     },
     {
-      src: "/PP.png?height=600&width=400",
+      src: "/PP.png",
       alt: "PsyPay",
       title: "PsyPay",
       href: "https://psypay.xyz/"
     },
     {
-      src: "/PAGallery.png?height=600&width=400",
+      src: "/PAGallery.png",
       alt: "Psychedelics Anonymous Gallery",
       title: "Psychedelics Anonymous Gallery",
       href: "https://pa-rarity-gallery.vercel.app/"
     },
     {
-      src: "/Morf.png?height=600&width=400",
+      src: "/Morf.png",
       alt: "Morf",
       title: "Morf",
       href: "https://v0-next-js-conf-2024-mkknu2.vercel.app/"
@@ -76,11 +77,14 @@ export function Gallery() {
               rel="noopener noreferrer"
               className="block h-full"
             >
-              <div className="aspect-[2/3] overflow-hidden">
-                <img
-                  src={image.src || "/placeholder.svg"}
+              <div className="aspect-[2/3] relative overflow-hidden">
+                <Image
+                  src={image.src}
                   alt={image.alt}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  priority={index < 2} // Prioritize loading the first two images
                 />
               </div>
               <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
