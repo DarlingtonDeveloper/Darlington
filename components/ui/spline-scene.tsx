@@ -2,13 +2,17 @@
 
 import { Suspense, lazy } from 'react'
 
-// More efficient dynamic import with explicit handling
+// Define a fallback component 
+const NullComponent = () => null;
+
+// Dynamic import with proper typing
 const Spline = lazy(() =>
     import('@splinetool/react-spline')
         .then(mod => ({ default: mod.default }))
         .catch(() => {
             console.error('Failed to load Spline component');
-            return { default: () => null };
+            // Return a module with the same type signature
+            return { default: NullComponent };
         })
 );
 
