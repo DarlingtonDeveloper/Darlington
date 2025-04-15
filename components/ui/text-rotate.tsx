@@ -18,6 +18,7 @@ import {
 
 import { cn } from "@/lib/utils"
 
+// Types
 interface TextRotateProps {
     texts: string[]
     rotationInterval?: number
@@ -29,8 +30,8 @@ interface TextRotateProps {
     staggerDuration?: number
     staggerFrom?: "first" | "last" | "center" | number | "random"
     transition?: Transition
-    loop?: boolean // Whether to start from the first text when the last one is reached
-    auto?: boolean // Whether to start the animation automatically
+    loop?: boolean
+    auto?: boolean
     splitBy?: "words" | "characters" | "lines" | string
     onNext?: (index: number) => void
     mainClassName?: string
@@ -50,14 +51,32 @@ interface WordObject {
     needsSpace: boolean
 }
 
+// Default animation properties
+const DEFAULT_ANIMATION = {
+    initial: { y: "100%", opacity: 0 },
+    animate: { y: 0, opacity: 1 },
+    exit: { y: "-120%", opacity: 0 },
+    transition: { type: "spring", damping: 25, stiffness: 300 },
+};
+
+// Helper function to split text into characters with Unicode support
+const splitIntoCharacters = (text: string): string[] => {
+    if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+        const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" })
+        return Array.from(segmenter.segment(text), ({ segment }) => segment)
+    }
+    // Fallback for browsers that don't support Intl.Segmenter
+    return Array.from(text)
+}
+
 const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
     (
         {
             texts,
-            transition = { type: "spring", damping: 25, stiffness: 300 },
-            initial = { y: "100%", opacity: 0 },
-            animate = { y: 0, opacity: 1 },
-            exit = { y: "-120%", opacity: 0 },
+            transition = DEFAULT_ANIMATION.transition,
+            initial = DEFAULT_ANIMATION.initial,
+            animate = DEFAULT_ANIMATION.animate,
+            exit = DEFAULT_ANIMATION.exit,
             animatePresenceMode = "wait",
             animatePresenceInitial = false,
             rotationInterval = 2000,
@@ -76,16 +95,7 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
     ) => {
         const [currentTextIndex, setCurrentTextIndex] = useState(0)
 
-        // handy function to split text into characters with support for unicode and emojis
-        const splitIntoCharacters = (text: string): string[] => {
-            if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-                const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" })
-                return Array.from(segmenter.segment(text), ({ segment }) => segment)
-            }
-            // Fallback for browsers that don't support Intl.Segmenter
-            return Array.from(text)
-        }
-
+        // Process text elements based on splitting strategy
         const elements = useMemo(() => {
             const currentText = texts[currentTextIndex]
             if (splitBy === "characters") {
@@ -102,6 +112,7 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
                     : currentText.split(splitBy)
         }, [texts, currentTextIndex, splitBy])
 
+        // Calculate stagger delay based on strategy
         const getStaggerDelay = useCallback(
             (index: number, totalChars: number) => {
                 const total = totalChars
@@ -120,12 +131,13 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
             [staggerFrom, staggerDuration]
         )
 
-        // Helper function to handle index changes and trigger callback
+        // Handle index changes with callback
         const handleIndexChange = useCallback((newIndex: number) => {
             setCurrentTextIndex(newIndex)
             onNext?.(newIndex)
         }, [onNext])
 
+        // Navigation functions
         const next = useCallback(() => {
             const nextIndex = currentTextIndex === texts.length - 1
                 ? (loop ? 0 : currentTextIndex)
@@ -159,7 +171,7 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
             }
         }, [currentTextIndex, handleIndexChange])
 
-        // Expose all navigation functions via ref
+        // Expose navigation functions via ref
         useImperativeHandle(ref, () => ({
             next,
             previous,
@@ -167,9 +179,10 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
             reset,
         }), [next, previous, jumpTo, reset])
 
-
+        // Auto-rotation effect
         useEffect(() => {
             if (!auto) return
+
             const intervalId = setInterval(next, rotationInterval)
             return () => clearInterval(intervalId)
         }, [next, rotationInterval, auto])
@@ -181,6 +194,7 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
                 layout
                 transition={transition}
             >
+                {/* Screen reader text */}
                 <span className="sr-only">{texts[currentTextIndex]}</span>
 
                 <AnimatePresence
@@ -196,6 +210,7 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
                         layout
                         aria-hidden="true"
                     >
+                        {/* Process elements based on split method */}
                         {(splitBy === "characters"
                             ? (elements as WordObject[])
                             : (elements as string[]).map((el, i) => ({

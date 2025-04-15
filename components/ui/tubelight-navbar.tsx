@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useNavigation } from "@/hooks/use-navigation"
 
 interface NavItem {
     name: string
@@ -17,65 +18,13 @@ interface NavBarProps {
 }
 
 export function NavBar({ items, className }: NavBarProps) {
-    const [activeTab, setActiveTab] = useState(items[0].name)
-    const [isMobile, setIsMobile] = useState(false)
-    const [hasScrolled, setHasScrolled] = useState(false)
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768)
-        }
-
-        const handleScroll = () => {
-            setHasScrolled(window.scrollY > 100)
-
-            // Update active tab based on scroll position
-            const scrollPosition = window.scrollY + 100
-
-            // Only check navigation items with hash links
-            const hashItems = items.filter(item => item.url.startsWith('#'))
-
-            // Determine which section is currently in view
-            // Start from the bottom sections and work up for proper highlighting
-            for (let i = hashItems.length - 1; i >= 0; i--) {
-                const item = hashItems[i]
-                const targetId = item.url.substring(1)
-                const element = document.getElementById(targetId)
-
-                if (element) {
-                    const rect = element.getBoundingClientRect()
-                    const elementTop = window.scrollY + rect.top
-
-                    // If we've scrolled to or past this element, make it active
-                    // Add a small offset to trigger the highlight slightly before reaching the section
-                    if (scrollPosition >= elementTop - 150) {
-                        if (activeTab !== item.name) {
-                            setActiveTab(item.name)
-                        }
-                        break
-                    }
-                }
-            }
-
-            // If at the very top of the page, select the first tab
-            if (window.scrollY < 100 && hashItems.length > 0 && activeTab !== hashItems[0].name) {
-                setActiveTab(hashItems[0].name)
-            }
-        }
-
-        handleResize()
-        window.addEventListener("resize", handleResize)
-        window.addEventListener("scroll", handleScroll)
-
-        return () => {
-            window.removeEventListener("resize", handleResize)
-            window.removeEventListener("scroll", handleScroll)
-        }
-    }, [items, activeTab])
-
-    const isExternalLink = (url: string) => {
-        return url.startsWith('http') || url.startsWith('https')
-    }
+    const {
+        activeTab,
+        isMobile,
+        hasScrolled,
+        isExternalLink,
+        handleNavigation
+    } = useNavigation(items)
 
     return (
         <div
@@ -113,7 +62,7 @@ export function NavBar({ items, className }: NavBarProps) {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="block w-full h-full"
-                                        onClick={() => setActiveTab(item.name)}
+                                        onClick={() => handleNavigation(item.name, item.url)}
                                     >
                                         <span className="hidden md:inline">{item.name}</span>
                                         <span className="md:hidden">
@@ -126,21 +75,7 @@ export function NavBar({ items, className }: NavBarProps) {
                                         className="block w-full h-full"
                                         onClick={(e) => {
                                             e.preventDefault()
-                                            setActiveTab(item.name)
-
-                                            // Handle smooth scrolling for internal links
-                                            if (item.url.startsWith('#')) {
-                                                const targetId = item.url.substring(1)
-                                                const targetElement = document.getElementById(targetId)
-
-                                                if (targetElement) {
-                                                    // Just scroll the element into view - simplest approach
-                                                    targetElement.scrollIntoView({
-                                                        behavior: 'smooth',
-                                                        block: 'start'
-                                                    })
-                                                }
-                                            }
+                                            handleNavigation(item.name, item.url)
                                         }}
                                     >
                                         <span className="hidden md:inline">{item.name}</span>
