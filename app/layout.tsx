@@ -1,6 +1,8 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { defaultMetadata } from "@/lib/metadata-config";
+import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -15,23 +17,31 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Darlington | Developer",
-  description: "Portfolio for Darlington - Developer and System Architect",
-  keywords: ["developer", "portfolio", "architect", "typescript", "nextjs", "react"],
-  authors: [
-    {
-      name: "Darlington",
-      url: "https://github.com/DarlingtonDeveloper",
-    },
-  ],
-};
+// Export the default metadata for better SEO
+export const metadata = defaultMetadata;
 
+// Define viewport settings
 export const viewport: Viewport = {
   themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+};
+
+// Portfolio owner information for schema.org data
+const portfolioOwner = {
+  name: "Darlington",
+  jobTitle: "Developer & System Architect",
+  image: "https://github.com/DarlingtonDeveloper.png", // Use GitHub profile image
+  url: "https://darlington.dev",
+  sameAs: [
+    "https://github.com/DarlingtonDeveloper",
+    "https://x.com/DarlingtonDev",
+    "https://www.linkedin.com/in/DarlingtonDev/",
+    "https://instagram.com/Darlington.dev",
+    "https://frtr.hashnode.dev/"
+  ],
+  description: "Full-stack developer and system architect specializing in TypeScript, Python, Go and cloud infrastructure.",
 };
 
 export default function RootLayout({
@@ -51,6 +61,9 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
 
+        {/* Canonical URL - important for SEO */}
+        <link rel="canonical" href="https://darlington.dev" />
+
         {/* Preconnect to domains for faster resource loading */}
         <link rel="preconnect" href="https://github.com" />
         <link rel="preconnect" href="https://x.com" />
@@ -69,6 +82,15 @@ export default function RootLayout({
         style={{ isolation: "isolate" }}
         suppressHydrationWarning
       >
+        {/* JSON-LD structured data for better SEO */}
+        <PersonSchema person={portfolioOwner} />
+        <WebsiteSchema
+          name="Darlington - Developer Portfolio"
+          url="https://darlington.dev"
+          description="Portfolio website of Darlington, a developer and system architect specializing in modern web technologies."
+        />
+
+        {/* Main content */}
         {children}
       </body>
     </html>
