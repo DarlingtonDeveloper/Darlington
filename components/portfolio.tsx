@@ -154,7 +154,7 @@ export function Portfolio() {
             elementLevelClassName="inline-block"
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
             rotationInterval={3000}
-          /> on GitHub
+          /> on GitHub.
         </h2>
 
         <div className="mb-12 flex flex-wrap justify-center gap-4">

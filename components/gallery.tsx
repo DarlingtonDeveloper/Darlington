@@ -46,7 +46,7 @@ export function Gallery() {
       >
         <span>A selection of</span>
         <Typewriter
-          text={["Interactive Frontend Builds", "Modern Web Applications", "Live Prototypes", "Responsive Web Interfaces", "Production-Ready UI"]}
+          text={["Interactive Frontend Builds.", "Modern Web Applications.", "Live Prototypes.", "Responsive Web Interfaces.", "Production-Ready UI."]}
           speed={70}
           className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
           waitTime={1500}
