@@ -12,22 +12,22 @@ export function SparklesSection() {
     const socialIcons = [
         {
             Icon: Github,
-            href: "https://github.com/S3Crypto/",
+            href: "https://github.com/Darlingtondeveloper/",
             className: "hover:scale-105"
         },
         {
             Icon: XIcon,
-            href: "https://x.com/AutoFutureTech",
+            href: "https://x.com/DarlingtonDev",
             className: "hover:scale-105"
         },
         {
             Icon: Linkedin,
-            href: "https://www.linkedin.com/in/michael-darlington-249653143/",
+            href: "https://www.linkedin.com/in/DarlingtonDev/",
             className: "hover:scale-105"
         },
         {
             Icon: Instagram,
-            href: "https://instagram.com/MikeDarmal",
+            href: "https://instagram.com/Darlington.dev",
             className: "hover:scale-105"
         },
         {
