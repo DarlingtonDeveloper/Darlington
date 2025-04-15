@@ -8,7 +8,7 @@ import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap", // Keep text visible during font loading
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 const portfolioOwner = {
   name: "Darlington",
   jobTitle: "Developer & System Architect",
-  image: "https://github.com/DarlingtonDeveloper.png", // Use GitHub profile image
+  image: "https://github.com/DarlingtonDeveloper.png",
   url: "https://darlington.dev",
   sameAs: [
     "https://github.com/DarlingtonDeveloper",
@@ -52,14 +52,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        {/* Preload critical fonts */}
-        <link
-          rel="preload"
-          href={geistSans.url}
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
 
         {/* Canonical URL - important for SEO */}
         <link rel="canonical" href="https://darlington.dev" />
