@@ -4,6 +4,7 @@ import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 import { SparklesSection } from "@/components/SparklesSection";
 import { MarqueeDemo } from "@/components/marquee-demo";
 import { Gallery } from "@/components/gallery";
+import { PortfolioGrid } from "@/components/portfolio-grid";
 import { Header } from "@/components/header";
 import { BreadcrumbSchema } from "@/components/json-ld";
 
