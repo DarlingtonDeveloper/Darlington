@@ -7,7 +7,6 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { RainbowButton } from "@/components/ui/rainbow-button"
 import { TextRotate } from "@/components/ui/text-rotate"
 
-
 export function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState("all")
 

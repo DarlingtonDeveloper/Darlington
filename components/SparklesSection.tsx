@@ -2,55 +2,46 @@
 
 import { SparklesCore } from "@/components/ui/sparkles"
 import { SocialIcons } from "@/components/ui/social-icons"
-import { Github, Linkedin, Instagram } from "lucide-react"
+import { Github, Linkedin, Instagram } from 'lucide-react'
 import { XIcon } from "@/components/x-icon"
 import { HashNodeIcon } from "@/components/hashnode-icon"
 import { TextRotate } from "@/components/ui/text-rotate"
 
-// Define social platforms for better maintainability
-const SOCIAL_PLATFORMS = [
-    {
-        Icon: Github,
-        href: "https://github.com/Darlingtondeveloper/",
-        label: "GitHub Profile",
-        className: "hover:scale-105"
-    },
-    {
-        Icon: XIcon,
-        href: "https://x.com/DarlingtonDev",
-        label: "X (Twitter) Profile",
-        className: "hover:scale-105"
-    },
-    {
-        Icon: Linkedin,
-        href: "https://www.linkedin.com/in/DarlingtonDev/",
-        label: "LinkedIn Profile",
-        className: "hover:scale-105"
-    },
-    {
-        Icon: Instagram,
-        href: "https://instagram.com/Darlington.dev",
-        label: "Instagram Profile",
-        className: "hover:scale-105"
-    },
-    {
-        Icon: HashNodeIcon,
-        href: "https://frtr.hashnode.dev/",
-        label: "HashNode Blog",
-        className: "hover:scale-105"
-    }
-];
-
-// Define text rotation items
-const ROTATION_TEXTS = [
-    "GitHub.",
-    "X.",
-    "LinkedIn.",
-    "Instagram.",
-    "HashNode."
-];
-
 export function SparklesSection() {
+    // Define social platforms for better maintainability
+    const socialPlatforms = [
+        {
+            Icon: Github,
+            href: "https://github.com/Darlingtondeveloper/",
+            label: "GitHub Profile",
+            className: "hover:scale-105"
+        },
+        {
+            Icon: XIcon,
+            href: "https://x.com/DarlingtonDev",
+            label: "X (Twitter) Profile",
+            className: "hover:scale-105"
+        },
+        {
+            Icon: Linkedin,
+            href: "https://www.linkedin.com/in/DarlingtonDev/",
+            label: "LinkedIn Profile",
+            className: "hover:scale-105"
+        },
+        {
+            Icon: Instagram,
+            href: "https://instagram.com/Darlington.dev",
+            label: "Instagram Profile",
+            className: "hover:scale-105"
+        },
+        {
+            Icon: HashNodeIcon,
+            href: "https://frtr.hashnode.dev/",
+            label: "HashNode Blog",
+            className: "hover:scale-105"
+        }
+    ];
+
     return (
         <div className="w-full h-80 relative bg-black rounded-t-none rounded-b-lg overflow-hidden mt-0 z-20">
             {/* Decorative gradients */}
@@ -77,7 +68,13 @@ export function SparklesSection() {
                     <div className="flex flex-col sm:flex-row items-center justify-center mb-6 text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
                         <span className="whitespace-nowrap mr-2 mb-2 sm:mb-0">Let's build together on</span>
                         <TextRotate
-                            texts={ROTATION_TEXTS}
+                            texts={[
+                                "GitHub.",
+                                "X.",
+                                "LinkedIn.",
+                                "Instagram.",
+                                "HashNode."
+                            ]}
                             mainClassName="text-white px-2 sm:px-2 md:px-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden py-0.5 sm:py-1 md:py-1.5 justify-center rounded-lg flex items-center font-medium"
                             staggerFrom="first"
                             initial={{ y: "100%" }}
@@ -93,7 +90,7 @@ export function SparklesSection() {
 
                     {/* Social Icons */}
                     <SocialIcons
-                        icons={SOCIAL_PLATFORMS}
+                        icons={socialPlatforms}
                         iconSize={28}
                         className="mt-4"
                     />
