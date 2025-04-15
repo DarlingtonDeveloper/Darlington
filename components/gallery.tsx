@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { useRef } from "react"
 import { useInView } from "framer-motion"
+import { Typewriter } from "@/components/ui/typewriter"
 
 export function Gallery() {
   const ref = useRef(null)
@@ -38,12 +39,21 @@ export function Gallery() {
   return (
     <section ref={ref} className="w-full">
       <motion.h2
-        className="mb-10 text-center text-3xl font-bold tracking-tighter sm:text-4xl"
+        className="mb-10 text-center text-3xl font-bold tracking-tighter sm:text-4xl flex items-center justify-center gap-2"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.8 }}
       >
-        Featured Works
+        <span>A selection of</span>
+        <Typewriter
+          text={["Interactive Frontend Builds", "Modern Web Applications", "Live Prototypes", "Responsive Web Interfaces", "Production-Ready UI"]}
+          speed={70}
+          className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+          waitTime={1500}
+          deleteSpeed={40}
+          cursorChar="|"
+          cursorClassName="text-purple-400 ml-1"
+        />
       </motion.h2>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {images.map((image, index) => (

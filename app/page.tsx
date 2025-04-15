@@ -20,18 +20,20 @@ export default function Home() {
 
         {/* Content Sections - Position below the hero which stays fixed */}
         <div className="relative z-30 bg-black">
-          <div className="px-6 md:px-12 lg:px-20 space-y-16 pt-16">
-            <div id="projects">
+          {/* Add padding-top to create space for the fixed navbar */}
+          <div className="px-6 md:px-12 lg:px-20 pt-24">
+            {/* Projects section with id for navigation and additional padding */}
+            <div id="projects" className="pt-16 -mt-16 mb-8">
               <Gallery />
             </div>
-            <div className="w-full">
-              <h2 className="text-2xl font-bold text-center mb-8">Powered By</h2>
+            <div className="w-full mb-8">
+              <h2 className="text-2xl font-bold text-center mb-0">Powered By</h2>
               <MarqueeDemo />
             </div>
           </div>
 
-          {/* Portfolio Section - Full width */}
-          <div id="systems" className="mt-16 w-full">
+          {/* Portfolio Section - Full width with additional padding for navbar */}
+          <div id="systems" className="mt-16 pt-16 -mt-16 w-full">
             <Portfolio />
           </div>
 

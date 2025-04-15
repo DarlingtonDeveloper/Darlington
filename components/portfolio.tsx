@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { RainbowButton } from "@/components/ui/rainbow-button"
+import { TextRotate } from "@/components/ui/text-rotate"
 
 
 export function Portfolio() {
@@ -108,7 +109,29 @@ export function Portfolio() {
   return (
     <section className="bg-black py-16">
       <div className="container mx-auto px-6 md:px-12 lg:px-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Portfolio</h2>
+        <h2 className="text-3xl font-bold text-center mb-12 flex items-center justify-center gap-2">
+          Explore
+          <TextRotate
+            texts={[
+              "System Design",
+              "Backend Systems",
+              "Microservices",
+              "API Engineering",
+              "Automation Pipelines",
+              "Cloud Infrastructure"
+            ]}
+            mainClassName="text-white px-2 sm:px-2 md:px-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden py-0.5 sm:py-1 md:py-1.5 justify-center rounded-lg flex items-center font-medium"
+            staggerFrom="first"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-120%" }}
+            staggerDuration={0.025}
+            splitLevelClassName="overflow-hidden"
+            elementLevelClassName="inline-block"
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
+            rotationInterval={3000}
+          /> on GitHub
+        </h2>
 
         <div className="mb-12 flex flex-wrap justify-center gap-4">
           {categories.map((category) => (
