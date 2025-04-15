@@ -8,7 +8,7 @@ export function Header() {
         { name: 'Connect', url: '#connect', icon: Home },
         { name: 'Projects', url: '#projects', icon: LayoutGrid },
         { name: 'Systems', url: '#systems', icon: Images },
-        { name: 'Blog', url: 'https://hashnode.com/@darlington', icon: BookOpen }
+        { name: 'Blog', url: 'https://frtr.hashnode.dev/', icon: BookOpen }
     ]
 
     return (
