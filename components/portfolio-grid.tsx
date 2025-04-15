@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { InfiniteGrid } from "@/components/ui/infinite-grid";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { OptimizedImage } from "@/components/optimised-image";
 import { TextRotate } from "@/components/ui/text-rotate";
+import { RainbowButton } from "@/components/ui/rainbow-button";
 import { PortfolioItem } from "@/components/types";
 
 interface PortfolioGridProps {
@@ -14,6 +15,11 @@ interface PortfolioGridProps {
 }
 
 export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
+    const [selectedCategory, setSelectedCategory] = useState("all");
+
+    // Define all available categories
+    const categories = ["all", "TypeScript", "Python", ".NET", "Go"];
+
     // Portfolio items from the existing portfolio component
     const portfolioItems: PortfolioItem[] = [
         {
@@ -130,6 +136,11 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
         }
     ];
 
+    // Filter items based on selected category
+    const filteredItems = portfolioItems.filter((item) =>
+        selectedCategory === "all" ? true : item.category === selectedCategory
+    );
+
     // Render a portfolio item
     const renderPortfolioItem = (item: PortfolioItem) => (
         <a
@@ -200,12 +211,28 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                 </h2>
             )}
 
+            {/* Category Filter Buttons */}
+            <div className="mb-12 flex flex-wrap justify-center gap-4">
+                {categories.map((category) => (
+                    <RainbowButton
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`text-sm capitalize ${selectedCategory === category
+                            ? 'opacity-100 font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105 border border-white/20'
+                            : 'opacity-70 hover:opacity-90'
+                            }`}
+                    >
+                        {category}
+                    </RainbowButton>
+                ))}
+            </div>
+
             <div className="mb-4 text-center text-sm text-gray-400">
                 <p>Drag in any direction to explore — the grid extends infinitely</p>
             </div>
 
             <InfiniteGrid<PortfolioItem>
-                items={portfolioItems}
+                items={filteredItems}
                 renderItem={renderPortfolioItem}
                 columns={3}
                 gap={40}

@@ -58,7 +58,7 @@ export function InfiniteGrid<T>({
     }, [dimensions.width, dimensions.height, columns, gap]);
 
     // Function to get a unique item index different from neighbors
-    const getUniqueItemIndex = useCallback((col: number, row: number, existing: Map<string, number>) => {
+    const getUniqueItemIndex = useCallback((col: number, row: number) => {
         // Simple deterministic but pseudo-random selection based on position
         const seed = Math.abs((col * 13) + (row * 17)) % items.length;
 
@@ -93,7 +93,7 @@ export function InfiniteGrid<T>({
                 const row = startRow + rowOffset;
                 const key = `${col},${row}`;
 
-                const itemIndex = getUniqueItemIndex(col, row, existing);
+                const itemIndex = getUniqueItemIndex(col, row);
                 existing.set(key, itemIndex);
 
                 newItems.push({
