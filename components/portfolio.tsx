@@ -133,8 +133,8 @@ export function Portfolio() {
   return (
     <section className="bg-black py-16">
       <div className="container mx-auto px-6 md:px-12 lg:px-20">
-        <h2 className="text-3xl font-bold text-center mb-12 flex items-center justify-center gap-2">
-          Explore
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <span className="whitespace-nowrap mb-2 sm:mb-0">Explore</span>
           <TextRotate
             texts={[
               "System Design",
@@ -154,7 +154,8 @@ export function Portfolio() {
             elementLevelClassName="inline-block"
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
             rotationInterval={3000}
-          /> on GitHub.
+          />
+          <span className="whitespace-nowrap mt-2 sm:mt-0 sm:ml-2">on GitHub.</span>
         </h2>
 
         <div className="mb-12 flex flex-wrap justify-center gap-4">

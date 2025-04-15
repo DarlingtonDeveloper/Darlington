@@ -59,8 +59,8 @@ export function SparklesSection() {
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                 <div className="text-center px-4">
-                    <div className="flex items-center justify-center mb-6 text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-                        <span className="mr-2">Let's build together on</span>
+                    <div className="flex flex-col sm:flex-row items-center justify-center mb-6 text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
+                        <span className="whitespace-nowrap mr-2 mb-2 sm:mb-0">Let's build together on</span>
                         <TextRotate
                             texts={[
                                 "GitHub.",
