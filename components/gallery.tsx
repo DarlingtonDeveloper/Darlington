@@ -3,8 +3,8 @@
 import { motion } from "framer-motion"
 import { useRef } from "react"
 import { useInView } from "framer-motion"
-import Image from "next/image"
 import { Typewriter } from "@/components/ui/typewriter"
+import { GalleryImage } from "@/components/gallery-image-server"
 
 export function Gallery() {
   const ref = useRef(null)
@@ -66,31 +66,19 @@ export function Gallery() {
         {images.map((image, index) => (
           <motion.div
             key={index}
-            className="group relative overflow-hidden rounded-lg cursor-pointer"
+            className="relative overflow-hidden rounded-lg cursor-pointer"
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: index * 0.2 }}
           >
-            <a
+            {/* Using the server component for each gallery image */}
+            <GalleryImage
+              src={image.src}
+              alt={image.alt}
+              title={image.title}
               href={image.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block h-full"
-            >
-              <div className="aspect-[2/3] relative overflow-hidden">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  priority={index < 2} // Prioritize loading the first two images
-                />
-              </div>
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <h3 className="text-xl font-semibold text-white">{image.title}</h3>
-              </div>
-            </a>
+              priority={index < 2} // Prioritize loading the first two images
+            />
           </motion.div>
         ))}
       </div>

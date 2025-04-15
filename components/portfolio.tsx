@@ -1,12 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
-import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { RainbowButton } from "@/components/ui/rainbow-button"
 import { TextRotate } from "@/components/ui/text-rotate"
+import { PortfolioItem } from "@/components/portfolio-item-server"
 
 export function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -34,7 +32,7 @@ export function Portfolio() {
       id: 3,
       title: "Sprout",
       category: "TypeScript",
-      image: "/Sprout.gif?height=400&width=600",
+      image: "/Sprout.gif",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/Sprout"
     },
@@ -42,7 +40,7 @@ export function Portfolio() {
       id: 4,
       title: "EIII",
       category: "TypeScript",
-      image: "/e3.svg?height=400&width=600",
+      image: "/e3.svg",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/EIII"
     },
@@ -50,7 +48,7 @@ export function Portfolio() {
       id: 5,
       title: "TelexistenceAPI",
       category: ".NET",
-      image: "/TX.png?height=400&width=600",
+      image: "/TX.png",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/TelexistenceAPI"
     },
@@ -58,7 +56,7 @@ export function Portfolio() {
       id: 6,
       title: "Arise",
       category: "TypeScript",
-      image: "/Arise.png?height=400&width=600",
+      image: "/Arise.png",
       year: "2025",
       href: "https://github.com/DarlingtonDeveloper/Arise"
     },
@@ -128,7 +126,9 @@ export function Portfolio() {
     }
   ]
 
-  const filteredWorks = works.filter((work) => (selectedCategory === "all" ? true : work.category === selectedCategory))
+  const filteredWorks = works.filter((work) =>
+    selectedCategory === "all" ? true : work.category === selectedCategory
+  )
 
   return (
     <section className="bg-black py-16">
@@ -184,42 +184,13 @@ export function Portfolio() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="relative rounded-[1.25rem] border-[0.75px] border-border p-2">
-                  <GlowingEffect
-                    spread={40}
-                    glow={true}
-                    disabled={false}
-                    proximity={64}
-                    inactiveZone={0.01}
-                    borderWidth={4}
-                  />
-                  <a
-                    href={work.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block cursor-pointer"
-                  >
-                    <Card className="overflow-hidden bg-zinc-900 relative rounded-xl border-[0.5px] shadow-sm dark:shadow-[0px_0px_27px_0px_rgba(45,45,45,0.3)]">
-                      <CardContent className="p-0">
-                        <div className="group relative">
-                          <div className="relative aspect-video w-full overflow-hidden">
-                            <Image
-                              src={work.image}
-                              alt={work.title}
-                              fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </div>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                            <h3 className="text-xl font-semibold text-white">{work.title}</h3>
-                            <p className="mt-2 text-sm text-gray-300">{work.year}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </a>
-                </div>
+                {/* Using the server component for each portfolio item */}
+                <PortfolioItem
+                  title={work.title}
+                  image={work.image}
+                  year={work.year}
+                  href={work.href}
+                />
               </motion.div>
             ))}
           </AnimatePresence>

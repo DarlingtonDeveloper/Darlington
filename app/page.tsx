@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 import { SparklesSection } from "@/components/SparklesSection";
 import { MarqueeDemo } from "@/components/marquee-demo";
@@ -13,7 +14,13 @@ export default function Home() {
       <main className="flex flex-col w-full">
         {/* Hero Section - Fixed position with 100vh height */}
         <div id="connect" className="w-full h-screen">
-          <SplineSceneBasic />
+          <Suspense fallback={
+            <div className="w-full h-full flex items-center justify-center bg-black">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          }>
+            <SplineSceneBasic />
+          </Suspense>
           <SparklesSection />
         </div>
 
