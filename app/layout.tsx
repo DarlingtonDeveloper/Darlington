@@ -4,6 +4,7 @@ import "./globals.css";
 import { defaultMetadata } from "@/lib/metadata-config";
 import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -83,6 +84,7 @@ export default function RootLayout({
           description="Portfolio website of Darlington, a developer and system architect specializing in modern web technologies."
         />
         <Analytics />
+        <SpeedInsights />
 
         {/* Main content */}
         {children}
