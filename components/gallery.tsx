@@ -30,7 +30,7 @@ export function Gallery() {
       href: "https://pa-rarity-gallery.vercel.app/"
     },
     {
-      src: "/Morf.png",
+      src: "/mf.png",
       alt: "Morf",
       title: "Morf",
       href: "https://v0-next-js-conf-2024-mkknu2.vercel.app/"
