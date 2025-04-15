@@ -63,7 +63,15 @@ export function ScrollParallax({
     )
 }
 
-export function MultiLayerParallax({ children, className = '' }) {
+interface MultiLayerParallaxProps {
+    children: React.ReactNode
+    className?: string
+}
+
+export function MultiLayerParallax({
+    children,
+    className = ''
+}: MultiLayerParallaxProps) {
     return (
         <div className={`relative ${className}`}>
             {children}
@@ -71,21 +79,32 @@ export function MultiLayerParallax({ children, className = '' }) {
     )
 }
 
+interface ParallaxLayerProps {
+    children: React.ReactNode
+    speed?: number
+    direction?: 'up' | 'down' | 'left' | 'right'
+    className?: string
+    zIndex?: number
+    style?: React.CSSProperties
+}
+
 export function ParallaxLayer({
     children,
     speed = 0.5,
     direction = 'up',
     className = '',
-    zIndex = 0
-}) {
+    zIndex = 0,
+    style
+}: ParallaxLayerProps) {
     return (
         <ScrollParallax
             speed={speed}
             direction={direction}
             className={`absolute inset-0 ${className}`}
-            style={{ zIndex }}
         >
-            {children}
+            <div style={{ zIndex, ...style }}>
+                {children}
+            </div>
         </ScrollParallax>
     )
 }
