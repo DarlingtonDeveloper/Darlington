@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 'use client';
 
 import dynamic from 'next/dynamic';
