@@ -13,21 +13,25 @@ export function Gallery() {
       src: "/PA.jpg?height=600&width=400",
       alt: "Psychedelics Anonymous",
       title: "Psychedelics Anonymous",
+      href: "https://psychedelicsanonymous.com/"
     },
     {
       src: "/PP.png?height=600&width=400",
       alt: "PsyPay",
       title: "PsyPay",
+      href: "https://psypay.xyz/"
     },
     {
       src: "/PAGallery.png?height=600&width=400",
       alt: "Psychedelics Anonymous Gallery",
       title: "Psychedelics Anonymous Gallery",
+      href: "https://pa-rarity-gallery.vercel.app/"
     },
     {
       src: "/Morf.png?height=600&width=400",
       alt: "Morf",
       title: "Morf",
+      href: "https://v0-next-js-conf-2024-mkknu2.vercel.app/"
     },
   ]
 
@@ -45,21 +49,28 @@ export function Gallery() {
         {images.map((image, index) => (
           <motion.div
             key={index}
-            className="group relative overflow-hidden rounded-lg"
+            className="group relative overflow-hidden rounded-lg cursor-pointer"
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: index * 0.2 }}
           >
-            <div className="aspect-[2/3] overflow-hidden">
-              <img
-                src={image.src || "/placeholder.svg"}
-                alt={image.alt}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <h3 className="text-xl font-semibold text-white">{image.title}</h3>
-            </div>
+            <a
+              href={image.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block h-full"
+            >
+              <div className="aspect-[2/3] overflow-hidden">
+                <img
+                  src={image.src || "/placeholder.svg"}
+                  alt={image.alt}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <h3 className="text-xl font-semibold text-white">{image.title}</h3>
+              </div>
+            </a>
           </motion.div>
         ))}
       </div>

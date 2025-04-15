@@ -15,31 +15,35 @@ export function Portfolio() {
   const works = [
     {
       id: 1,
-      title: "Psychedelics Anonymous",
-      category: "TypeScript",
-      image: "/PA.jpg?height=400&width=600",
-      year: "2024",
+      title: "ArchAngel",
+      category: "Go",
+      image: "/placeholder.svg?height=400&width=600",
+      year: "2025",
+      href: "#"
     },
     {
       id: 2,
-      title: "PsyPay",
-      category: "TypeScript",
-      image: "/PP.png?height=400&width=600",
+      title: "TelexistenceAPI",
+      category: ".NET",
+      image: "/placeholder.svg?height=400&width=600",
       year: "2024",
+      href: "#"
     },
     {
       id: 3,
-      title: "Psychedelics Anonymous Gallery",
+      title: "Fraud Detection",
       category: "TypeScript",
-      image: "/PAGallery.png?height=400&width=600",
+      image: "/Fraud.png?height=400&width=600",
       year: "2024",
+      href: "#"
     },
     {
       id: 4,
-      title: "Morf",
-      category: "TypeScript",
-      image: "/Morf.png?height=400&width=600",
+      title: "CrewAI",
+      category: "Python",
+      image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
       id: 5,
@@ -47,6 +51,7 @@ export function Portfolio() {
       category: "TypeScript",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
       id: 6,
@@ -54,6 +59,7 @@ export function Portfolio() {
       category: "TypeScript",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
       id: 7,
@@ -61,62 +67,39 @@ export function Portfolio() {
       category: "TypeScript",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
       id: 8,
-      title: "TelexistenceAPI",
-      category: ".NET",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2024",
-    },
-    {
-      id: 9,
-      title: "ArchAngel",
-      category: "Go",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2025",
-    },
-    {
-      id: 10,
-      title: "Fraud Detection",
-      category: "TypeScript",
-      image: "/Fraud.png?height=400&width=600",
-      year: "2024",
-    },
-    {
-      id: 11,
-      title: "CrewAI",
-      category: "Python",
-      image: "/placeholder.svg?height=400&width=600",
-      year: "2025",
-    },
-    {
-      id: 12,
       title: "ConnectFourRL",
       category: "Python",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
-      id: 13,
+      id: 9,
       title: "VARCalculator",
       category: "Python",
       image: "/VAR.png?height=400&width=600",
       year: "2024",
+      href: "#"
     },
     {
-      id: 14,
+      id: 10,
       title: "TAPlotter",
       category: "Python",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     },
     {
-      id: 15,
+      id: 11,
       title: "PageLoadTimeExtension",
       category: "TypeScript",
       image: "/placeholder.svg?height=400&width=600",
       year: "2025",
+      href: "#"
     }
   ]
 
@@ -159,21 +142,28 @@ export function Portfolio() {
                     inactiveZone={0.01}
                     borderWidth={4}
                   />
-                  <Card className="overflow-hidden bg-zinc-900 relative rounded-xl border-[0.5px] shadow-sm dark:shadow-[0px_0px_27px_0px_rgba(45,45,45,0.3)]">
-                    <CardContent className="p-0">
-                      <div className="group relative">
-                        <img
-                          src={work.image || "/placeholder.svg"}
-                          alt={work.title}
-                          className="w-full transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                          <h3 className="text-xl font-semibold text-white">{work.title}</h3>
-                          <p className="mt-2 text-sm text-gray-300">{work.year}</p>
+                  <a
+                    href={work.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block cursor-pointer"
+                  >
+                    <Card className="overflow-hidden bg-zinc-900 relative rounded-xl border-[0.5px] shadow-sm dark:shadow-[0px_0px_27px_0px_rgba(45,45,45,0.3)]">
+                      <CardContent className="p-0">
+                        <div className="group relative">
+                          <img
+                            src={work.image || "/placeholder.svg"}
+                            alt={work.title}
+                            className="w-full transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <h3 className="text-xl font-semibold text-white">{work.title}</h3>
+                            <p className="mt-2 text-sm text-gray-300">{work.year}</p>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </a>
                 </div>
               </motion.div>
             ))}
