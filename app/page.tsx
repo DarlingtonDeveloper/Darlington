@@ -2,9 +2,6 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 import { SparklesSection } from "@/components/SparklesSection";
-import { MarqueeDemo } from "@/components/marquee-demo";
-import { Gallery } from "@/components/gallery";
-import { PortfolioGrid } from "@/components/portfolio-grid";
 import { Header } from "@/components/header";
 import { BreadcrumbSchema } from "@/components/json-ld";
 
@@ -48,35 +45,6 @@ export default function Home() {
             </Suspense>
             <SparklesSection />
           </section>
-
-          <div className="relative z-30 bg-black min-h-screen flex flex-col">
-            <div className="px-4 sm:px-6 md:px-12 lg:px-20 flex flex-col min-h-screen">
-              {/* Gallery section - 80-85% of viewport */}
-              <section
-                id="projects"
-                aria-label="Interactive Frontend Projects"
-                className="h-[80vh] flex flex-col justify-center pt-16 sm:pt-20"
-              >
-                <Gallery />
-              </section>
-
-              {/* Technologies section - 15-20% of viewport */}
-              <section
-                aria-label="Technologies"
-                className="h-[20vh] flex flex-col justify-end pb-4 md:pb-8"
-              >
-                <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 md:mb-4">Powered By</h2>
-                <MarqueeDemo />
-              </section>
-            </div>
-
-            {/* Portfolio Section */}
-            <section id="systems" aria-label="System Architecture Projects" className="pt-16 -mt-16 w-full pb-20">
-              <div className="container mx-auto px-6 md:px-12 lg:px-20">
-                <PortfolioGrid className="w-full" />
-              </div>
-            </section>
-          </div>
         </main>
 
         {/* Add a minimal semantic footer */}

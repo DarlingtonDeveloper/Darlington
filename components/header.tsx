@@ -1,16 +1,17 @@
 "use client"
 
-import { Home, LayoutGrid, Images, BookOpen } from 'lucide-react'
+import { Home, LayoutGrid, Images, BookOpen, FileText } from 'lucide-react'
 import { NavBar } from "@/components/ui/tubelight-navbar"
 import { motion } from "framer-motion"
 import { Typewriter } from "@/components/ui/typewriter"
 
 export function Header() {
     const navItems = [
-        { name: 'Connect', url: '#connect', icon: Home },
-        { name: 'Projects', url: '#projects', icon: LayoutGrid },
-        { name: 'Systems', url: '#systems', icon: Images },
-        { name: 'Blog', url: 'https://frtr.hashnode.dev/', icon: BookOpen }
+        { name: 'Home', url: '/', icon: Home },
+        { name: 'Projects', url: '/projects', icon: LayoutGrid },
+        { name: 'Systems', url: '/systems', icon: Images },
+        { name: 'Blog', url: 'https://blog.darlington.dev', icon: BookOpen },
+        { name: 'Docs', url: 'https://docs.darlington.dev', icon: FileText }
     ]
 
     return (
@@ -38,7 +39,6 @@ export function Header() {
                     </h1>
                 </motion.div>
             </div>
-
         </>
     )
 }
