@@ -31,17 +31,20 @@ export function NavBar({ items, className }: NavBarProps) {
             className={cn(
                 isMobile
                     ? "fixed bottom-0 left-0 right-0 mb-6 z-50"
-                    : "fixed top-4 left-0 right-0 z-50",
+                    : "fixed top-4 left-0 right-0 z-40", // Lower z-index than logo
                 hasScrolled ? "opacity-100" : "opacity-100",
                 className
             )}
+            style={{ pointerEvents: 'none' }} // Make the container not capture clicks
         >
-            <div className="flex justify-center">
+            <div className="flex justify-center" style={{ pointerEvents: 'none' }}>
                 <div className={cn(
                     "flex items-center gap-3 py-1 px-1 rounded-full shadow-lg",
                     "bg-background/5 border border-border backdrop-blur-lg",
                     hasScrolled && "bg-[#0D1117]/90 backdrop-blur-md"
-                )}>
+                )}
+                    style={{ pointerEvents: 'auto' }} // Re-enable pointer events only for the navbar itself
+                >
                     {items.map((item) => {
                         const Icon = item.icon
                         const isActive = activeTab === item.name
