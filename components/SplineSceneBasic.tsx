@@ -4,7 +4,7 @@ import SplineScene from "@/components/ui/spline-scene"
 
 export function SplineSceneBasic() {
     return (
-        <Card className="w-full h-[calc(100vh-420px)] bg-black/[0.96] relative overflow-hidden border-b-0 rounded-b-none sticky top-0 z-10">
+        <Card className="w-full h-full bg-black/[0.96] relative overflow-hidden border-b-0 rounded-b-none sticky top-0 z-10">
             <ClientWrapper>
                 <div className="h-full w-full">
                     {/* Background glow effects */}
@@ -15,7 +15,6 @@ export function SplineSceneBasic() {
 
                     {/* Content layer */}
                     <div className="flex h-full flex-col md:flex-row relative z-10">
-
                         {/* Right content */}
                         <div className="flex-1 relative">
                             <SplineScene
