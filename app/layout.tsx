@@ -5,6 +5,7 @@ import { defaultMetadata } from "@/lib/metadata-config";
 import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
 // Optimize font loading with display swap
@@ -86,12 +87,22 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
 
-        {/* Main content */}
-        <div className="flex flex-col min-h-screen">
-          <div className="flex-grow">
+        {/* Main layout structure */}
+        <div className="bg-black text-white flex flex-col h-screen overflow-hidden">
+          {/* Header - fixed height */}
+          <div className="flex-none h-[100px]">
+            <Header />
+          </div>
+
+          {/* Main content - calculated height to fit remaining space */}
+          <div className="flex-1 h-[calc(100vh-230px)] overflow-hidden">
             {children}
           </div>
-          <Footer />
+
+          {/* Footer - fixed height */}
+          <div className="flex-none h-[130px]">
+            <Footer />
+          </div>
         </div>
       </body>
     </html>

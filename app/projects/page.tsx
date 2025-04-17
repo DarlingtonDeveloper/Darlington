@@ -29,31 +29,26 @@ export default function ProjectsPage() {
             {/* Structured data for breadcrumbs */}
             <BreadcrumbSchema items={breadcrumbs} />
 
-            <div className="bg-black text-white min-h-screen">
-                <main className="flex flex-col w-full">
-                    <div className="relative z-30 bg-black min-h-screen flex flex-col">
-                        <div className="px-4 sm:px-6 md:px-12 lg:px-20 flex flex-col min-h-screen">
+            <div className="w-full h-full flex flex-col">
+                <div className="flex-1 px-4 sm:px-6 md:px-12 lg:px-20 flex flex-col">
+                    {/* Gallery section - 80-85% of available space */}
+                    <section
+                        id="interactive-projects"
+                        aria-label="Interactive Frontend Projects"
+                        className="flex-1 flex flex-col justify-center"
+                    >
+                        <Gallery />
+                    </section>
 
-                            {/* Gallery section - 80-85% of viewport */}
-                            <section
-                                id="interactive-projects"
-                                aria-label="Interactive Frontend Projects"
-                                className="h-[80vh] flex flex-col justify-center"
-                            >
-                                <Gallery />
-                            </section>
-
-                            {/* Technologies section - 15-20% of viewport */}
-                            <section
-                                aria-label="Technologies"
-                                className="h-[20vh] flex flex-col justify-end pb-8 md:pb-16"
-                            >
-                                <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 md:mb-4">Powered By</h2>
-                                <MarqueeDemo />
-                            </section>
-                        </div>
-                    </div>
-                </main>
+                    {/* Technologies section - fixed height at bottom */}
+                    <section
+                        aria-label="Technologies"
+                        className="h-[80px] flex flex-col justify-center"
+                    >
+                        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">Powered By</h2>
+                        <MarqueeDemo />
+                    </section>
+                </div>
             </div>
         </>
     );

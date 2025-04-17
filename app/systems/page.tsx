@@ -28,17 +28,8 @@ export default function SystemsPage() {
             {/* Structured data for breadcrumbs */}
             <BreadcrumbSchema items={breadcrumbs} />
 
-            <div className="bg-black text-white min-h-screen">
-                <main className="flex flex-col w-full">
-                    <div className="relative z-30 bg-black min-h-screen flex flex-col">
-                        {/* Portfolio Section */}
-                        <section aria-label="System Architecture Projects" className="pt-8 w-full pb-20">
-                            <div className="container mx-auto px-6 md:px-12 lg:px-20">
-                                <PortfolioGrid className="w-full" />
-                            </div>
-                        </section>
-                    </div>
-                </main>
+            <div className="w-full h-full flex items-center justify-center px-6 md:px-12 lg:px-20">
+                <PortfolioGrid className="w-full h-full" />
             </div>
         </>
     );

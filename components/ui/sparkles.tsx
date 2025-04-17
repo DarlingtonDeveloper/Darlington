@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useState, useEffect } from "react";
+import React, { useId, useState, useEffect, useRef } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ export const SparklesCore = ({
     const [init, setInit] = useState(false);
     const controls = useAnimation();
     const id = useId();
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Initialize particles engine only once
     useEffect(() => {
@@ -50,17 +51,28 @@ export const SparklesCore = ({
             opacity: 1,
             transition: { duration: 1 },
         });
+
+        // Apply pointer-events: none to all canvas elements
+        if (containerRef.current) {
+            setTimeout(() => {
+                const canvasElements = containerRef.current?.querySelectorAll('canvas');
+                canvasElements?.forEach(canvas => {
+                    canvas.style.pointerEvents = 'none';
+                });
+            }, 100);
+        }
     };
 
     return (
         <motion.div
+            ref={containerRef}
             animate={controls}
-            className={cn("opacity-0", className)}
+            className={cn("opacity-0 pointer-events-none", className)}
         >
             {init && (
                 <Particles
                     id={id}
-                    className={cn("h-full w-full")}
+                    className={cn("h-full w-full pointer-events-none")}
                     particlesLoaded={particlesLoaded}
                     options={{
                         background: {
