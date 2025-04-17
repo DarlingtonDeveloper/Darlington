@@ -15,65 +15,65 @@ export function useNavigation(items: NavItem[]) {
     const [isMobile, setIsMobile] = useState(false)
     const [hasScrolled, setHasScrolled] = useState(false)
 
-    // Define isExternalLink as a callback to ensure it's properly initialized before use
-    const isExternalLink = useCallback((url: string) => {
+    // Define isExternalLink function
+    const isExternalLink = useCallback((url: string): boolean => {
         return url.startsWith('http') || url.startsWith('https')
     }, [])
 
     // Set active tab based on current pathname
     useEffect(() => {
         // For each path, normalize by removing the hash part for comparison
-        const normalizedPathname = pathname.split('#')[0];
+        const normalizedPathname = pathname?.split('#')[0] || '';
 
-        // Find the best matching nav item
-        let bestMatch: NavItem | null = null;
-        let bestMatchLength = 0;
+        // Initialize with first item as default
+        let activeItem: NavItem | undefined = items[0];
 
         // First check for exact matches
-        const exactMatch = items.find(item => {
+        for (const item of items) {
             const itemUrlPath = item.url.split('#')[0];
-            return normalizedPathname === itemUrlPath;
-        });
-
-        if (exactMatch) {
-            setActiveTab(exactMatch.name);
-            return;
+            if (normalizedPathname === itemUrlPath) {
+                activeItem = item;
+                break;
+            }
         }
 
         // Handle special case for home page
-        if (normalizedPathname === '/' || normalizedPathname === '') {
+        if ((normalizedPathname === '/' || normalizedPathname === '') && activeItem?.url !== '/') {
             const homeItem = items.find(item => item.url === '/' || item.url === '/#connect');
             if (homeItem) {
-                setActiveTab(homeItem.name);
-                return;
+                activeItem = homeItem;
             }
         }
 
-        // No exact match, find the best partial match
-        // This handles nested routes where the pathname might include additional segments
-        items.forEach(item => {
-            const itemUrlPath = item.url.split('#')[0];
+        // If still no match and not on homepage, try partial matching
+        if (activeItem?.url.split('#')[0] !== normalizedPathname &&
+            normalizedPathname !== '/' &&
+            normalizedPathname !== '') {
 
-            // Skip external links for partial matching
-            if (isExternalLink(item.url)) return;
+            let bestMatchLength = 0;
 
-            // Skip empty paths to prevent everything matching '/'
-            if (itemUrlPath === '') return;
+            for (const item of items) {
+                const itemUrlPath = item.url.split('#')[0];
 
-            if (normalizedPathname.startsWith(itemUrlPath) && itemUrlPath.length > bestMatchLength) {
-                bestMatch = item;
-                bestMatchLength = itemUrlPath.length;
+                // Skip external links and empty paths
+                if (isExternalLink(item.url) || itemUrlPath === '' || itemUrlPath === '/') {
+                    continue;
+                }
+
+                if (normalizedPathname.startsWith(itemUrlPath) && itemUrlPath.length > bestMatchLength) {
+                    activeItem = item;
+                    bestMatchLength = itemUrlPath.length;
+                }
             }
-        });
+        }
 
-        if (bestMatch) {
-            setActiveTab(bestMatch.name);
-        } else {
-            // Default to first item if no match
-            setActiveTab(items[0]?.name || '');
+        // Set the active tab
+        if (activeItem) {
+            setActiveTab(activeItem.name);
         }
     }, [pathname, items, isExternalLink]);
 
+    // Handle scroll and resize effects
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768)

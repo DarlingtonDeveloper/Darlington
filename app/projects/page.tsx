@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Metadata } from "next";
 import { MarqueeDemo } from "@/components/marquee-demo";
 import { Gallery } from "@/components/gallery";
