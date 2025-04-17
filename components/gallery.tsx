@@ -77,7 +77,7 @@ export function Gallery() {
 
   return (
     <section ref={ref} className="w-full h-full flex flex-col">
-      <motion.h2
+      <motion.h1
         className="mb-2 md:mb-4 text-center text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter lg:text-4xl flex flex-col sm:flex-row items-center justify-center gap-2"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
@@ -99,7 +99,7 @@ export function Gallery() {
           cursorChar="|"
           cursorClassName="text-purple-400 ml-1"
         />
-      </motion.h2>
+      </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

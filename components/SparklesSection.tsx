@@ -36,7 +36,7 @@ export function SparklesSection() {
         },
         {
             Icon: HashNodeIcon,
-            href: "https://frtr.hashnode.dev/",
+            href: "https://blog.darlington.dev/",
             label: "HashNode Blog",
             className: "hover:scale-105"
         }

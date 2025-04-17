@@ -34,17 +34,6 @@ export default function ProjectsPage() {
                 <main className="flex flex-col w-full">
                     <div className="relative z-30 bg-black min-h-screen flex flex-col">
                         <div className="px-4 sm:px-6 md:px-12 lg:px-20 flex flex-col min-h-screen">
-                            {/* Hero heading */}
-                            <div className="pt-32 pb-12">
-                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center">
-                                    <span className="bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-                                        Featured Projects
-                                    </span>
-                                </h1>
-                                <p className="text-center text-neutral-400 mt-4 max-w-2xl mx-auto">
-                                    A collection of interactive UI projects, web interfaces, and applications built with modern technologies.
-                                </p>
-                            </div>
 
                             {/* Gallery section - 80-85% of viewport */}
                             <section

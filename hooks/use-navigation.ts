@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface NavItem {
     name: string
@@ -9,9 +10,69 @@ interface NavItem {
 }
 
 export function useNavigation(items: NavItem[]) {
-    const [activeTab, setActiveTab] = useState(items[0].name)
+    const pathname = usePathname()
+    const [activeTab, setActiveTab] = useState('')
     const [isMobile, setIsMobile] = useState(false)
     const [hasScrolled, setHasScrolled] = useState(false)
+
+    // Define isExternalLink as a callback to ensure it's properly initialized before use
+    const isExternalLink = useCallback((url: string) => {
+        return url.startsWith('http') || url.startsWith('https')
+    }, [])
+
+    // Set active tab based on current pathname
+    useEffect(() => {
+        // For each path, normalize by removing the hash part for comparison
+        const normalizedPathname = pathname.split('#')[0];
+
+        // Find the best matching nav item
+        let bestMatch: NavItem | null = null;
+        let bestMatchLength = 0;
+
+        // First check for exact matches
+        const exactMatch = items.find(item => {
+            const itemUrlPath = item.url.split('#')[0];
+            return normalizedPathname === itemUrlPath;
+        });
+
+        if (exactMatch) {
+            setActiveTab(exactMatch.name);
+            return;
+        }
+
+        // Handle special case for home page
+        if (normalizedPathname === '/' || normalizedPathname === '') {
+            const homeItem = items.find(item => item.url === '/' || item.url === '/#connect');
+            if (homeItem) {
+                setActiveTab(homeItem.name);
+                return;
+            }
+        }
+
+        // No exact match, find the best partial match
+        // This handles nested routes where the pathname might include additional segments
+        items.forEach(item => {
+            const itemUrlPath = item.url.split('#')[0];
+
+            // Skip external links for partial matching
+            if (isExternalLink(item.url)) return;
+
+            // Skip empty paths to prevent everything matching '/'
+            if (itemUrlPath === '') return;
+
+            if (normalizedPathname.startsWith(itemUrlPath) && itemUrlPath.length > bestMatchLength) {
+                bestMatch = item;
+                bestMatchLength = itemUrlPath.length;
+            }
+        });
+
+        if (bestMatch) {
+            setActiveTab(bestMatch.name);
+        } else {
+            // Default to first item if no match
+            setActiveTab(items[0]?.name || '');
+        }
+    }, [pathname, items, isExternalLink]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -20,42 +81,10 @@ export function useNavigation(items: NavItem[]) {
 
         const handleScroll = () => {
             setHasScrolled(window.scrollY > 100)
-
-            // Update active tab based on scroll position
-            const scrollPosition = window.scrollY + 100
-
-            // Only check navigation items with hash links
-            const hashItems = items.filter(item => item.url.startsWith('#'))
-
-            // Determine which section is currently in view
-            // Start from the bottom sections and work up for proper highlighting
-            for (let i = hashItems.length - 1; i >= 0; i--) {
-                const item = hashItems[i]
-                const targetId = item.url.substring(1)
-                const element = document.getElementById(targetId)
-
-                if (element) {
-                    const rect = element.getBoundingClientRect()
-                    const elementTop = window.scrollY + rect.top
-
-                    // If we've scrolled to or past this element, make it active
-                    // Add a small offset to trigger the highlight slightly before reaching the section
-                    if (scrollPosition >= elementTop - 150) {
-                        if (activeTab !== item.name) {
-                            setActiveTab(item.name)
-                        }
-                        break
-                    }
-                }
-            }
-
-            // If at the very top of the page, select the first tab
-            if (window.scrollY < 100 && hashItems.length > 0 && activeTab !== hashItems[0].name) {
-                setActiveTab(hashItems[0].name)
-            }
         }
 
         handleResize()
+        handleScroll()
         window.addEventListener("resize", handleResize)
         window.addEventListener("scroll", handleScroll)
 
@@ -63,34 +92,12 @@ export function useNavigation(items: NavItem[]) {
             window.removeEventListener("resize", handleResize)
             window.removeEventListener("scroll", handleScroll)
         }
-    }, [items, activeTab])
-
-    const isExternalLink = (url: string) => {
-        return url.startsWith('http') || url.startsWith('https')
-    }
-
-    const handleNavigation = (itemName: string, itemUrl: string) => {
-        setActiveTab(itemName)
-
-        // Handle smooth scrolling for internal links
-        if (itemUrl.startsWith('#')) {
-            const targetId = itemUrl.substring(1)
-            const targetElement = document.getElementById(targetId)
-
-            if (targetElement) {
-                targetElement.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                })
-            }
-        }
-    }
+    }, [])
 
     return {
         activeTab,
         isMobile,
         hasScrolled,
-        isExternalLink,
-        handleNavigation
+        isExternalLink
     }
 }

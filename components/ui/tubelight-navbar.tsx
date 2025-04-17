@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNavigation } from "@/hooks/use-navigation"
+import Link from "next/link"
 
 interface NavItem {
     name: string
@@ -22,8 +23,7 @@ export function NavBar({ items, className }: NavBarProps) {
         activeTab,
         isMobile,
         hasScrolled,
-        isExternalLink,
-        handleNavigation
+        isExternalLink
     } = useNavigation(items)
 
     return (
@@ -62,7 +62,6 @@ export function NavBar({ items, className }: NavBarProps) {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="block w-full h-full"
-                                        onClick={() => handleNavigation(item.name, item.url)}
                                     >
                                         <span className="hidden md:inline">{item.name}</span>
                                         <span className="md:hidden">
@@ -70,19 +69,15 @@ export function NavBar({ items, className }: NavBarProps) {
                                         </span>
                                     </a>
                                 ) : (
-                                    <a
+                                    <Link
                                         href={item.url}
                                         className="block w-full h-full"
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            handleNavigation(item.name, item.url)
-                                        }}
                                     >
                                         <span className="hidden md:inline">{item.name}</span>
                                         <span className="md:hidden">
                                             <Icon size={18} strokeWidth={2.5} />
                                         </span>
-                                    </a>
+                                    </Link>
                                 )}
 
                                 {isActive && (
@@ -96,7 +91,7 @@ export function NavBar({ items, className }: NavBarProps) {
                                             damping: 30,
                                         }}
                                     >
-                                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
+                                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
                                             <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
                                             <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
                                             <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />

@@ -185,7 +185,7 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
     return (
         <div className={className}>
             {title && (
-                <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12 flex flex-col sm:flex-row items-center justify-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-center mb-12 flex flex-col sm:flex-row items-center justify-center gap-2">
                     <span className="whitespace-nowrap mb-2 sm:mb-0">Explore</span>
                     <TextRotate
                         texts={[
@@ -208,7 +208,7 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                         rotationInterval={3000}
                     />
                     <span className="whitespace-nowrap mt-2 sm:mt-0">on GitHub.</span>
-                </h2>
+                </h1>
             )}
 
             {/* Category Filter Buttons */}

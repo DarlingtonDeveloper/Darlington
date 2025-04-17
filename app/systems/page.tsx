@@ -31,18 +31,6 @@ export default function SystemsPage() {
             <div className="bg-black text-white min-h-screen">
                 <main className="flex flex-col w-full">
                     <div className="relative z-30 bg-black min-h-screen flex flex-col">
-                        {/* Hero heading */}
-                        <div className="pt-32 pb-12">
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center">
-                                <span className="bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-                                    System Architecture
-                                </span>
-                            </h1>
-                            <p className="text-center text-neutral-400 mt-4 max-w-2xl mx-auto">
-                                A showcase of backend systems, infrastructure projects, and architectural designs across various technologies.
-                            </p>
-                        </div>
-
                         {/* Portfolio Section */}
                         <section aria-label="System Architecture Projects" className="pt-8 w-full pb-20">
                             <div className="container mx-auto px-6 md:px-12 lg:px-20">
