@@ -54,13 +54,6 @@ export default function ProjectsPage() {
                         </div>
                     </div>
                 </main>
-
-                {/* Add a minimal semantic footer */}
-                <footer className="bg-zinc-950 py-8 text-center text-gray-400 text-sm">
-                    <div className="container mx-auto px-6">
-                        <p>© {new Date().getFullYear()} Darlington.Dev. All rights reserved.</p>
-                    </div>
-                </footer>
             </div>
         </>
     );

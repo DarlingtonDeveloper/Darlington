@@ -5,6 +5,7 @@ import { defaultMetadata } from "@/lib/metadata-config";
 import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Footer } from "@/components/footer";
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -54,7 +55,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-
         {/* Canonical URL - important for SEO */}
         <link rel="canonical" href="https://darlington.dev" />
 
@@ -87,7 +87,12 @@ export default function RootLayout({
         <SpeedInsights />
 
         {/* Main content */}
-        {children}
+        <div className="flex flex-col min-h-screen">
+          <div className="flex-grow">
+            {children}
+          </div>
+          <Footer />
+        </div>
       </body>
     </html>
   );

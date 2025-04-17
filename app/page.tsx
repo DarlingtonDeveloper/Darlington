@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { SplineSceneBasic } from "@/components/SplineSceneBasic";
-import { SparklesSection } from "@/components/SparklesSection";
 import { Header } from "@/components/header";
 import { BreadcrumbSchema } from "@/components/json-ld";
 
@@ -43,16 +42,8 @@ export default function Home() {
             }>
               <SplineSceneBasic />
             </Suspense>
-            <SparklesSection />
           </section>
         </main>
-
-        {/* Add a minimal semantic footer */}
-        <footer className="bg-zinc-950 py-8 text-center text-gray-400 text-sm">
-          <div className="container mx-auto px-6">
-            <p>© {new Date().getFullYear()} Darlington.Dev. All rights reserved.</p>
-          </div>
-        </footer>
       </div>
     </>
   );
