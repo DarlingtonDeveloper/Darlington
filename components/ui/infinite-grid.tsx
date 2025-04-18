@@ -7,19 +7,21 @@ import { cn } from "@/lib/utils";
 interface InfiniteGridProps<T> {
     items: T[];
     renderItem: (item: T, index: number) => React.ReactNode;
-    columns?: number;
+    columns?: number | { sm: number; md: number; lg: number; xl: number; '2xl': number };
     gap?: number;
     className?: string;
     itemClassName?: string;
+    maxItemWidth?: number;
 }
 
 export function InfiniteGrid<T>({
     items,
     renderItem,
-    columns = 3,
+    columns = { sm: 2, md: 3, lg: 4, xl: 5, '2xl': 6 },
     gap = 16,
     className,
     itemClassName,
+    maxItemWidth = 300, // Cap the maximum width of each item
 }: InfiniteGridProps<T>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -29,6 +31,23 @@ export function InfiniteGrid<T>({
     const lastPositionRef = useRef({ x: 0, y: 0 });
     const dragStartRef = useRef({ x: 0, y: 0 });
 
+    // Calculate responsive column count based on screen width
+    const currentColumns = useMemo(() => {
+        if (typeof columns === 'number') {
+            return columns;
+        }
+
+        // Calculate columns based on container width
+        const width = dimensions.width;
+        if (width === 0) return columns.md; // Default fallback
+
+        if (width >= 1536) return columns['2xl']; // 2xl screens (1536px+)
+        if (width >= 1280) return columns.xl;     // xl screens (1280px+)
+        if (width >= 1024) return columns.lg;     // lg screens (1024px+)
+        if (width >= 768) return columns.md;      // md screens (768px+)
+        return columns.sm;                        // sm screens (<768px)
+    }, [columns, dimensions.width]);
+
     // Calculate item width and other grid properties based on container width
     const gridConfig = useMemo(() => {
         if (dimensions.width === 0) {
@@ -36,18 +55,19 @@ export function InfiniteGrid<T>({
                 itemWidth: 250,
                 itemHeight: 250,
                 viewportRows: 5,
-                viewportCols: columns + 2
+                viewportCols: typeof columns === 'number' ? columns + 2 : columns.md + 2
             };
         }
 
         // Calculate item width based on container width, columns, and gap
-        const availableWidth = dimensions.width - (gap * (columns - 1));
-        const itemWidth = availableWidth / columns;
+        const availableWidth = dimensions.width - (gap * (currentColumns - 1));
+        const calculatedWidth = Math.min(availableWidth / currentColumns, maxItemWidth);
+        const itemWidth = calculatedWidth;
         const itemHeight = itemWidth; // Square items
 
         // Calculate how many rows/columns are needed to fill the viewport plus overflow
         const viewportRows = Math.ceil(dimensions.height / (itemHeight + gap)) + 2;
-        const viewportCols = columns + 2; // Add buffer columns
+        const viewportCols = currentColumns + 2; // Add buffer columns
 
         return {
             itemWidth,
@@ -55,7 +75,7 @@ export function InfiniteGrid<T>({
             viewportRows,
             viewportCols
         };
-    }, [dimensions.width, dimensions.height, columns, gap]);
+    }, [dimensions.width, dimensions.height, currentColumns, gap, maxItemWidth, columns]);
 
     // Function to get a unique item index different from neighbors
     const getUniqueItemIndex = useCallback((col: number, row: number) => {
@@ -63,14 +83,14 @@ export function InfiniteGrid<T>({
         const seed = Math.abs((col * 13) + (row * 17)) % items.length;
 
         // For the main items (your featured projects), use deterministic placement
-        if (col >= 0 && row >= 0 && col < columns && row < Math.ceil(items.length / columns)) {
-            const index = row * columns + col;
+        if (col >= 0 && row >= 0 && col < currentColumns && row < Math.ceil(items.length / currentColumns)) {
+            const index = row * currentColumns + col;
             return index < items.length ? index : seed;
         }
 
         // For infinity grid, use the seed
         return seed;
-    }, [items.length, columns]);
+    }, [items.length, currentColumns]);
 
     // Update visible grid items
     const updateGridItems = useCallback(() => {
@@ -128,6 +148,7 @@ export function InfiniteGrid<T>({
 
     // Handle drag interactions
     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        if (isDragging) return; // Prevent re-entry if already dragging
         setIsDragging(true);
 
         // Get starting position
@@ -138,38 +159,45 @@ export function InfiniteGrid<T>({
         lastPositionRef.current = position;
     };
 
-    const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleDragMove = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
         if (!isDragging) return;
 
         // Calculate drag delta
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const clientX = 'touches' in e ?
+            (e as TouchEvent).touches[0].clientX :
+            (e as MouseEvent).clientX;
+        const clientY = 'touches' in e ?
+            (e as TouchEvent).touches[0].clientY :
+            (e as MouseEvent).clientY;
 
         const deltaX = clientX - dragStartRef.current.x;
         const deltaY = clientY - dragStartRef.current.y;
 
-        // Update position
-        setPosition({
-            x: lastPositionRef.current.x + deltaX,
-            y: lastPositionRef.current.y + deltaY
+        // Update position without triggering re-renders for every mouse movement
+        // Use requestAnimationFrame for smoother performance
+        requestAnimationFrame(() => {
+            setPosition({
+                x: lastPositionRef.current.x + deltaX,
+                y: lastPositionRef.current.y + deltaY
+            });
         });
-    };
+    }, [isDragging]);
 
-    const handleDragEnd = () => {
+    const handleDragEnd = useCallback(() => {
         setIsDragging(false);
-    };
+    }, []);
 
     // Attach drag event handlers
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => handleDragMove(e as unknown as React.MouseEvent);
-        const handleTouchMove = (e: TouchEvent) => handleDragMove(e as unknown as React.TouchEvent);
+        const handleMouseMove = (e: MouseEvent) => handleDragMove(e);
+        const handleTouchMove = (e: TouchEvent) => handleDragMove(e);
 
         const handleMouseUp = () => handleDragEnd();
         const handleTouchEnd = () => handleDragEnd();
 
         if (isDragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('touchmove', handleTouchMove);
+            document.addEventListener('mousemove', handleMouseMove, { passive: true });
+            document.addEventListener('touchmove', handleTouchMove, { passive: true });
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('touchend', handleTouchEnd);
         }
@@ -180,7 +208,7 @@ export function InfiniteGrid<T>({
             document.removeEventListener('mouseup', handleMouseUp);
             document.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [isDragging]);
+    }, [isDragging, handleDragMove, handleDragEnd]);
 
     // Handle initial empty state
     useEffect(() => {
@@ -188,6 +216,26 @@ export function InfiniteGrid<T>({
             updateGridItems();
         }
     }, [gridItems.length, dimensions.width, updateGridItems]);
+
+    // Initialize grid position
+    useEffect(() => {
+        if (dimensions.width > 0 && containerRef.current && gridConfig) {
+            // Initial position in center for all screen sizes
+            const { itemWidth } = gridConfig;
+            const visibleColumns = Math.min(currentColumns, items.length);
+            const totalGridWidth = visibleColumns * (itemWidth + gap) - gap;
+
+            // Center horizontally if the grid is smaller than the container
+            if (totalGridWidth < dimensions.width) {
+                const centerX = (dimensions.width - totalGridWidth) / 2;
+                setPosition(prev => ({ ...prev, x: centerX }));
+            } else {
+                // For very small screens or when the grid is wider than container,
+                // start position at 0 (default)
+                setPosition(prev => ({ ...prev, x: 0 }));
+            }
+        }
+    }, [dimensions.width, currentColumns, gridConfig, gap, items.length]);
 
     return (
         <div
@@ -234,11 +282,13 @@ export function InfiniteGrid<T>({
                 })}
             </div>
 
-            {/* Debug overlay */}
+            {/* Debug overlay - can be useful during development */}
             {process.env.NODE_ENV === 'development' && false && (
                 <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs p-2 rounded">
                     <div>Items: {items.length}</div>
                     <div>Grid Items: {gridItems.length}</div>
+                    <div>Columns: {currentColumns}</div>
+                    <div>Item Width: {gridConfig.itemWidth.toFixed(0)}px</div>
                     <div>Position: {position.x.toFixed(0)}, {position.y.toFixed(0)}</div>
                     <div>Dimensions: {dimensions.width.toFixed(0)}x{dimensions.height.toFixed(0)}</div>
                 </div>

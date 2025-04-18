@@ -231,14 +231,24 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                 <p>Drag in any direction to explore — the grid extends infinitely</p>
             </div>
 
-            <InfiniteGrid<PortfolioItem>
-                items={filteredItems}
-                renderItem={renderPortfolioItem}
-                columns={3}
-                gap={40}
-                className="h-[700px] md:h-[800px] lg:h-[900px] w-full rounded-xl bg-black/20 backdrop-blur-sm"
-                itemClassName="cursor-pointer"
-            />
+            <div className="flex justify-center w-full">
+                <InfiniteGrid<PortfolioItem>
+                    items={filteredItems}
+                    renderItem={renderPortfolioItem}
+                    // Use responsive column configuration
+                    columns={{
+                        sm: 2,      // Small screens
+                        md: 3,      // Medium screens
+                        lg: 4,      // Large screens
+                        xl: 5,      // Extra large screens
+                        '2xl': 6    // 2XL screens (1536px+)
+                    }}
+                    gap={24}
+                    maxItemWidth={240} // Limit maximum item width
+                    className="h-[700px] md:h-[800px] lg:h-[900px] w-full max-w-[1800px] rounded-xl bg-black/20 backdrop-blur-sm"
+                    itemClassName="cursor-pointer"
+                />
+            </div>
         </div>
     );
 }
