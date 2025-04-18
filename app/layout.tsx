@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { MobileNavBar } from "@/components/MobileNavBar";
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -48,6 +49,8 @@ const portfolioOwner = {
   description: "Full-stack developer and system architect specializing in TypeScript, Python, Go and cloud infrastructure.",
 };
 
+// Mobile navbar will be handled by a client component
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -87,7 +90,11 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
 
-        {/* Main layout structure */}
+        {/* 
+          Responsive Layout Structure:
+          - Desktop: Logo+Navbar -> Content -> Footer
+          - Mobile: Logo -> Content -> Navbar -> Footer
+        */}
         <div className="bg-black text-white flex flex-col h-screen overflow-hidden">
           {/* Header - fixed height */}
           <div className="flex-none h-[100px]">
@@ -95,8 +102,13 @@ export default function RootLayout({
           </div>
 
           {/* Main content - calculated height to fit remaining space */}
-          <div className="flex-1 h-[calc(100vh-230px)] overflow-hidden">
+          <div className="flex-1 h-[calc(100vh-230px)] md:h-[calc(100vh-230px)] overflow-hidden">
             {children}
+          </div>
+
+          {/* Mobile Navbar - only visible on mobile */}
+          <div className="md:hidden flex-none">
+            <MobileNavBar />
           </div>
 
           {/* Footer - fixed height */}

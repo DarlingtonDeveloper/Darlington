@@ -30,8 +30,8 @@ export function NavBar({ items, className }: NavBarProps) {
         <div
             className={cn(
                 isMobile
-                    ? "fixed bottom-0 left-0 right-0 mb-6 z-50"
-                    : "fixed top-4 left-0 right-0 z-40", // Lower z-index than logo
+                    ? "w-full z-10" // Changed from fixed positioning for mobile
+                    : "fixed top-4 left-0 right-0 z-40",
                 hasScrolled ? "opacity-100" : "opacity-100",
                 className
             )}

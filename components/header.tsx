@@ -4,6 +4,7 @@ import { Home, LayoutGrid, Images, BookOpen, FileText } from 'lucide-react'
 import { NavBar } from "@/components/ui/tubelight-navbar"
 import { motion } from "framer-motion"
 import { Typewriter } from "@/components/ui/typewriter"
+import { useNavigation } from "@/hooks/use-navigation"
 
 export function Header() {
     const navItems = [
@@ -14,11 +15,17 @@ export function Header() {
         { name: 'Docs', url: 'https://docs.darlington.dev', icon: FileText }
     ]
 
+    const { isMobile } = useNavigation(navItems)
+
     return (
         <div className="h-full w-full relative flex flex-col">
-            <div className="absolute top-4 left-0 right-0 z-50">
-                <NavBar items={navItems} />
-            </div>
+            {/* Only render navbar in header for desktop */}
+            {!isMobile && (
+                <div className="absolute top-4 left-0 right-0 z-50">
+                    <NavBar items={navItems} />
+                </div>
+            )}
+
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
