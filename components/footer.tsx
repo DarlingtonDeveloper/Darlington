@@ -68,8 +68,8 @@ export function Footer() {
                 <SparklesCore
                     background="transparent"
                     minSize={0.3}
-                    maxSize={0.9}
-                    particleDensity={200}
+                    maxSize={1}
+                    particleDensity={1300}
                     className="w-full h-full pointer-events-none"
                     particleColor="#FFFFFF"
                     speed={0.8}
@@ -79,9 +79,9 @@ export function Footer() {
             {/* Content overlay with high z-index */}
             <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
                 <div className="text-center px-4">
-                    {/* Headline with text rotation */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center mb-2 text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-                        <span className="whitespace-nowrap mr-2 mb-2 sm:mb-0">Let&apos;s build together on</span>
+                    {/* Headline with text rotation - FIXED to stay on one line */}
+                    <div className="flex items-center justify-center whitespace-nowrap text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
+                        <span className="mr-2">Let&apos;s build together on</span>
                         <TextRotate
                             texts={[
                                 "GitHub.",
