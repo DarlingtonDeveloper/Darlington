@@ -185,8 +185,8 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
     return (
         <div className={className}>
             {title && (
-                <h1 className="text-2xl sm:text-3xl font-bold text-center mb-12 flex flex-col sm:flex-row items-center justify-center gap-2">
-                    <span className="whitespace-nowrap mb-2 sm:mb-0">Explore</span>
+                <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-center mb-6 sm:mb-8 flex flex-row items-center justify-center gap-1 sm:gap-2">
+                    <span className="whitespace-nowrap sm:text-base md:text-lg lg:text-xl">Explore</span>
                     <TextRotate
                         texts={[
                             "System Design",
@@ -196,7 +196,7 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                             "Automation Pipelines",
                             "Cloud Infrastructure"
                         ]}
-                        mainClassName="text-white px-2 sm:px-2 md:px-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden py-0.5 sm:py-1 md:py-1.5 justify-center rounded-lg flex items-center font-medium"
+                        mainClassName="text-white px-1 sm:px-2 md:px-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 overflow-hidden py-0.5 justify-center rounded-lg flex items-center font-medium sm:text-base md:text-lg lg:text-xl"
                         staggerFrom="first"
                         initial={{ y: "100%" }}
                         animate={{ y: 0 }}
@@ -207,24 +207,25 @@ export function PortfolioGrid({ className, title = true }: PortfolioGridProps) {
                         transition={{ type: "spring", damping: 30, stiffness: 400 }}
                         rotationInterval={3000}
                     />
-                    <span className="whitespace-nowrap mt-2 sm:mt-0">on GitHub.</span>
+                    <span className="whitespace-nowrap sm:text-base md:text-lg lg:text-xl">on GitHub.</span>
                 </h1>
             )}
 
-            {/* Category Filter Buttons */}
-            <div className="mb-12 flex flex-wrap justify-center gap-4">
-                {categories.map((category) => (
-                    <RainbowButton
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`text-sm capitalize ${selectedCategory === category
-                            ? 'opacity-100 font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105 border border-white/20'
-                            : 'opacity-70 hover:opacity-90'
-                            }`}
-                    >
-                        {category}
-                    </RainbowButton>
-                ))}
+            <div className="mb-6 sm:mb-8 md:mb-10 flex justify-center">
+                <div className="inline-flex flex-nowrap overflow-x-auto px-1 py-2 no-scrollbar">
+                    {categories.map((category) => (
+                        <RainbowButton
+                            key={category}
+                            onClick={() => setSelectedCategory(category)}
+                            className={`text-sm md:text-base capitalize py-1 px-3 mx-1 whitespace-nowrap ${selectedCategory === category
+                                ? 'opacity-100 font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-105 border border-white/20'
+                                : 'opacity-70 hover:opacity-90'
+                                }`}
+                        >
+                            {category}
+                        </RainbowButton>
+                    ))}
+                </div>
             </div>
 
             <div className="mb-4 text-center text-sm text-gray-400">

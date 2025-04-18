@@ -169,3 +169,17 @@
 .animate-rainbow {
   animation: rainbow var(--speed, 4s) linear infinite;
 }
+
+/* Hide scrollbar while allowing scrolling */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+}
