@@ -29,17 +29,17 @@ export default function ProjectsPage() {
             {/* Structured data for breadcrumbs */}
             <BreadcrumbSchema items={breadcrumbs} />
 
-            <div className="bg-black text-white">
-                <main>
-                    <div className="px-4 sm:px-6 md:px-12 lg:px-20 py-10">
-                        {/* Gallery section */}
-                        <section id="interactive-projects" aria-label="Interactive Frontend Projects" className="mb-12">
+            <div className="bg-black text-white h-full overflow-hidden">
+                <main className="h-full overflow-hidden">
+                    <div className="px-4 sm:px-6 md:px-12 lg:px-20 py-6 h-full flex flex-col">
+                        {/* Gallery section - set to flex-grow to take available space */}
+                        <section id="interactive-projects" aria-label="Interactive Frontend Projects" className="flex-grow">
                             <Gallery />
                         </section>
 
-                        {/* Technologies section - with a large bottom margin to avoid footer overlap */}
-                        <section aria-label="Technologies" className="mb-48">
-                            <h2 className="text-xl sm:text-2xl font-bold text-center mb-6">Powered By</h2>
+                        {/* Technologies section - fixed at bottom with no margins */}
+                        <section aria-label="Technologies" className="flex-none mt-auto">
+                            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4">Powered By</h2>
                             <MarqueeDemo />
                         </section>
                     </div>
