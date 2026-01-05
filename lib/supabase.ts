@@ -15,13 +15,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
 // For server-side use with service role key (bypasses RLS)
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-)
+// Only available on server-side (not in browser)
+export const supabaseAdmin =
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient<Database>(
+      supabaseUrl,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
+    : null
