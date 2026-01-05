@@ -15,6 +15,7 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@splinetool/react-spline": "^4.0.0",
     "@splinetool/runtime": "^1.9.82",
+    "@supabase/supabase-js": "^2.89.0",
     "@tsparticles/engine": "^3.8.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.8.1",
