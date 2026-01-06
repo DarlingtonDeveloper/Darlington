@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSwipeable } from 'react-swipeable'
 import { isToday, isYesterday, startOfDay, differenceInHours, format } from 'date-fns'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DayNavigator } from '@/components/habits/day-navigator'
+import { PartialComplete, usePartialComplete } from '@/components/habits/partial-complete'
 
 interface Habit {
     id: string
@@ -23,6 +25,7 @@ interface HabitWithStatus extends Habit {
     completed_today: boolean
     completion_id?: string
     completed_at?: string
+    completion_percentage?: number
 }
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
@@ -30,9 +33,10 @@ const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 interface HabitsClientProps {
     initialHabits: HabitWithStatus[]
     initialDate?: string
+    hasCheckedInToday?: boolean
 }
 
-export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) {
+export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false }: HabitsClientProps) {
     // Always use browser's local date for "today"
     const browserToday = format(new Date(), 'yyyy-MM-dd')
     const serverDateMatches = initialDate === browserToday
@@ -43,6 +47,9 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
     const [energyLevel, setEnergyLevel] = useState<'low' | 'medium' | 'high'>('medium')
     const [contextNotes, setContextNotes] = useState('')
     const [hasMounted, setHasMounted] = useState(false)
+
+    // Partial completion modal state
+    const { isOpen: isPartialOpen, targetHabitId, open: openPartial, close: closePartial } = usePartialComplete()
 
     // Determine edit permissions
     const now = new Date()
@@ -88,6 +95,7 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                     completed_today: !!completion,
                     completion_id: completion?.id,
                     completed_at: completion?.completed_at,
+                    completion_percentage: completion?.completion_percentage ?? (completion ? 100 : 0),
                 }
             })
 
@@ -189,6 +197,78 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
         }
     }
 
+    // Handle partial completion
+    async function handlePartialComplete(habitId: string, percentage: number) {
+        if (!canEdit) return
+
+        const habit = habits.find(h => h.id === habitId)
+        if (!habit) return
+
+        try {
+            if (percentage === 0) {
+                // Clear completion
+                if (habit.completion_id) {
+                    const { error } = await supabase
+                        .from('habit_completions')
+                        .delete()
+                        .eq('id', habit.completion_id)
+
+                    if (error) throw error
+
+                    setHabits(habits.map(h =>
+                        h.id === habitId
+                            ? { ...h, completed_today: false, completion_id: undefined, completed_at: undefined, completion_percentage: 0 }
+                            : h
+                    ))
+                }
+            } else if (habit.completion_id) {
+                // Update existing completion
+                const { error } = await supabase
+                    .from('habit_completions')
+                    .update({ completion_percentage: percentage })
+                    .eq('id', habit.completion_id)
+
+                if (error) throw error
+
+                setHabits(habits.map(h =>
+                    h.id === habitId
+                        ? { ...h, completion_percentage: percentage }
+                        : h
+                ))
+            } else {
+                // Create new completion with percentage
+                const completedAt = viewingIsToday
+                    ? new Date().toISOString()
+                    : `${dateString}T12:00:00.000Z`
+
+                const { data, error } = await supabase
+                    .from('habit_completions')
+                    .insert({
+                        habit_id: habitId,
+                        user_id: USER_ID,
+                        completed_at: completedAt,
+                        completion_date: dateString,
+                        completion_percentage: percentage,
+                    })
+                    .select()
+                    .single()
+
+                if (error) throw error
+                if (!data) throw new Error('No data returned from insert')
+
+                setHabits(habits.map(h =>
+                    h.id === habitId
+                        ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at, completion_percentage: percentage }
+                        : h
+                ))
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            console.error('Error setting partial completion:', error)
+            alert(`Failed to update habit: ${errorMessage}`)
+        }
+    }
+
     async function saveDailySummary() {
         if (!canEdit) return
 
@@ -215,9 +295,14 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
         }
     }
 
+    // Calculate progress with partial completions
+    const completionSum = habits.reduce((sum, h) => {
+        if (!h.completed_today) return sum
+        return sum + ((h.completion_percentage ?? 100) / 100)
+    }, 0)
     const completedCount = habits.filter(h => h.completed_today).length
     const totalCount = habits.length
-    const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+    const percentage = totalCount > 0 ? Math.round((completionSum / totalCount) * 100) : 0
 
     // Group habits by category
     const groupedHabits = habits.reduce((acc, habit) => {
@@ -300,6 +385,44 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                 </div>
             </div>
 
+            {/* Check-in prompt - only show for today when not checked in */}
+            {viewingIsToday && !hasCheckedInToday && !isLoading && (
+                <div className="px-4 sm:px-6 pt-4 sm:max-w-2xl sm:mx-auto">
+                    <Link
+                        href="/habits/checkin"
+                        className="
+                            block w-full p-4 rounded-lg
+                            bg-emerald-950/40 border border-emerald-800/50
+                            active:bg-emerald-950/60 transition-colors duration-150
+                            active:scale-[0.99] active:transition-transform
+                        "
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="
+                                w-10 h-10 rounded-lg
+                                bg-emerald-900/50 border border-emerald-800/50
+                                flex items-center justify-center flex-shrink-0
+                            ">
+                                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-emerald-300">
+                                    Morning check-in
+                                </div>
+                                <div className="text-xs text-emerald-500/70 mt-0.5">
+                                    Reflect on yesterday, set today&apos;s focus
+                                </div>
+                            </div>
+                            <svg className="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+                </div>
+            )}
+
             {/* Loading overlay */}
             {isLoading && (
                 <div className="px-4 sm:px-6 py-8 sm:max-w-2xl sm:mx-auto">
@@ -331,7 +454,15 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                                     {categoryHabits.map(habit => (
                                         <button
                                             key={habit.id}
-                                            onClick={() => toggleHabit(habit)}
+                                            onClick={() => {
+                                                if (habit.completed_today) {
+                                                    // Open partial complete to adjust or clear
+                                                    openPartial(habit.id)
+                                                } else {
+                                                    // Quick complete at 100%
+                                                    toggleHabit(habit)
+                                                }
+                                            }}
                                             disabled={!canEdit}
                                             className={`
                                                 w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 rounded-lg sm:rounded-md text-left
@@ -349,25 +480,48 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                                             `}
                                         >
                                             <div className="flex items-center gap-4 sm:gap-3">
-                                                {/* Checkbox */}
-                                                <div className={`
-                                                    flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
-                                                    flex items-center justify-center transition-colors duration-150
-                                                    ${habit.completed_today
-                                                        ? canEdit
-                                                            ? 'bg-emerald-500 border-emerald-500'
-                                                            : 'bg-neutral-600 border-neutral-600'
-                                                        : canEdit
-                                                            ? 'border-neutral-600'
-                                                            : 'border-neutral-700'
-                                                    }
-                                                `}>
-                                                    {habit.completed_today && (
-                                                        <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                {/* Checkbox with progress indicator */}
+                                                {habit.completed_today && (habit.completion_percentage ?? 100) < 100 ? (
+                                                    // Partial completion - show circular progress
+                                                    <div className="flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 relative">
+                                                        <svg className="w-full h-full -rotate-90" viewBox="0 0 24 24">
+                                                            <circle
+                                                                cx="12" cy="12" r="10"
+                                                                fill="none"
+                                                                className="stroke-neutral-700"
+                                                                strokeWidth="2"
+                                                            />
+                                                            <circle
+                                                                cx="12" cy="12" r="10"
+                                                                fill="none"
+                                                                className={canEdit ? 'stroke-emerald-500' : 'stroke-neutral-500'}
+                                                                strokeWidth="2"
+                                                                strokeDasharray={`${(habit.completion_percentage ?? 0) * 0.628} 100`}
+                                                                strokeLinecap="round"
+                                                            />
                                                         </svg>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                ) : (
+                                                    // Full completion or not completed - show checkbox
+                                                    <div className={`
+                                                        flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
+                                                        flex items-center justify-center transition-colors duration-150
+                                                        ${habit.completed_today
+                                                            ? canEdit
+                                                                ? 'bg-emerald-500 border-emerald-500'
+                                                                : 'bg-neutral-600 border-neutral-600'
+                                                            : canEdit
+                                                                ? 'border-neutral-600'
+                                                                : 'border-neutral-700'
+                                                        }
+                                                    `}>
+                                                        {habit.completed_today && (
+                                                            <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <div className="flex-1 flex items-center justify-between min-w-0">
                                                     <span className={`text-base sm:text-sm font-medium truncate ${
                                                         canEdit
@@ -378,6 +532,9 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                                                     </span>
                                                     {habit.completed_at && (
                                                         <span className={`font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${canEdit ? 'text-neutral-500' : 'text-neutral-600'}`}>
+                                                            {(habit.completion_percentage ?? 100) < 100 && (
+                                                                <span className="text-amber-500/80 mr-1">{habit.completion_percentage}%</span>
+                                                            )}
                                                             {new Date(habit.completed_at).toLocaleTimeString('en-US', {
                                                                 hour: 'numeric',
                                                                 minute: '2-digit',
@@ -464,6 +621,19 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
                     </div>
                 </div>
             )}
+
+            {/* Partial completion modal */}
+            <PartialComplete
+                isOpen={isPartialOpen}
+                onClose={closePartial}
+                onSelect={(percentage) => {
+                    if (targetHabitId) {
+                        handlePartialComplete(targetHabitId, percentage)
+                    }
+                }}
+                currentPercentage={habits.find(h => h.id === targetHabitId)?.completion_percentage ?? 0}
+                habitName={habits.find(h => h.id === targetHabitId)?.name}
+            />
         </div>
     )
 }

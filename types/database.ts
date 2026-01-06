@@ -87,6 +87,7 @@ export interface Database {
           user_id: string
           completed_at: string
           completion_date: string
+          completion_percentage: number
           notes: string | null
           created_at: string
         }
@@ -96,6 +97,7 @@ export interface Database {
           user_id: string
           completed_at?: string
           completion_date?: string
+          completion_percentage?: number
           notes?: string | null
           created_at?: string
         }
@@ -105,6 +107,7 @@ export interface Database {
           user_id?: string
           completed_at?: string
           completion_date?: string
+          completion_percentage?: number
           notes?: string | null
           created_at?: string
         }
@@ -209,6 +212,8 @@ export interface HabitWithCompletion extends Habit {
   completed_today: boolean
   completion_id?: string
   completion_time?: string
+  completion_percentage?: number
+  completion_notes?: string | null
   streak?: number
 }
 
