@@ -47,9 +47,9 @@
 - ✅ Habit notes (optional notes on completions)
 - ✅ Daily check-in flow (reflection, focus selection, intention)
 
-### Tier 2 Features (In Progress)
+### Tier 2 Features (Complete)
 - ✅ What's Next button (smart habit suggestion based on focus, time of day)
-- [ ] Multi-step habits (sub-steps within habits)
+- ✅ Multi-step habits (sub-steps within habits - Yoga has 8 steps)
 
 ---
 
@@ -115,10 +115,10 @@ Mindful meal, Teeth evening, **Bed by 11pm** (CRITICAL), No alcohol, No masturba
 - [x] Analytics dashboard with streaks, weekly chart, time heatmap
 - [x] Tier 1: Partial completions, habit notes, daily check-in
 - [x] Tier 2: What's Next smart suggestions
+- [x] Tier 2: Multi-step habits (Yoga)
 
 **In Progress:**
 - [ ] 30 days of completion data
-- [ ] Tier 2: Multi-step habits
 
 **Future:**
 - [ ] Authentication system
