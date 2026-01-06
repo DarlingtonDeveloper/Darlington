@@ -48,7 +48,6 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                 ))
             } else {
                 // Complete - insert new completion
-                // @ts-expect-error - Supabase client type inference issue with insert
                 const { data, error } = await supabase
                     .from('habit_completions')
                     .insert({
@@ -94,7 +93,6 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
             const today = new Date().toISOString().split('T')[0]
             const completedCount = habits.filter(h => h.completed_today).length
 
-            // @ts-expect-error - Supabase client type inference issue with upsert
             const { error } = await supabase
                 .from('daily_summaries')
                 .upsert({
