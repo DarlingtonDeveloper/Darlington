@@ -107,26 +107,36 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
   }
 }
 
-async function getTodayCheckin(): Promise<boolean> {
+async function getTodayCheckin(): Promise<{ hasCheckedIn: boolean; focusHabitIds: string[] }> {
   try {
     const today = new Date().toLocaleDateString('en-CA')
     const { data } = await supabase
       .from('daily_checkins')
-      .select('id')
+      .select('id, focus_habit_ids')
       .eq('user_id', USER_ID)
       .eq('checkin_date', today)
       .single()
-    return !!data
+    return {
+      hasCheckedIn: !!data,
+      focusHabitIds: data?.focus_habit_ids || []
+    }
   } catch {
-    return false
+    return { hasCheckedIn: false, focusHabitIds: [] }
   }
 }
 
 export default async function HabitsPage() {
-  const [{ habits, date }, hasCheckedIn] = await Promise.all([
+  const [{ habits, date }, checkinData] = await Promise.all([
     loadHabits(),
     getTodayCheckin(),
   ])
 
-  return <HabitsClient initialHabits={habits} initialDate={date} hasCheckedInToday={hasCheckedIn} />
+  return (
+    <HabitsClient
+      initialHabits={habits}
+      initialDate={date}
+      hasCheckedInToday={checkinData.hasCheckedIn}
+      focusHabitIds={checkinData.focusHabitIds}
+    />
+  )
 }

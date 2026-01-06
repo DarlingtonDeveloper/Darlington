@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { format } from 'date-fns'
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
@@ -34,6 +33,7 @@ interface CheckinClientProps {
     yesterdayData: YesterdayData
     existingCheckin: ExistingCheckin | null
     habitsWithStats: HabitWithStats[]
+    serverDate: string
 }
 
 type Step = 'review' | 'reflection' | 'focus' | 'intention'
@@ -51,6 +51,7 @@ export function CheckinClient({
     yesterdayData,
     existingCheckin,
     habitsWithStats,
+    serverDate,
 }: CheckinClientProps) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState<Step>('review')
@@ -91,12 +92,11 @@ export function CheckinClient({
 
     const handleSave = useCallback(async () => {
         setIsSaving(true)
-        const today = format(new Date(), 'yyyy-MM-dd')
 
         try {
             const checkinData = {
                 user_id: USER_ID,
-                checkin_date: today,
+                checkin_date: serverDate,
                 yesterday_reflection: reflection || null,
                 today_intention: intention || null,
                 focus_habit_ids: focusHabitIds.length > 0 ? focusHabitIds : null,
@@ -131,7 +131,7 @@ export function CheckinClient({
             alert('Failed to save check-in.')
             setIsSaving(false)
         }
-    }, [reflection, intention, focusHabitIds, existingCheckin])
+    }, [reflection, intention, focusHabitIds, existingCheckin, serverDate])
 
     // Build suggested focus habits: missed yesterday first, then low completion rate
     const suggestedHabits = [...habitsWithStats]

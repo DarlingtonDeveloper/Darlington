@@ -125,6 +125,8 @@ async function getTodayCheckin() {
 }
 
 export default async function CheckinPage() {
+    const serverToday = format(new Date(), 'yyyy-MM-dd')
+
     const [yesterdayData, existingCheckin, habitsWithStats] = await Promise.all([
         getYesterdayData(),
         getTodayCheckin(),
@@ -136,6 +138,7 @@ export default async function CheckinPage() {
             yesterdayData={yesterdayData}
             existingCheckin={existingCheckin}
             habitsWithStats={habitsWithStats}
+            serverDate={serverToday}
         />
     )
 }
