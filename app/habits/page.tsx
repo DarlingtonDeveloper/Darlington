@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { HabitsClient } from './habits-client'
 
+// Force dynamic rendering - don't try to build this at build time
+export const dynamic = 'force-dynamic'
+
 interface Habit {
   id: string
   user_id: string
