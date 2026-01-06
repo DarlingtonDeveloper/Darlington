@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Habit } from '@/types/database'
+import type { Habit, CompletionInsert, SummaryInsert } from '@/types/database'
 
 interface HabitWithStatus extends Habit {
     completed_today: boolean
@@ -48,14 +48,16 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                 ))
             } else {
                 // Complete - insert new completion
+                const completionData: CompletionInsert = {
+                    habit_id: habit.id,
+                    user_id: USER_ID,
+                    completed_at: new Date().toISOString(),
+                    completion_date: new Date().toISOString().split('T')[0],
+                }
+
                 const { data, error } = await supabase
                     .from('habit_completions')
-                    .insert({
-                        habit_id: habit.id,
-                        user_id: USER_ID,
-                        completed_at: new Date().toISOString(),
-                        completion_date: new Date().toISOString().split('T')[0],
-                    })
+                    .insert(completionData)
                     .select()
                     .single()
 
@@ -69,6 +71,10 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                     throw error
                 }
 
+                if (!data) {
+                    throw new Error('No data returned from insert')
+                }
+
                 // Update local state
                 setHabits(habits.map(h =>
                     h.id === habit.id
@@ -78,6 +84,8 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
             }
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            console.error('Error toggling habit:', error)
+            console.error('Full error object:', JSON.stringify(error, null, 2))
             alert(`Failed to update habit: ${errorMessage}`)
         }
     }
@@ -87,16 +95,18 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
             const today = new Date().toISOString().split('T')[0]
             const completedCount = habits.filter(h => h.completed_today).length
 
+            const summaryData: SummaryInsert = {
+                user_id: USER_ID,
+                summary_date: today,
+                total_habits: habits.length,
+                completed_count: completedCount,
+                energy_level: energyLevel,
+                context_notes: contextNotes,
+            }
+
             const { error } = await supabase
                 .from('daily_summaries')
-                .upsert({
-                    user_id: USER_ID,
-                    summary_date: today,
-                    total_habits: habits.length,
-                    completed_count: completedCount,
-                    energy_level: energyLevel,
-                    context_notes: contextNotes,
-                })
+                .upsert(summaryData)
 
             if (error) throw error
 
