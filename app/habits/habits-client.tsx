@@ -76,10 +76,9 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                         : h
                 ))
             }
-        } catch (error: any) {
-            console.error('Error toggling habit:', error)
-            console.error('Full error object:', JSON.stringify(error, null, 2))
-            alert(`Failed to update habit: ${error?.message || 'Unknown error'}`)
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            alert(`Failed to update habit: ${errorMessage}`)
         }
     }
 
