@@ -58,3 +58,16 @@ Required in `.env.local` and Vercel:
 - NEVER put API keys, tokens, passwords, or user IDs in markdown files
 - Reference secrets via environment variable names only (e.g., "set SUPABASE_KEY")
 - Keep sensitive IDs in .env, not documentation
+
+## Post-Push Workflow
+
+After every `git push`:
+1. Check deployment status with `vercel ls`
+2. If deployment **succeeds**:
+   - Update `/todos` to mark completed items
+   - Move completed items in `Project_status.md` from "Next Steps" to "Completed"
+3. If deployment **fails**:
+   - Check Vercel logs to identify the issue
+   - Attempt to fix the problem
+   - Re-push and verify
+   - If fix fails, notify the user with the error details
