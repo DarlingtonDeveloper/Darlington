@@ -103,26 +103,35 @@ export function CheckinClient({
                 updated_at: new Date().toISOString(),
             }
 
+            let error
             if (existingCheckin) {
-                await supabase
+                const result = await supabase
                     .from('daily_checkins')
                     .update(checkinData)
                     .eq('id', existingCheckin.id)
+                error = result.error
             } else {
-                await supabase
+                const result = await supabase
                     .from('daily_checkins')
                     .insert(checkinData)
+                error = result.error
             }
 
-            // Use refresh to ensure the habits page re-fetches data
-            router.push('/habits')
-            router.refresh()
+            if (error) {
+                console.error('Failed to save check-in:', error)
+                alert('Failed to save check-in. Make sure to run the database migration.')
+                setIsSaving(false)
+                return
+            }
+
+            // Full page reload to ensure fresh server data
+            window.location.href = '/habits'
         } catch (error) {
             console.error('Failed to save check-in:', error)
-        } finally {
+            alert('Failed to save check-in.')
             setIsSaving(false)
         }
-    }, [reflection, intention, focusHabitIds, existingCheckin, router])
+    }, [reflection, intention, focusHabitIds, existingCheckin])
 
     // Build suggested focus habits: missed yesterday first, then low completion rate
     const suggestedHabits = [...habitsWithStats]
