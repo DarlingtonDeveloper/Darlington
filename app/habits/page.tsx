@@ -25,9 +25,10 @@ interface HabitWithStatus extends Habit {
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281' // Your user ID
 
-async function loadHabits(): Promise<HabitWithStatus[]> {
+async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }> {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    // Use local date string to match user's expectation
+    const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
 
     // Get all habits
     const { data: habitsData, error: habitsError } = await supabase
@@ -65,15 +66,16 @@ async function loadHabits(): Promise<HabitWithStatus[]> {
       }
     })
 
-    return habitsWithStatus
+    return { habits: habitsWithStatus, date: today }
   } catch (error) {
     console.error('Error loading habits:', error)
-    return []
+    const today = new Date().toLocaleDateString('en-CA')
+    return { habits: [], date: today }
   }
 }
 
 export default async function HabitsPage() {
-  const initialHabits = await loadHabits()
+  const { habits, date } = await loadHabits()
 
-  return <HabitsClient initialHabits={initialHabits} />
+  return <HabitsClient initialHabits={habits} initialDate={date} />
 }

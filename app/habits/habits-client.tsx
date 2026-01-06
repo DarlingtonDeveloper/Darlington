@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSwipeable } from 'react-swipeable'
 import { isToday, isYesterday, startOfDay, differenceInHours, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -33,13 +33,16 @@ interface HabitsClientProps {
 }
 
 export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) {
-    const [habits, setHabits] = useState<HabitWithStatus[]>(initialHabits)
-    const [viewingDate, setViewingDate] = useState<Date>(
-        initialDate ? new Date(initialDate + 'T12:00:00') : new Date()
-    )
-    const [isLoading, setIsLoading] = useState(false)
+    // Always use browser's local date for "today"
+    const browserToday = format(new Date(), 'yyyy-MM-dd')
+    const serverDateMatches = initialDate === browserToday
+
+    const [habits, setHabits] = useState<HabitWithStatus[]>(serverDateMatches ? initialHabits : [])
+    const [viewingDate, setViewingDate] = useState<Date>(new Date())
+    const [isLoading, setIsLoading] = useState(!serverDateMatches)
     const [energyLevel, setEnergyLevel] = useState<'low' | 'medium' | 'high'>('medium')
     const [contextNotes, setContextNotes] = useState('')
+    const [hasMounted, setHasMounted] = useState(false)
 
     // Determine edit permissions
     const now = new Date()
@@ -95,6 +98,16 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
             setIsLoading(false)
         }
     }, [])
+
+    // Re-fetch on mount if server date doesn't match browser date (timezone mismatch)
+    useEffect(() => {
+        if (!hasMounted) {
+            setHasMounted(true)
+            if (!serverDateMatches) {
+                loadHabitsForDate(new Date())
+            }
+        }
+    }, [hasMounted, serverDateMatches, loadHabitsForDate])
 
     // Handle date change
     const handleDateChange = useCallback((newDate: Date) => {
