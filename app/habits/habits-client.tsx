@@ -30,7 +30,15 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                     .delete()
                     .eq('id', habit.completion_id)
 
-                if (error) throw error
+                if (error) {
+                    console.error('DELETE error details:', {
+                        message: error.message,
+                        details: error.details,
+                        hint: error.hint,
+                        code: error.code
+                    })
+                    throw error
+                }
 
                 // Update local state
                 setHabits(habits.map(h =>
@@ -51,7 +59,15 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                     .select()
                     .single()
 
-                if (error) throw error
+                if (error) {
+                    console.error('INSERT error details:', {
+                        message: error.message,
+                        details: error.details,
+                        hint: error.hint,
+                        code: error.code
+                    })
+                    throw error
+                }
 
                 // Update local state
                 setHabits(habits.map(h =>
@@ -60,9 +76,10 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                         : h
                 ))
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error toggling habit:', error)
-            alert('Failed to update habit. Check console for details.')
+            console.error('Full error object:', JSON.stringify(error, null, 2))
+            alert(`Failed to update habit: ${error?.message || 'Unknown error'}`)
         }
     }
 
