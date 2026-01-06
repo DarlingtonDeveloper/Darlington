@@ -26,6 +26,7 @@ interface HabitWithStatus extends Habit {
     completion_id?: string
     completed_at?: string
     completion_percentage?: number
+    notes?: string | null
 }
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
@@ -96,6 +97,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     completion_id: completion?.id,
                     completed_at: completion?.completed_at,
                     completion_percentage: completion?.completion_percentage ?? (completion ? 100 : 0),
+                    notes: completion?.notes ?? null,
                 }
             })
 
@@ -197,8 +199,8 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
         }
     }
 
-    // Handle partial completion
-    async function handlePartialComplete(habitId: string, percentage: number) {
+    // Handle partial completion with optional note
+    async function handlePartialComplete(habitId: string, percentage: number, note?: string) {
         if (!canEdit) return
 
         const habit = habits.find(h => h.id === habitId)
@@ -217,7 +219,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
                     setHabits(habits.map(h =>
                         h.id === habitId
-                            ? { ...h, completed_today: false, completion_id: undefined, completed_at: undefined, completion_percentage: 0 }
+                            ? { ...h, completed_today: false, completion_id: undefined, completed_at: undefined, completion_percentage: 0, notes: null }
                             : h
                     ))
                 }
@@ -225,14 +227,14 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 // Update existing completion
                 const { error } = await supabase
                     .from('habit_completions')
-                    .update({ completion_percentage: percentage })
+                    .update({ completion_percentage: percentage, notes: note ?? null })
                     .eq('id', habit.completion_id)
 
                 if (error) throw error
 
                 setHabits(habits.map(h =>
                     h.id === habitId
-                        ? { ...h, completion_percentage: percentage }
+                        ? { ...h, completion_percentage: percentage, notes: note ?? null }
                         : h
                 ))
             } else {
@@ -249,6 +251,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                         completed_at: completedAt,
                         completion_date: dateString,
                         completion_percentage: percentage,
+                        notes: note ?? null,
                     })
                     .select()
                     .single()
@@ -258,7 +261,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
                 setHabits(habits.map(h =>
                     h.id === habitId
-                        ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at, completion_percentage: percentage }
+                        ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at, completion_percentage: percentage, notes: note ?? null }
                         : h
                 ))
             }
@@ -523,13 +526,27 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                     </div>
                                                 )}
                                                 <div className="flex-1 flex items-center justify-between min-w-0">
-                                                    <span className={`text-base sm:text-sm font-medium truncate ${
-                                                        canEdit
-                                                            ? habit.completed_today ? 'text-neutral-300' : 'text-neutral-200'
-                                                            : 'text-neutral-500'
-                                                    }`}>
-                                                        {habit.name}
-                                                    </span>
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className={`text-base sm:text-sm font-medium truncate ${
+                                                            canEdit
+                                                                ? habit.completed_today ? 'text-neutral-300' : 'text-neutral-200'
+                                                                : 'text-neutral-500'
+                                                        }`}>
+                                                            {habit.name}
+                                                        </span>
+                                                        {/* Note indicator */}
+                                                        {habit.notes && (
+                                                            <svg
+                                                                className="w-3.5 h-3.5 flex-shrink-0 text-neutral-600"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                                strokeWidth={1.5}
+                                                            >
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
                                                     {habit.completed_at && (
                                                         <span className={`font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${canEdit ? 'text-neutral-500' : 'text-neutral-600'}`}>
                                                             {(habit.completion_percentage ?? 100) < 100 && (
@@ -626,12 +643,13 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             <PartialComplete
                 isOpen={isPartialOpen}
                 onClose={closePartial}
-                onSelect={(percentage) => {
+                onSelect={(percentage, note) => {
                     if (targetHabitId) {
-                        handlePartialComplete(targetHabitId, percentage)
+                        handlePartialComplete(targetHabitId, percentage, note)
                     }
                 }}
                 currentPercentage={habits.find(h => h.id === targetHabitId)?.completion_percentage ?? 0}
+                currentNote={habits.find(h => h.id === targetHabitId)?.notes}
                 habitName={habits.find(h => h.id === targetHabitId)?.name}
             />
         </div>
