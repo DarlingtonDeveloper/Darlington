@@ -148,7 +148,7 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
 
     if (habits.length === 0) {
         return (
-            <div className="min-h-full bg-neutral-950 text-neutral-50 flex items-center justify-center px-4 pt-safe pb-safe">
+            <div className="min-h-full bg-neutral-950 text-neutral-50 flex items-center justify-center px-4 pb-safe">
                 <div className="text-center">
                     <div className="text-base font-medium mb-2 text-neutral-300">No habits found</div>
                     <div className="text-sm text-neutral-500">
@@ -161,8 +161,8 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
 
     return (
         <div className="min-h-full bg-neutral-950 text-neutral-50">
-            {/* Header - sticky with safe area for notch */}
-            <div className="sticky top-0 bg-neutral-950 border-b border-neutral-800 z-10 pt-safe">
+            {/* Header */}
+            <div className="bg-neutral-950 border-b border-neutral-800">
                 <div className="px-4 sm:px-6 py-4 sm:max-w-2xl sm:mx-auto">
                     <div className="flex items-baseline justify-between">
                         <h1 className="text-xl sm:text-lg font-semibold tracking-tight">Daily Habits</h1>

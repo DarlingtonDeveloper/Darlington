@@ -17,6 +17,8 @@
 
 ### Frontend
 - ✅ `/habits` route with mobile-first Linear-inspired UI
+- ✅ `/habits/analytics` dashboard with streaks, weekly chart, time heatmap
+- ✅ Tab navigation between Daily and Analytics views
 - ✅ TypeScript types generated from schema
 - ✅ Supabase client configured (lib/supabase.ts)
 - ✅ Client component for habit interactions
@@ -44,14 +46,7 @@
 
 ## 🔄 Next Steps
 
-### 1. Build Analytics Dashboard
-- [ ] Create `/habits/analytics` route
-- [ ] Streak counters per habit
-- [ ] Weekly completion rates
-- [ ] Time-of-day heatmap
-- [ ] Monthly trends chart
-
-### 3. Authentication
+### 1. Authentication
 - [ ] Add Supabase Auth
 - [ ] Replace hardcoded user ID with auth user
 - [ ] Update RLS policies
@@ -108,9 +103,9 @@ Mindful meal, Teeth evening, **Bed by 11pm** (CRITICAL), No alcohol, No masturba
 - [x] Production deployment configured
 - [x] Pre-commit hooks for quality
 - [x] Notion data migrated
+- [x] Analytics dashboard with streaks, weekly chart, time heatmap
 
 **In Progress:**
-- [ ] Analytics dashboard live
 - [ ] 30 days of completion data
 
 **Future:**
