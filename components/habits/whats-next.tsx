@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react'
 
-interface Habit {
+// Base habit properties needed for the What's Next feature
+interface BaseHabit {
     id: string
     name: string
     category: string | null
@@ -10,26 +11,26 @@ interface Habit {
     completed_today: boolean
 }
 
-interface WhatsNextProps {
-    habits: Habit[]
+interface WhatsNextProps<T extends BaseHabit> {
+    habits: T[]
     focusHabitIds: string[]
-    onComplete: (habit: Habit) => void
+    onComplete: (habit: T) => void
     skippedIds: string[]
     onSkip: (habitId: string) => void
 }
 
-interface ScoredHabit {
-    habit: Habit
+interface ScoredHabit<T extends BaseHabit> {
+    habit: T
     score: number
     reason: string
 }
 
-function getNextHabit(
-    habits: Habit[],
+function getNextHabit<T extends BaseHabit>(
+    habits: T[],
     focusHabitIds: string[],
     skippedIds: string[],
     currentHour: number
-): ScoredHabit | null {
+): ScoredHabit<T> | null {
     // Filter to incomplete, non-skipped habits
     const incomplete = habits.filter(h =>
         !h.completed_today && !skippedIds.includes(h.id)
@@ -80,13 +81,13 @@ function getNextHabit(
     return scored[0] || null
 }
 
-export function WhatsNext({
+export function WhatsNext<T extends BaseHabit>({
     habits,
     focusHabitIds,
     onComplete,
     skippedIds,
     onSkip,
-}: WhatsNextProps) {
+}: WhatsNextProps<T>) {
     const currentHour = new Date().getHours()
 
     // Get the suggested habit

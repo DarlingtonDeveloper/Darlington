@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DayNavigator } from '@/components/habits/day-navigator'
 import { PartialComplete, usePartialComplete } from '@/components/habits/partial-complete'
+import { WhatsNext, useWhatsNext } from '@/components/habits/whats-next'
 
 interface Habit {
     id: string
@@ -55,6 +56,9 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
     // Partial completion modal state
     const { isOpen: isPartialOpen, targetHabitId, open: openPartial, close: closePartial } = usePartialComplete()
+
+    // What's Next skip state
+    const { skippedIds, skip: skipHabit, resetSkips } = useWhatsNext()
 
     // Determine edit permissions
     const now = new Date()
@@ -127,7 +131,8 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
     const handleDateChange = useCallback((newDate: Date) => {
         setViewingDate(newDate)
         loadHabitsForDate(newDate)
-    }, [loadHabitsForDate])
+        resetSkips() // Clear skipped habits when changing dates
+    }, [loadHabitsForDate, resetSkips])
 
     // Navigation helpers
     const goToPrevDay = useCallback(() => {
@@ -454,6 +459,19 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     <div className="flex items-center justify-center">
                         <div className="text-neutral-500 text-sm">Loading...</div>
                     </div>
+                </div>
+            )}
+
+            {/* What's Next suggestion card */}
+            {viewingIsToday && canEdit && !isLoading && (
+                <div className="px-4 sm:px-6 pt-4 sm:max-w-2xl sm:mx-auto">
+                    <WhatsNext
+                        habits={habits}
+                        focusHabitIds={focusHabitIds}
+                        onComplete={toggleHabit}
+                        skippedIds={skippedIds}
+                        onSkip={skipHabit}
+                    />
                 </div>
             )}
 
