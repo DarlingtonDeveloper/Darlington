@@ -58,13 +58,12 @@ export function HabitsClient({ initialHabits, initialDate }: HabitsClientProps) 
         try {
             const targetDate = format(date, 'yyyy-MM-dd')
 
-            // Get all habits that existed on or before this date
+            // Get all active habits (don't filter by created_at since migrated data may predate habit creation)
             const { data: habitsData, error: habitsError } = await supabase
                 .from('habits')
                 .select('*')
                 .eq('user_id', USER_ID)
                 .eq('is_active', true)
-                .lte('created_at', `${targetDate}T23:59:59`)
                 .order('display_order')
 
             if (habitsError) throw habitsError
