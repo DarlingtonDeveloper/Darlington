@@ -2,7 +2,19 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Habit } from '@/types/database'
+
+interface Habit {
+    id: string
+    user_id: string
+    name: string
+    description: string | null
+    category: string | null
+    target_frequency: string
+    display_order: number
+    is_active: boolean
+    created_at: string
+    updated_at: string
+}
 
 interface HabitWithStatus extends Habit {
     completed_today: boolean

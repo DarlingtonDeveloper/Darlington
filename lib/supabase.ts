@@ -1,5 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -12,16 +11,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey
-)
+// Not using Database type - causes TypeScript inference issues
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // For server-side use with service role key (bypasses RLS)
 // Only available on server-side (not in browser)
 export const supabaseAdmin =
   process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient<Database>(
+    ? createClient(
       supabaseUrl,
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
