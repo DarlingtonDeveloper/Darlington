@@ -31,6 +31,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover", // Enable safe area insets for iPhone notch/home indicator
 };
 
 // Portfolio owner information for schema.org data

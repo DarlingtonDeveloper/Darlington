@@ -139,12 +139,19 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
 
     const categoryOrder = ['morning', 'anytime', 'productivity', 'social', 'evening']
 
+    // Calculate category completion counts
+    const getCategoryStats = (categoryKey: string) => {
+        const categoryHabits = groupedHabits[categoryKey] || []
+        const completed = categoryHabits.filter(h => h.completed_today).length
+        return { completed, total: categoryHabits.length }
+    }
+
     if (habits.length === 0) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <div className="min-h-full bg-neutral-950 text-neutral-50 flex items-center justify-center px-4 pt-safe pb-safe">
                 <div className="text-center">
-                    <div className="text-xl mb-4">No habits found</div>
-                    <div className="text-sm text-white/50">
+                    <div className="text-base font-medium mb-2 text-neutral-300">No habits found</div>
+                    <div className="text-sm text-neutral-500">
                         Check that your database is set up correctly and habits are seeded.
                     </div>
                 </div>
@@ -153,75 +160,92 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white">
-            {/* Header */}
-            <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/10 z-10">
-                <div className="max-w-2xl mx-auto px-4 py-4">
-                    <h1 className="text-2xl font-bold">Daily Habits</h1>
-                    <div className="mt-2">
-                        <div className="flex items-center justify-between text-sm">
-                            <span>{completedCount} of {totalCount} completed</span>
-                            <span className="font-bold">{percentage}%</span>
+        <div className="min-h-full bg-neutral-950 text-neutral-50">
+            {/* Header - sticky with safe area for notch */}
+            <div className="sticky top-0 bg-neutral-950 border-b border-neutral-800 z-10 pt-safe">
+                <div className="px-4 sm:px-6 py-4 sm:max-w-2xl sm:mx-auto">
+                    <div className="flex items-baseline justify-between">
+                        <h1 className="text-xl sm:text-lg font-semibold tracking-tight">Daily Habits</h1>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-base sm:text-sm tabular-nums text-neutral-400">
+                                {completedCount}/{totalCount}
+                            </span>
+                            <span className="text-neutral-600">·</span>
+                            <span className="font-mono text-base sm:text-sm tabular-nums text-neutral-300">
+                                {percentage}%
+                            </span>
                         </div>
-                        <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-300"
-                                style={{ width: `${percentage}%` }}
-                            />
-                        </div>
+                    </div>
+                    <div className="mt-3 h-1.5 sm:h-1 bg-neutral-800 rounded-sm overflow-hidden">
+                        <div
+                            className="h-full bg-emerald-500 transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Habits List */}
-            <div className="max-w-2xl mx-auto px-4 py-6">
+            <div className="px-4 sm:px-6 py-4 sm:max-w-2xl sm:mx-auto">
                 {categoryOrder.map(categoryKey => {
                     const categoryHabits = groupedHabits[categoryKey]
                     if (!categoryHabits || categoryHabits.length === 0) return null
+                    const stats = getCategoryStats(categoryKey)
 
                     return (
-                        <div key={categoryKey} className="mb-8">
-                            <h2 className="text-lg font-semibold capitalize mb-3 text-white/70">
-                                {categoryKey}
-                            </h2>
+                        <div key={categoryKey} className="mb-6 sm:mb-4">
+                            <div className="flex items-center justify-between mb-3 sm:mb-2">
+                                <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                                    {categoryKey}
+                                </h2>
+                                <span className="font-mono text-xs tabular-nums text-neutral-600">
+                                    {stats.completed}/{stats.total}
+                                </span>
+                            </div>
                             <div className="space-y-2">
                                 {categoryHabits.map(habit => (
                                     <button
                                         key={habit.id}
                                         onClick={() => toggleHabit(habit)}
                                         className={`
-                      w-full p-4 rounded-lg text-left transition-all
-                      ${habit.completed_today
-                                                ? 'bg-green-500/20 border-green-500/50'
-                                                : 'bg-white/5 border-white/10'
+                                            w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 rounded-lg sm:rounded-md text-left
+                                            transition-colors duration-150
+                                            active:scale-[0.98] active:transition-transform
+                                            ${habit.completed_today
+                                                ? 'bg-emerald-950/50 border-emerald-800/50'
+                                                : 'bg-neutral-900 border-neutral-800 active:bg-neutral-800'
                                             }
-                      border hover:border-white/30
-                    `}
+                                            border
+                                        `}
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-4 sm:gap-3">
+                                            {/* Checkbox - 24px on mobile for touch, 20px on desktop */}
                                             <div className={`
-                        flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center
-                        ${habit.completed_today
-                                                    ? 'bg-green-500 border-green-500'
-                                                    : 'border-white/30'
+                                                flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
+                                                flex items-center justify-center transition-colors duration-150
+                                                ${habit.completed_today
+                                                    ? 'bg-emerald-500 border-emerald-500'
+                                                    : 'border-neutral-600'
                                                 }
-                      `}>
+                                            `}>
                                                 {habit.completed_today && (
-                                                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-medium">{habit.name}</div>
+                                            <div className="flex-1 flex items-center justify-between min-w-0">
+                                                <span className={`text-base sm:text-sm font-medium truncate ${habit.completed_today ? 'text-neutral-300' : 'text-neutral-200'}`}>
+                                                    {habit.name}
+                                                </span>
                                                 {habit.completed_at && (
-                                                    <div className="text-xs text-white/50 mt-1">
-                                                        Completed at {new Date(habit.completed_at).toLocaleTimeString('en-US', {
+                                                    <span className="font-mono text-sm sm:text-xs tabular-nums text-neutral-500 ml-3 flex-shrink-0">
+                                                        {new Date(habit.completed_at).toLocaleTimeString('en-US', {
                                                             hour: 'numeric',
                                                             minute: '2-digit',
                                                             hour12: true
                                                         })}
-                                                    </div>
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -233,26 +257,28 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
                 })}
             </div>
 
-            {/* Daily Summary Section */}
-            <div className="max-w-2xl mx-auto px-4 pb-8">
-                <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                    <h3 className="font-semibold mb-3">Daily Summary</h3>
+            {/* Daily Summary Section - with safe area for home indicator */}
+            <div className="px-4 sm:px-6 pb-safe sm:max-w-2xl sm:mx-auto">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-lg sm:rounded-md p-4 mb-4">
+                    <h3 className="text-base sm:text-sm font-medium text-neutral-300 mb-4 sm:mb-3">Daily Summary</h3>
 
-                    {/* Energy Level */}
+                    {/* Energy Level - 44px min touch targets */}
                     <div className="mb-4">
-                        <label className="block text-sm text-white/70 mb-2">Energy Level</label>
+                        <label className="block text-xs text-neutral-500 mb-2">Energy Level</label>
                         <div className="flex gap-2">
                             {(['low', 'medium', 'high'] as const).map(level => (
                                 <button
                                     key={level}
                                     onClick={() => setEnergyLevel(level)}
                                     className={`
-                    flex-1 py-2 px-4 rounded-lg capitalize transition-all
-                    ${energyLevel === level
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-white/5 text-white/70 hover:bg-white/10'
+                                        flex-1 min-h-[44px] sm:min-h-0 py-3 sm:py-2 px-3 rounded-lg sm:rounded-md
+                                        text-base sm:text-sm font-medium capitalize
+                                        transition-colors duration-150 active:scale-[0.98]
+                                        ${energyLevel === level
+                                            ? 'bg-neutral-800 text-neutral-200'
+                                            : 'bg-neutral-900 text-neutral-500 border border-neutral-800 active:bg-neutral-800'
                                         }
-                  `}
+                                    `}
                                 >
                                     {level}
                                 </button>
@@ -262,21 +288,22 @@ export function HabitsClient({ initialHabits }: HabitsClientProps) {
 
                     {/* Context Notes */}
                     <div className="mb-4">
-                        <label className="block text-sm text-white/70 mb-2">Notes</label>
+                        <label className="block text-xs text-neutral-500 mb-2">Notes</label>
                         <textarea
                             value={contextNotes}
                             onChange={(e) => setContextNotes(e.target.value)}
                             placeholder="How was your day? Any context..."
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg sm:rounded-md p-4 sm:p-3 text-base sm:text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-600 transition-colors duration-150 resize-none"
                             rows={3}
                         />
                     </div>
 
+                    {/* Save button - 44px min height for touch */}
                     <button
                         onClick={saveDailySummary}
-                        className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-4 rounded-lg transition-all"
+                        className="w-full min-h-[44px] sm:min-h-0 bg-neutral-800 active:bg-neutral-700 sm:hover:bg-neutral-700 text-neutral-200 text-base sm:text-sm font-medium py-3 sm:py-2.5 px-4 rounded-lg sm:rounded-md transition-colors duration-150 active:scale-[0.98]"
                     >
-                        Save Daily Summary
+                        Save Summary
                     </button>
                 </div>
             </div>
