@@ -18,7 +18,8 @@
 ### Frontend
 - ✅ `/habits` route with mobile-first Linear-inspired UI
 - ✅ `/habits/analytics` dashboard with streaks, weekly chart, time heatmap
-- ✅ Tab navigation between Daily and Analytics views
+- ✅ `/goals` route showing goals with linked habits and progress
+- ✅ Tab navigation between Daily, Goals, and Analytics views
 - ✅ TypeScript types generated from schema
 - ✅ Supabase client configured (lib/supabase.ts)
 - ✅ Client component for habit interactions
@@ -50,6 +51,9 @@
 ### Tier 2 Features (Complete)
 - ✅ What's Next button (smart habit suggestion based on focus, time of day)
 - ✅ Multi-step habits (sub-steps within habits - Yoga has 8 steps)
+
+### Tier 3 Features (In Progress)
+- ✅ Goals table (habits linked to goals with weighted progress tracking)
 
 ---
 
@@ -116,6 +120,7 @@ Mindful meal, Teeth evening, **Bed by 11pm** (CRITICAL), No alcohol, No masturba
 - [x] Tier 1: Partial completions, habit notes, daily check-in
 - [x] Tier 2: What's Next smart suggestions
 - [x] Tier 2: Multi-step habits (Yoga)
+- [x] Tier 3: Goals table with weighted progress
 
 **In Progress:**
 - [ ] 30 days of completion data
@@ -123,7 +128,7 @@ Mindful meal, Teeth evening, **Bed by 11pm** (CRITICAL), No alcohol, No masturba
 **Future:**
 - [ ] Authentication system
 - [ ] AI Daily Scheduler
-- [ ] Goals & Calendar integration
+- [ ] Calendar integration
 
 ---
 
