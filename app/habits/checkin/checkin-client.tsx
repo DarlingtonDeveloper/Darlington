@@ -8,16 +8,11 @@ import { format } from 'date-fns'
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
 interface YesterdayData {
-    completions: {
-        habit_id: string
-        habit_name: string
-        category: string
-        completion_percentage: number
-        notes: string | null
-    }[]
-    totalHabits: number
+    completionRate: number
     completedCount: number
+    totalHabits: number
     missedHabits: { id: string; name: string; category: string }[]
+    notesFromYesterday: { habitName: string; note: string }[]
 }
 
 interface ExistingCheckin {
@@ -27,16 +22,18 @@ interface ExistingCheckin {
     focus_habit_ids: string[] | null
 }
 
-interface Habit {
+interface HabitWithStats {
     id: string
     name: string
     category: string | null
+    completionRate7d: number
+    missedYesterday: boolean
 }
 
 interface CheckinClientProps {
     yesterdayData: YesterdayData
     existingCheckin: ExistingCheckin | null
-    allHabits: Habit[]
+    habitsWithStats: HabitWithStats[]
 }
 
 type Step = 'review' | 'reflection' | 'focus' | 'intention'
@@ -53,7 +50,7 @@ const STEP_TITLES: Record<Step, string> = {
 export function CheckinClient({
     yesterdayData,
     existingCheckin,
-    allHabits,
+    habitsWithStats,
 }: CheckinClientProps) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState<Step>('review')
@@ -117,7 +114,9 @@ export function CheckinClient({
                     .insert(checkinData)
             }
 
+            // Use refresh to ensure the habits page re-fetches data
             router.push('/habits')
+            router.refresh()
         } catch (error) {
             console.error('Failed to save check-in:', error)
         } finally {
@@ -125,9 +124,16 @@ export function CheckinClient({
         }
     }, [reflection, intention, focusHabitIds, existingCheckin, router])
 
-    const completionRate = yesterdayData.totalHabits > 0
-        ? Math.round((yesterdayData.completedCount / yesterdayData.totalHabits) * 100)
-        : 0
+    // Build suggested focus habits: missed yesterday first, then low completion rate
+    const suggestedHabits = [...habitsWithStats]
+        .sort((a, b) => {
+            // Missed yesterday comes first
+            if (a.missedYesterday && !b.missedYesterday) return -1
+            if (!a.missedYesterday && b.missedYesterday) return 1
+            // Then sort by lowest completion rate
+            return a.completionRate7d - b.completionRate7d
+        })
+        .slice(0, 10)
 
     return (
         <div className="min-h-screen bg-neutral-950 text-neutral-50 flex flex-col">
@@ -179,23 +185,20 @@ export function CheckinClient({
             {/* Content */}
             <main className="flex-1 px-4 py-6 overflow-y-auto">
                 {currentStep === 'review' && (
-                    <ReviewStep
-                        yesterdayData={yesterdayData}
-                        completionRate={completionRate}
-                    />
+                    <ReviewStep yesterdayData={yesterdayData} />
                 )}
 
                 {currentStep === 'reflection' && (
                     <ReflectionStep
                         reflection={reflection}
                         setReflection={setReflection}
-                        completionRate={completionRate}
+                        completionRate={yesterdayData.completionRate}
                     />
                 )}
 
                 {currentStep === 'focus' && (
                     <FocusStep
-                        allHabits={allHabits}
+                        suggestedHabits={suggestedHabits}
                         focusHabitIds={focusHabitIds}
                         toggleFocusHabit={toggleFocusHabit}
                     />
@@ -206,7 +209,7 @@ export function CheckinClient({
                         intention={intention}
                         setIntention={setIntention}
                         focusHabitIds={focusHabitIds}
-                        allHabits={allHabits}
+                        habitsWithStats={habitsWithStats}
                     />
                 )}
             </main>
@@ -253,90 +256,63 @@ export function CheckinClient({
 
 // Step Components
 
-function ReviewStep({
-    yesterdayData,
-    completionRate,
-}: {
-    yesterdayData: YesterdayData
-    completionRate: number
-}) {
+function ReviewStep({ yesterdayData }: { yesterdayData: YesterdayData }) {
+    const { completionRate, completedCount, totalHabits, missedHabits, notesFromYesterday } = yesterdayData
+
     return (
         <div className="space-y-6">
-            {/* Summary */}
+            {/* Big summary */}
             <div className="text-center">
-                <div className="text-5xl font-semibold text-neutral-50 font-mono tabular-nums">
+                <div className="text-6xl font-semibold text-neutral-50 font-mono tabular-nums">
                     {completionRate}%
                 </div>
-                <p className="text-sm text-neutral-500 mt-1">
-                    {yesterdayData.completedCount} of {yesterdayData.totalHabits} habits completed
+                <p className="text-sm text-neutral-500 mt-2">
+                    {completedCount} of {totalHabits} habits completed yesterday
                 </p>
             </div>
 
-            {/* Completed habits */}
-            {yesterdayData.completions.length > 0 && (
-                <div>
+            {/* Notes from yesterday (if any) */}
+            {notesFromYesterday.length > 0 && (
+                <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
                     <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                        Completed
+                        Your notes
                     </h3>
-                    <div className="space-y-2">
-                        {yesterdayData.completions.map(habit => (
-                            <div
-                                key={habit.habit_id}
-                                className="
-                                    px-3 py-2.5 rounded-lg
-                                    bg-emerald-950/30 border border-emerald-900/50
-                                "
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <span className="text-sm text-neutral-200">{habit.habit_name}</span>
-                                    </div>
-                                    {habit.completion_percentage < 100 && (
-                                        <span className="text-xs font-mono text-emerald-400">
-                                            {habit.completion_percentage}%
-                                        </span>
-                                    )}
+                    <div className="space-y-3">
+                        {notesFromYesterday.map((item, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                                <svg className="w-3.5 h-3.5 text-neutral-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                                </svg>
+                                <div>
+                                    <span className="text-xs text-neutral-500">{item.habitName}:</span>
+                                    <p className="text-sm text-neutral-300 italic">{item.note}</p>
                                 </div>
-                                {/* Show note if exists */}
-                                {habit.notes && (
-                                    <div className="mt-2 ml-8 flex items-start gap-2">
-                                        <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                        </svg>
-                                        <span className="text-xs text-emerald-400/70 italic">{habit.notes}</span>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* Missed habits */}
-            {yesterdayData.missedHabits.length > 0 && (
+            {/* Missed habits summary */}
+            {missedHabits.length > 0 && (
                 <div>
                     <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                        Missed
+                        Missed ({missedHabits.length})
                     </h3>
-                    <div className="space-y-2">
-                        {yesterdayData.missedHabits.map(habit => (
-                            <div
+                    <div className="flex flex-wrap gap-2">
+                        {missedHabits.slice(0, 8).map(habit => (
+                            <span
                                 key={habit.id}
-                                className="
-                                    flex items-center gap-3
-                                    px-3 py-2.5 rounded-lg
-                                    bg-neutral-900 border border-neutral-800
-                                "
+                                className="px-2.5 py-1 rounded-full text-xs bg-neutral-900 border border-neutral-800 text-neutral-400"
                             >
-                                <div className="w-5 h-5 rounded-full border-2 border-neutral-700" />
-                                <span className="text-sm text-neutral-400">{habit.name}</span>
-                            </div>
+                                {habit.name}
+                            </span>
                         ))}
+                        {missedHabits.length > 8 && (
+                            <span className="px-2.5 py-1 rounded-full text-xs text-neutral-600">
+                                +{missedHabits.length - 8} more
+                            </span>
+                        )}
                     </div>
                 </div>
             )}
@@ -384,18 +360,18 @@ function ReflectionStep({
             />
 
             <p className="text-xs text-neutral-600 text-right">
-                Optional — skip if you prefer
+                Optional - skip if you prefer
             </p>
         </div>
     )
 }
 
 function FocusStep({
-    allHabits,
+    suggestedHabits,
     focusHabitIds,
     toggleFocusHabit,
 }: {
-    allHabits: Habit[]
+    suggestedHabits: HabitWithStats[]
     focusHabitIds: string[]
     toggleFocusHabit: (id: string) => void
 }) {
@@ -406,12 +382,12 @@ function FocusStep({
                     Choose up to 3 focus habits
                 </h2>
                 <p className="text-sm text-neutral-500 mt-1">
-                    Which habits matter most today?
+                    Prioritizing missed habits and those needing attention.
                 </p>
             </div>
 
             <div className="space-y-2">
-                {allHabits.map(habit => {
+                {suggestedHabits.map(habit => {
                     const isSelected = focusHabitIds.includes(habit.id)
                     const isDisabled = !isSelected && focusHabitIds.length >= 3
 
@@ -433,14 +409,26 @@ function FocusStep({
                                 }
                             `}
                         >
-                            <span className="text-sm font-medium">{habit.name}</span>
-                            {isSelected && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm font-medium">{habit.name}</span>
+                                {habit.missedYesterday && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500/80">
+                                        missed
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-neutral-600">
+                                    {habit.completionRate7d}% 7d
+                                </span>
+                                {isSelected && (
+                                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                )}
+                            </div>
                         </button>
                     )
                 })}
@@ -457,14 +445,14 @@ function IntentionStep({
     intention,
     setIntention,
     focusHabitIds,
-    allHabits,
+    habitsWithStats,
 }: {
     intention: string
     setIntention: (value: string) => void
     focusHabitIds: string[]
-    allHabits: Habit[]
+    habitsWithStats: HabitWithStats[]
 }) {
-    const focusHabits = allHabits.filter(h => focusHabitIds.includes(h.id))
+    const focusHabits = habitsWithStats.filter(h => focusHabitIds.includes(h.id))
 
     return (
         <div className="space-y-4">
@@ -508,7 +496,7 @@ function IntentionStep({
             />
 
             <p className="text-xs text-neutral-600 text-right">
-                Optional — skip if you prefer
+                Optional - skip if you prefer
             </p>
         </div>
     )

@@ -7,16 +7,19 @@ export const dynamic = 'force-dynamic'
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
 interface YesterdayData {
-    completions: {
-        habit_id: string
-        habit_name: string
-        category: string
-        completion_percentage: number
-        notes: string | null
-    }[]
-    totalHabits: number
+    completionRate: number
     completedCount: number
+    totalHabits: number
     missedHabits: { id: string; name: string; category: string }[]
+    notesFromYesterday: { habitName: string; note: string }[]
+}
+
+interface HabitWithStats {
+    id: string
+    name: string
+    category: string | null
+    completionRate7d: number
+    missedYesterday: boolean
 }
 
 async function getYesterdayData(): Promise<YesterdayData> {
@@ -37,28 +40,75 @@ async function getYesterdayData(): Promise<YesterdayData> {
         .eq('user_id', USER_ID)
         .eq('completion_date', yesterday)
 
-    const habitsWithNames = (completions || []).map(c => {
-        const habit = habits?.find(h => h.id === c.habit_id)
-        return {
-            habit_id: c.habit_id,
-            habit_name: habit?.name || 'Unknown',
-            category: habit?.category || 'uncategorized',
-            completion_percentage: c.completion_percentage ?? 100,
-            notes: c.notes,
-        }
-    })
-
     const completedIds = new Set(completions?.map(c => c.habit_id) || [])
     const missedHabits = (habits || [])
         .filter(h => !completedIds.has(h.id))
         .map(h => ({ id: h.id, name: h.name, category: h.category || 'uncategorized' }))
 
+    // Collect notes from yesterday
+    const notesFromYesterday = (completions || [])
+        .filter(c => c.notes)
+        .map(c => {
+            const habit = habits?.find(h => h.id === c.habit_id)
+            return { habitName: habit?.name || 'Unknown', note: c.notes! }
+        })
+
+    const totalHabits = habits?.length || 0
+    const completedCount = completions?.length || 0
+    const completionRate = totalHabits > 0 ? Math.round((completedCount / totalHabits) * 100) : 0
+
     return {
-        completions: habitsWithNames,
-        totalHabits: habits?.length || 0,
-        completedCount: completions?.length || 0,
+        completionRate,
+        completedCount,
+        totalHabits,
         missedHabits,
+        notesFromYesterday,
     }
+}
+
+async function getHabitsWithStats(): Promise<HabitWithStats[]> {
+    const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+    const weekAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd')
+
+    // Get all habits
+    const { data: habits } = await supabase
+        .from('habits')
+        .select('id, name, category')
+        .eq('user_id', USER_ID)
+        .eq('is_active', true)
+        .order('display_order')
+
+    // Get last 7 days of completions
+    const { data: completions } = await supabase
+        .from('habit_completions')
+        .select('habit_id, completion_date')
+        .eq('user_id', USER_ID)
+        .gte('completion_date', weekAgo)
+        .lte('completion_date', yesterday)
+
+    // Get yesterday's completions for missed check
+    const { data: yesterdayCompletions } = await supabase
+        .from('habit_completions')
+        .select('habit_id')
+        .eq('user_id', USER_ID)
+        .eq('completion_date', yesterday)
+
+    const yesterdayIds = new Set(yesterdayCompletions?.map(c => c.habit_id) || [])
+
+    // Calculate 7-day completion rate per habit
+    const completionsByHabit = new Map<string, number>()
+    completions?.forEach(c => {
+        const count = completionsByHabit.get(c.habit_id) || 0
+        completionsByHabit.set(c.habit_id, count + 1)
+    })
+
+    return (habits || []).map(h => ({
+        id: h.id,
+        name: h.name,
+        category: h.category,
+        completionRate7d: Math.round(((completionsByHabit.get(h.id) || 0) / 7) * 100),
+        missedYesterday: !yesterdayIds.has(h.id),
+    }))
 }
 
 async function getTodayCheckin() {
@@ -74,29 +124,18 @@ async function getTodayCheckin() {
     return data
 }
 
-async function getAllHabits() {
-    const { data } = await supabase
-        .from('habits')
-        .select('id, name, category')
-        .eq('user_id', USER_ID)
-        .eq('is_active', true)
-        .order('display_order')
-
-    return data || []
-}
-
 export default async function CheckinPage() {
-    const [yesterdayData, existingCheckin, allHabits] = await Promise.all([
+    const [yesterdayData, existingCheckin, habitsWithStats] = await Promise.all([
         getYesterdayData(),
         getTodayCheckin(),
-        getAllHabits(),
+        getHabitsWithStats(),
     ])
 
     return (
         <CheckinClient
             yesterdayData={yesterdayData}
             existingCheckin={existingCheckin}
-            allHabits={allHabits}
+            habitsWithStats={habitsWithStats}
         />
     )
 }

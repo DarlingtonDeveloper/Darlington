@@ -388,41 +388,59 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 </div>
             </div>
 
-            {/* Check-in prompt - only show for today when not checked in */}
-            {viewingIsToday && !hasCheckedInToday && !isLoading && (
+            {/* Check-in prompt or completed indicator */}
+            {viewingIsToday && !isLoading && (
                 <div className="px-4 sm:px-6 pt-4 sm:max-w-2xl sm:mx-auto">
-                    <Link
-                        href="/habits/checkin"
-                        className="
-                            block w-full p-4 rounded-lg
-                            bg-emerald-950/40 border border-emerald-800/50
-                            active:bg-emerald-950/60 transition-colors duration-150
-                            active:scale-[0.99] active:transition-transform
-                        "
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="
-                                w-10 h-10 rounded-lg
-                                bg-emerald-900/50 border border-emerald-800/50
-                                flex items-center justify-center flex-shrink-0
-                            ">
-                                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    {!hasCheckedInToday ? (
+                        <Link
+                            href="/habits/checkin"
+                            className="
+                                block w-full p-4 rounded-lg
+                                bg-emerald-950/40 border border-emerald-800/50
+                                active:bg-emerald-950/60 transition-colors duration-150
+                                active:scale-[0.99] active:transition-transform
+                            "
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="
+                                    w-10 h-10 rounded-lg
+                                    bg-emerald-900/50 border border-emerald-800/50
+                                    flex items-center justify-center flex-shrink-0
+                                ">
+                                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-emerald-300">
+                                        Morning check-in
+                                    </div>
+                                    <div className="text-xs text-emerald-500/70 mt-0.5">
+                                        Reflect on yesterday, set today&apos;s focus
+                                    </div>
+                                </div>
+                                <svg className="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-emerald-300">
-                                    Morning check-in
-                                </div>
-                                <div className="text-xs text-emerald-500/70 mt-0.5">
-                                    Reflect on yesterday, set today&apos;s focus
-                                </div>
-                            </div>
-                            <svg className="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/habits/checkin"
+                            className="
+                                flex items-center justify-center gap-2 py-2
+                                text-xs text-neutral-500
+                                active:text-neutral-400 transition-colors
+                            "
+                        >
+                            <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                        </div>
-                    </Link>
+                            <span>Check-in complete</span>
+                            <span className="text-neutral-600">·</span>
+                            <span className="text-neutral-400">View</span>
+                        </Link>
+                    )}
                 </div>
             )}
 
