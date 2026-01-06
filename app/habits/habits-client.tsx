@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { DayNavigator } from '@/components/habits/day-navigator'
 import { PartialComplete, usePartialComplete } from '@/components/habits/partial-complete'
 import { WhatsNext, useWhatsNext } from '@/components/habits/whats-next'
+import { HabitSteps, type HabitStep } from '@/components/habits/habit-steps'
 
 interface Habit {
     id: string
@@ -28,6 +29,8 @@ interface HabitWithStatus extends Habit {
     completed_at?: string
     completion_percentage?: number
     notes?: string | null
+    steps?: HabitStep[]
+    completedStepIds?: string[]
 }
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
@@ -60,6 +63,9 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
     // What's Next skip state
     const { skippedIds, skip: skipHabit, resetSkips } = useWhatsNext()
 
+    // Multi-step habit expand state
+    const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null)
+
     // Determine edit permissions
     const now = new Date()
     const viewingIsToday = isToday(viewingDate)
@@ -87,18 +93,39 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
             if (habitsError) throw habitsError
 
-            // Get completions for this date
-            const { data: completionsData, error: completionsError } = await supabase
-                .from('habit_completions')
-                .select('*')
-                .eq('user_id', USER_ID)
-                .eq('completion_date', targetDate)
+            // Get completions, steps, and step completions for this date
+            const [completionsResult, stepsResult, stepCompletionsResult] = await Promise.all([
+                supabase
+                    .from('habit_completions')
+                    .select('*')
+                    .eq('user_id', USER_ID)
+                    .eq('completion_date', targetDate),
+                supabase
+                    .from('habit_steps')
+                    .select('*')
+                    .order('display_order'),
+                supabase
+                    .from('habit_step_completions')
+                    .select('step_id')
+                    .eq('user_id', USER_ID)
+                    .eq('completion_date', targetDate)
+            ])
 
-            if (completionsError) throw completionsError
+            if (completionsResult.error) throw completionsResult.error
 
-            // Merge habits with completion status
+            const completionsData = completionsResult.data
+            const stepsData = stepsResult.data || []
+            const stepCompletionsData = stepCompletionsResult.data || []
+            const completedStepIds = stepCompletionsData.map(sc => sc.step_id)
+
+            // Merge habits with completion status and steps
             const habitsWithStatus: HabitWithStatus[] = (habitsData || []).map(habit => {
                 const completion = completionsData?.find(c => c.habit_id === habit.id)
+                const habitSteps = stepsData.filter(s => s.habit_id === habit.id)
+                const habitCompletedStepIds = habitSteps
+                    .filter(s => completedStepIds.includes(s.id))
+                    .map(s => s.id)
+
                 return {
                     ...habit,
                     completed_today: !!completion,
@@ -106,6 +133,8 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     completed_at: completion?.completed_at,
                     completion_percentage: completion?.completion_percentage ?? (completion ? 100 : 0),
                     notes: completion?.notes ?? null,
+                    steps: habitSteps.length > 0 ? habitSteps : undefined,
+                    completedStepIds: habitCompletedStepIds.length > 0 ? habitCompletedStepIds : undefined,
                 }
             })
 
@@ -278,6 +307,106 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
             console.error('Error setting partial completion:', error)
             alert(`Failed to update habit: ${errorMessage}`)
+        }
+    }
+
+    // Toggle a step completion
+    async function toggleStep(stepId: string, habitId: string, currentlyCompleted: boolean) {
+        if (!canEdit) return
+
+        const habit = habits.find(h => h.id === habitId)
+        if (!habit || !habit.steps) return
+
+        try {
+            if (currentlyCompleted) {
+                // Delete step completion
+                const { error } = await supabase
+                    .from('habit_step_completions')
+                    .delete()
+                    .eq('step_id', stepId)
+                    .eq('user_id', USER_ID)
+                    .eq('completion_date', dateString)
+
+                if (error) throw error
+
+                // Update local state
+                setHabits(habits.map(h =>
+                    h.id === habitId
+                        ? { ...h, completedStepIds: (h.completedStepIds || []).filter(id => id !== stepId) }
+                        : h
+                ))
+            } else {
+                // Insert step completion
+                const { error } = await supabase
+                    .from('habit_step_completions')
+                    .insert({
+                        step_id: stepId,
+                        user_id: USER_ID,
+                        completion_date: dateString,
+                    })
+
+                if (error) throw error
+
+                // Update local state
+                const newCompletedStepIds = [...(habit.completedStepIds || []), stepId]
+                setHabits(habits.map(h =>
+                    h.id === habitId
+                        ? { ...h, completedStepIds: newCompletedStepIds }
+                        : h
+                ))
+
+                // Check if all steps are now done - auto-complete parent habit
+                const allStepsDone = habit.steps.every(s => newCompletedStepIds.includes(s.id))
+                if (allStepsDone && !habit.completed_today) {
+                    // Auto-complete parent at 100%
+                    await toggleHabit(habit)
+                }
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            console.error('Error toggling step:', error)
+            alert(`Failed to update step: ${errorMessage}`)
+        }
+    }
+
+    // Complete all steps for a habit
+    async function completeAllSteps(habitId: string) {
+        if (!canEdit) return
+
+        const habit = habits.find(h => h.id === habitId)
+        if (!habit || !habit.steps) return
+
+        const incompleteSteps = habit.steps.filter(s => !(habit.completedStepIds || []).includes(s.id))
+        if (incompleteSteps.length === 0) return
+
+        try {
+            // Insert completions for all incomplete steps
+            const { error } = await supabase
+                .from('habit_step_completions')
+                .insert(incompleteSteps.map(step => ({
+                    step_id: step.id,
+                    user_id: USER_ID,
+                    completion_date: dateString,
+                })))
+
+            if (error) throw error
+
+            // Update local state
+            const allStepIds = habit.steps.map(s => s.id)
+            setHabits(habits.map(h =>
+                h.id === habitId
+                    ? { ...h, completedStepIds: allStepIds }
+                    : h
+            ))
+
+            // Auto-complete parent habit if not already completed
+            if (!habit.completed_today) {
+                await toggleHabit(habit)
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            console.error('Error completing all steps:', error)
+            alert(`Failed to complete steps: ${errorMessage}`)
         }
     }
 
@@ -495,121 +624,142 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                 </div>
                                 <div className="space-y-2">
                                     {categoryHabits.map(habit => (
-                                        <button
-                                            key={habit.id}
-                                            onClick={() => {
-                                                if (habit.completed_today) {
-                                                    // Open partial complete to adjust or clear
-                                                    openPartial(habit.id)
-                                                } else {
-                                                    // Quick complete at 100%
-                                                    toggleHabit(habit)
-                                                }
-                                            }}
-                                            disabled={!canEdit}
-                                            className={`
-                                                w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 rounded-lg sm:rounded-md text-left
-                                                transition-colors duration-150
-                                                ${canEdit ? 'active:scale-[0.98] active:transition-transform' : 'cursor-default'}
-                                                ${habit.completed_today
-                                                    ? canEdit
-                                                        ? 'bg-emerald-950/50 border-emerald-800/50'
-                                                        : 'bg-neutral-900/50 border-neutral-800/50'
-                                                    : canEdit
-                                                        ? 'bg-neutral-900 border-neutral-800 active:bg-neutral-800'
-                                                        : 'bg-neutral-900/50 border-neutral-800/50'
-                                                }
-                                                border
-                                            `}
-                                        >
-                                            <div className="flex items-center gap-4 sm:gap-3">
-                                                {/* Checkbox with progress indicator */}
-                                                {habit.completed_today && (habit.completion_percentage ?? 100) < 100 ? (
-                                                    // Partial completion - show circular progress
-                                                    <div className="flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 relative">
-                                                        <svg className="w-full h-full -rotate-90" viewBox="0 0 24 24">
-                                                            <circle
-                                                                cx="12" cy="12" r="10"
-                                                                fill="none"
-                                                                className="stroke-neutral-700"
-                                                                strokeWidth="2"
-                                                            />
-                                                            <circle
-                                                                cx="12" cy="12" r="10"
-                                                                fill="none"
-                                                                className={canEdit ? 'stroke-emerald-500' : 'stroke-neutral-500'}
-                                                                strokeWidth="2"
-                                                                strokeDasharray={`${(habit.completion_percentage ?? 0) * 0.628} 100`}
-                                                                strokeLinecap="round"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                ) : (
-                                                    // Full completion or not completed - show checkbox
-                                                    <div className={`
-                                                        flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
-                                                        flex items-center justify-center transition-colors duration-150
-                                                        ${habit.completed_today
-                                                            ? canEdit
-                                                                ? 'bg-emerald-500 border-emerald-500'
-                                                                : 'bg-neutral-600 border-neutral-600'
-                                                            : canEdit
-                                                                ? 'border-neutral-600'
-                                                                : 'border-neutral-700'
-                                                        }
-                                                    `}>
-                                                        {habit.completed_today && (
-                                                            <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                        )}
-                                                    </div>
+                                        habit.steps && habit.steps.length > 0 ? (
+                                            // Multi-step habit - use HabitSteps component
+                                            <HabitSteps
+                                                key={habit.id}
+                                                habitName={habit.name}
+                                                steps={habit.steps.map(s => ({
+                                                    ...s,
+                                                    completed: (habit.completedStepIds || []).includes(s.id)
+                                                }))}
+                                                isExpanded={expandedHabitId === habit.id}
+                                                onToggleExpand={() => setExpandedHabitId(
+                                                    expandedHabitId === habit.id ? null : habit.id
                                                 )}
-                                                <div className="flex-1 flex items-center justify-between min-w-0">
-                                                    <div className="flex items-center gap-2 min-w-0">
-                                                        {/* Focus indicator */}
-                                                        {viewingIsToday && todaysFocusHabits.includes(habit.id) && (
-                                                            <span className="text-amber-500 flex-shrink-0" title="Focus habit">
-                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                onToggleStep={(stepId, completed) => toggleStep(stepId, habit.id, completed)}
+                                                onCompleteAll={() => completeAllSteps(habit.id)}
+                                                disabled={isLoading}
+                                                canEdit={canEdit}
+                                            />
+                                        ) : (
+                                            // Regular habit - use button
+                                            <button
+                                                key={habit.id}
+                                                onClick={() => {
+                                                    if (habit.completed_today) {
+                                                        // Open partial complete to adjust or clear
+                                                        openPartial(habit.id)
+                                                    } else {
+                                                        // Quick complete at 100%
+                                                        toggleHabit(habit)
+                                                    }
+                                                }}
+                                                disabled={!canEdit}
+                                                className={`
+                                                    w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 rounded-lg sm:rounded-md text-left
+                                                    transition-colors duration-150
+                                                    ${canEdit ? 'active:scale-[0.98] active:transition-transform' : 'cursor-default'}
+                                                    ${habit.completed_today
+                                                        ? canEdit
+                                                            ? 'bg-emerald-950/50 border-emerald-800/50'
+                                                            : 'bg-neutral-900/50 border-neutral-800/50'
+                                                        : canEdit
+                                                            ? 'bg-neutral-900 border-neutral-800 active:bg-neutral-800'
+                                                            : 'bg-neutral-900/50 border-neutral-800/50'
+                                                    }
+                                                    border
+                                                `}
+                                            >
+                                                <div className="flex items-center gap-4 sm:gap-3">
+                                                    {/* Checkbox with progress indicator */}
+                                                    {habit.completed_today && (habit.completion_percentage ?? 100) < 100 ? (
+                                                        // Partial completion - show circular progress
+                                                        <div className="flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 relative">
+                                                            <svg className="w-full h-full -rotate-90" viewBox="0 0 24 24">
+                                                                <circle
+                                                                    cx="12" cy="12" r="10"
+                                                                    fill="none"
+                                                                    className="stroke-neutral-700"
+                                                                    strokeWidth="2"
+                                                                />
+                                                                <circle
+                                                                    cx="12" cy="12" r="10"
+                                                                    fill="none"
+                                                                    className={canEdit ? 'stroke-emerald-500' : 'stroke-neutral-500'}
+                                                                    strokeWidth="2"
+                                                                    strokeDasharray={`${(habit.completion_percentage ?? 0) * 0.628} 100`}
+                                                                    strokeLinecap="round"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    ) : (
+                                                        // Full completion or not completed - show checkbox
+                                                        <div className={`
+                                                            flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
+                                                            flex items-center justify-center transition-colors duration-150
+                                                            ${habit.completed_today
+                                                                ? canEdit
+                                                                    ? 'bg-emerald-500 border-emerald-500'
+                                                                    : 'bg-neutral-600 border-neutral-600'
+                                                                : canEdit
+                                                                    ? 'border-neutral-600'
+                                                                    : 'border-neutral-700'
+                                                            }
+                                                        `}>
+                                                            {habit.completed_today && (
+                                                                <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                                 </svg>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 flex items-center justify-between min-w-0">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            {/* Focus indicator */}
+                                                            {viewingIsToday && todaysFocusHabits.includes(habit.id) && (
+                                                                <span className="text-amber-500 flex-shrink-0" title="Focus habit">
+                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                    </svg>
+                                                                </span>
+                                                            )}
+                                                            <span className={`text-base sm:text-sm font-medium truncate ${
+                                                                canEdit
+                                                                    ? habit.completed_today ? 'text-neutral-300' : 'text-neutral-200'
+                                                                    : 'text-neutral-500'
+                                                            }`}>
+                                                                {habit.name}
+                                                            </span>
+                                                            {/* Note indicator */}
+                                                            {habit.notes && (
+                                                                <svg
+                                                                    className="w-3.5 h-3.5 flex-shrink-0 text-neutral-600"
+                                                                    fill="none"
+                                                                    viewBox="0 0 24 24"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth={1.5}
+                                                                >
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                                                                </svg>
+                                                            )}
+                                                        </div>
+                                                        {habit.completed_at && (
+                                                            <span className={`font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${canEdit ? 'text-neutral-500' : 'text-neutral-600'}`}>
+                                                                {(habit.completion_percentage ?? 100) < 100 && (
+                                                                    <span className="text-amber-500/80 mr-1">{habit.completion_percentage}%</span>
+                                                                )}
+                                                                {new Date(habit.completed_at).toLocaleTimeString('en-US', {
+                                                                    hour: 'numeric',
+                                                                    minute: '2-digit',
+                                                                    hour12: true
+                                                                })}
                                                             </span>
                                                         )}
-                                                        <span className={`text-base sm:text-sm font-medium truncate ${
-                                                            canEdit
-                                                                ? habit.completed_today ? 'text-neutral-300' : 'text-neutral-200'
-                                                                : 'text-neutral-500'
-                                                        }`}>
-                                                            {habit.name}
-                                                        </span>
-                                                        {/* Note indicator */}
-                                                        {habit.notes && (
-                                                            <svg
-                                                                className="w-3.5 h-3.5 flex-shrink-0 text-neutral-600"
-                                                                fill="none"
-                                                                viewBox="0 0 24 24"
-                                                                stroke="currentColor"
-                                                                strokeWidth={1.5}
-                                                            >
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                                            </svg>
-                                                        )}
                                                     </div>
-                                                    {habit.completed_at && (
-                                                        <span className={`font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${canEdit ? 'text-neutral-500' : 'text-neutral-600'}`}>
-                                                            {(habit.completion_percentage ?? 100) < 100 && (
-                                                                <span className="text-amber-500/80 mr-1">{habit.completion_percentage}%</span>
-                                                            )}
-                                                            {new Date(habit.completed_at).toLocaleTimeString('en-US', {
-                                                                hour: 'numeric',
-                                                                minute: '2-digit',
-                                                                hour12: true
-                                                            })}
-                                                        </span>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        </button>
+                                            </button>
+                                        )
                                     ))}
                                 </div>
                             </div>

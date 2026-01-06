@@ -18,10 +18,23 @@ interface Habit {
   updated_at: string
 }
 
+interface HabitStep {
+  id: string
+  habit_id: string
+  name: string
+  display_order: number
+  duration_seconds: number | null
+  description: string | null
+}
+
 interface HabitWithStatus extends Habit {
   completed_today: boolean
   completion_id?: string
   completed_at?: string
+  completion_percentage?: number
+  notes?: string | null
+  steps?: HabitStep[]
+  completedStepIds?: string[]
 }
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281' // Your user ID
@@ -45,8 +58,8 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
       throw habitsError
     }
 
-    // Get today's completions and yesterday's completions (for ordering)
-    const [todayResult, yesterdayResult] = await Promise.all([
+    // Get today's completions, yesterday's completions (for ordering), steps, and step completions
+    const [todayResult, yesterdayResult, stepsResult, stepCompletionsResult] = await Promise.all([
       supabase
         .from('habit_completions')
         .select('*')
@@ -57,13 +70,25 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
         .select('habit_id, completed_at')
         .eq('user_id', USER_ID)
         .eq('completion_date', yesterday)
-        .order('completed_at')
+        .order('completed_at'),
+      supabase
+        .from('habit_steps')
+        .select('*')
+        .order('display_order'),
+      supabase
+        .from('habit_step_completions')
+        .select('step_id')
+        .eq('user_id', USER_ID)
+        .eq('completion_date', today)
     ])
 
     if (todayResult.error) throw todayResult.error
 
     const completionsData = todayResult.data
     const yesterdayCompletions = yesterdayResult.data || []
+    const stepsData = stepsResult.data || []
+    const stepCompletionsData = stepCompletionsResult.data || []
+    const completedStepIds = stepCompletionsData.map(sc => sc.step_id)
 
     // Create a map of habit_id -> completion order from yesterday
     const yesterdayOrder = new Map<string, number>()
@@ -71,14 +96,23 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
       yesterdayOrder.set(c.habit_id, index)
     })
 
-    // Merge habits with completion status
+    // Merge habits with completion status and steps
     const habitsWithStatus: HabitWithStatus[] = (habitsData || []).map(habit => {
       const completion = completionsData?.find(c => c.habit_id === habit.id)
+      const habitSteps = stepsData.filter(s => s.habit_id === habit.id)
+      const habitCompletedStepIds = habitSteps
+        .filter(s => completedStepIds.includes(s.id))
+        .map(s => s.id)
+
       return {
         ...habit,
         completed_today: !!completion,
         completion_id: completion?.id,
         completed_at: completion?.completed_at,
+        completion_percentage: completion?.completion_percentage ?? (completion ? 100 : 0),
+        notes: completion?.notes ?? null,
+        steps: habitSteps.length > 0 ? habitSteps : undefined,
+        completedStepIds: habitCompletedStepIds.length > 0 ? habitCompletedStepIds : undefined,
       }
     })
 
