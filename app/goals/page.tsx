@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { GoalsClient } from './goals-client'
 import { subDays } from 'date-fns'
+import type { EnergyCorrelation } from '@/types/database'
 
 // Force dynamic rendering - don't try to build this at build time
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,32 @@ export interface GoalHabit {
 export interface GoalWithProgress extends Goal {
     habits: GoalHabit[]
     progress: number
+}
+
+interface GoalsData {
+    goals: GoalWithProgress[]
+    energyCorrelation: EnergyCorrelation[]
+}
+
+async function loadGoalsData(): Promise<GoalsData> {
+    try {
+        // Fetch goals and energy correlation in parallel
+        const [goalsResult, energyResult] = await Promise.all([
+            loadGoals(),
+            supabase.from('energy_correlation').select('*'),
+        ])
+
+        return {
+            goals: goalsResult,
+            energyCorrelation: (energyResult.data || []) as EnergyCorrelation[],
+        }
+    } catch (error) {
+        console.error('Error loading goals data:', error)
+        return {
+            goals: [],
+            energyCorrelation: [],
+        }
+    }
 }
 
 async function loadGoals(): Promise<GoalWithProgress[]> {
@@ -137,7 +164,7 @@ async function loadGoals(): Promise<GoalWithProgress[]> {
 }
 
 export default async function GoalsPage() {
-    const goals = await loadGoals()
+    const data = await loadGoalsData()
 
-    return <GoalsClient goals={goals} />
+    return <GoalsClient goals={data.goals} energyCorrelation={data.energyCorrelation} />
 }
