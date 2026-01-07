@@ -292,3 +292,42 @@ export interface AnalyticsResponse {
   time_patterns: CompletionTimePattern[]
   top_habits: HabitAnalytics[]
 }
+
+// ============================================================================
+// ANALYTICS DASHBOARD V2 TYPES
+// ============================================================================
+
+export interface DailyCompletionRate {
+  completion_date: string
+  completed_habits: number
+  total_habits: number
+  completion_rate: number
+  day_of_week: number
+}
+
+export interface PersonalRecords {
+  best_day_date: string | null
+  best_day_count: number
+  best_week_start: string | null
+  best_week_completions: number
+  longest_active_streak: number
+  total_completions: number
+}
+
+export interface EnergyCorrelation {
+  energy_level: 'low' | 'medium' | 'high'
+  days_count: number
+  avg_completion_rate: number
+}
+
+export interface HabitAnalyticsExtended {
+  habit_id: string
+  habit_name: string
+  category: string | null
+  total_completions: number
+  completions_7d: number
+  completions_30d: number
+  rate_7d: number
+  rate_30d: number
+  first_completion: string | null
+}
