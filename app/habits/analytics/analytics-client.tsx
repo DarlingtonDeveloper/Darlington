@@ -1,10 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import type { HabitStreak, WeeklyStat, CompletionTimePattern, DailyCompletionRate, PersonalRecords } from '@/types/database'
+import type { HabitStreak, WeeklyStat, CompletionTimePattern, DailyCompletionRate, PersonalRecords, Habit, EnergyCorrelation } from '@/types/database'
 import { OverviewTab } from './components/overview-tab'
 import { HabitsTab } from './components/habits-tab'
 import { InsightsTab } from './components/insights-tab'
+
+interface HabitCompletion {
+    habit_id: string
+    completion_date: string
+    completion_percentage: number
+    notes: string | null
+}
+
+interface HabitWithGoals {
+    id: string
+    name: string
+    category: string | null
+    goal_habits: Array<{
+        goals: {
+            id: string
+            title: string
+        }
+    }>
+}
 
 interface AnalyticsClientProps {
     streaks: HabitStreak[]
@@ -15,6 +34,10 @@ interface AnalyticsClientProps {
     personalRecords: PersonalRecords | null
     todayCompletedHabitIds: string[]
     totalActiveHabits: number
+    habits: Habit[]
+    recentCompletions: HabitCompletion[]
+    habitGoals: HabitWithGoals[]
+    energyCorrelation: EnergyCorrelation[]
 }
 
 type TabId = 'overview' | 'habits' | 'insights'
@@ -34,6 +57,10 @@ export function AnalyticsClient({
     personalRecords,
     todayCompletedHabitIds,
     totalActiveHabits,
+    habits,
+    recentCompletions,
+    habitGoals,
+    energyCorrelation,
 }: AnalyticsClientProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview')
 
@@ -99,10 +126,22 @@ export function AnalyticsClient({
                     />
                 )}
                 {activeTab === 'habits' && (
-                    <HabitsTab streaks={streaks} />
+                    <HabitsTab
+                        streaks={streaks}
+                        habits={habits}
+                        recentCompletions={recentCompletions}
+                        habitGoals={habitGoals}
+                        timePatterns={timePatterns}
+                    />
                 )}
                 {activeTab === 'insights' && (
-                    <InsightsTab />
+                    <InsightsTab
+                        streaks={streaks}
+                        dailyRates={dailyRates}
+                        energyCorrelation={energyCorrelation}
+                        habits={habits}
+                        recentCompletions={recentCompletions}
+                    />
                 )}
             </div>
         </div>
