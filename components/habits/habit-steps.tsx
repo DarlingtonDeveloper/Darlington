@@ -1,5 +1,7 @@
 'use client'
 
+import { useRef } from 'react'
+
 export interface HabitStep {
     id: string
     habit_id: string
@@ -20,6 +22,7 @@ interface HabitStepsProps {
     onToggleExpand: () => void
     onToggleStep: (stepId: string, currentlyCompleted: boolean) => void
     onCompleteAll: () => void
+    onOpenDetails?: () => void
     disabled?: boolean
     canEdit?: boolean
 }
@@ -37,9 +40,30 @@ export function HabitSteps({
     onToggleExpand,
     onToggleStep,
     onCompleteAll,
+    onOpenDetails,
     disabled = false,
     canEdit = true,
 }: HabitStepsProps) {
+    // Double-click detection
+    const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    function handleHeaderClick() {
+        if (!canEdit) return
+
+        if (clickTimeoutRef.current) {
+            // Double-click: open details modal
+            clearTimeout(clickTimeoutRef.current)
+            clickTimeoutRef.current = null
+            onOpenDetails?.()
+        } else {
+            // First click: set timeout for expand/collapse
+            clickTimeoutRef.current = setTimeout(() => {
+                onToggleExpand()
+                clickTimeoutRef.current = null
+            }, 300)
+        }
+    }
+
     const completedCount = steps.filter(s => s.completed).length
     const totalCount = steps.length
     const allCompleted = completedCount === totalCount
@@ -66,7 +90,7 @@ export function HabitSteps({
         `}>
             {/* Header - always visible */}
             <button
-                onClick={onToggleExpand}
+                onClick={handleHeaderClick}
                 disabled={disabled}
                 className={`
                     w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 text-left

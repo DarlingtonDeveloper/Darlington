@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSwipeable } from 'react-swipeable'
 import { isToday, isYesterday, startOfDay, differenceInHours, format } from 'date-fns'
 import Link from 'next/link'
@@ -65,6 +65,10 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
     // Multi-step habit expand state
     const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null)
+
+    // Double-click detection
+    const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const lastClickedHabitRef = useRef<string | null>(null)
 
     // Determine edit permissions
     const now = new Date()
@@ -217,6 +221,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                         user_id: USER_ID,
                         completed_at: completedAt,
                         completion_date: dateString,
+                        completion_percentage: 100,
                     })
                     .select()
                     .single()
@@ -226,7 +231,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
                 setHabits(habits.map(h =>
                     h.id === habit.id
-                        ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at }
+                        ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at, completion_percentage: 100 }
                         : h
                 ))
             }
@@ -407,6 +412,35 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
             console.error('Error completing all steps:', error)
             alert(`Failed to complete steps: ${errorMessage}`)
+        }
+    }
+
+    // Handle habit click with double-click detection
+    function handleHabitClick(habit: HabitWithStatus) {
+        if (!canEdit) return
+
+        // If clicking a different habit, cancel any pending timeout
+        if (lastClickedHabitRef.current !== habit.id && clickTimeoutRef.current) {
+            clearTimeout(clickTimeoutRef.current)
+            clickTimeoutRef.current = null
+        }
+
+        // Check if this is a double-click (same habit clicked within 300ms)
+        if (lastClickedHabitRef.current === habit.id && clickTimeoutRef.current) {
+            // Double-click: open details modal
+            clearTimeout(clickTimeoutRef.current)
+            clickTimeoutRef.current = null
+            lastClickedHabitRef.current = null
+            openPartial(habit.id)
+        } else {
+            // First click: set timeout for single-click action
+            lastClickedHabitRef.current = habit.id
+            clickTimeoutRef.current = setTimeout(() => {
+                // Single click: toggle habit
+                toggleHabit(habit)
+                clickTimeoutRef.current = null
+                lastClickedHabitRef.current = null
+            }, 300)
         }
     }
 
@@ -639,6 +673,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                 )}
                                                 onToggleStep={(stepId, completed) => toggleStep(stepId, habit.id, completed)}
                                                 onCompleteAll={() => completeAllSteps(habit.id)}
+                                                onOpenDetails={() => openPartial(habit.id)}
                                                 disabled={isLoading}
                                                 canEdit={canEdit}
                                             />
@@ -646,15 +681,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                             // Regular habit - use button
                                             <button
                                                 key={habit.id}
-                                                onClick={() => {
-                                                    if (habit.completed_today) {
-                                                        // Open partial complete to adjust or clear
-                                                        openPartial(habit.id)
-                                                    } else {
-                                                        // Quick complete at 100%
-                                                        toggleHabit(habit)
-                                                    }
-                                                }}
+                                                onClick={() => handleHabitClick(habit)}
                                                 disabled={!canEdit}
                                                 className={`
                                                     w-full min-h-[52px] sm:min-h-0 px-4 py-3.5 sm:p-3 rounded-lg sm:rounded-md text-left
