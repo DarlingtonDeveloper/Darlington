@@ -15,7 +15,7 @@ import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-const ITEMS_IN_PLAY = 4
+const ITEMS_IN_PLAY = 8
 
 interface HanziClientProps {
   initialWords: WordWithProgress[]

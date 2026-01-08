@@ -18,7 +18,7 @@ INSERT INTO words (hanzi, pinyin, pinyin_numbered, english, tone, stroke_count, 
 ('是', 'shì', 'shi4', 'is / am / are', 4, 9, 1, 1, 'Name food and drinks', 'introduced', 'Sun + correct = what is correct under the sun'),
 ('粥', 'zhōu', 'zhou1', 'porridge / congee', 1, 12, 1, 1, 'Name food and drinks', 'introduced', NULL),
 ('豆', 'dòu', 'dou4', 'bean', 4, 7, 1, 1, 'Name food and drinks', 'introduced', 'Looks like a bean plant on a stand'),
-('腐', 'fǔ', 'fu3', 'rotten / tofu (in 豆腐)', 3, 14, 1, 1, 'Name food and drinks', 'introduced', NULL)
+('腐', 'fǔ', 'fu3', 'rotten / tofu (part 2)', 3, 14, 1, 1, 'Name food and drinks', 'introduced', NULL)
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
