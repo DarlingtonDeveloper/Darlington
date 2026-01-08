@@ -225,3 +225,23 @@
 .pr-safe {
   padding-right: env(safe-area-inset-right, 0px);
 }
+
+/* Focus border animation for focused habits */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes focus-border-rotate {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
+}
+
+.animate-focus-border {
+  animation: focus-border-rotate 3s linear infinite;
+}
