@@ -1,6 +1,17 @@
 // Hanzi Linker - Adaptive Word Selection Algorithm
 
-import { Word, WordWithProgress, SCORE_THRESHOLDS } from './types'
+import { Word, WordWithProgress, SCORE_THRESHOLDS, DifficultySettings, DEFAULT_DIFFICULTY_SETTINGS } from './types'
+import {
+  calculateBoardDifficulty,
+  calculateExpectedDifficulty,
+  calculateWordTargetDifficulty,
+  shouldIntroduceNewWords as checkShouldIntroduceNew,
+  weightedDifficultySelect,
+  selectWordsForReset,
+} from './difficulty'
+
+// Re-export difficulty functions for convenience
+export { selectWordsForReset }
 
 // Fisher-Yates shuffle
 function shuffle<T>(array: T[]): T[] {
@@ -58,6 +69,9 @@ export interface WordSelectionOptions {
   recentlyCompleted?: string[] // Word IDs to exclude (cooldown)
   cooldownCount?: number // How many completions before word can reappear
   sessionScore?: number // Current session score (for performance-based progression)
+  // Difficulty system options
+  difficultySettings?: DifficultySettings
+  useDifficultyTargeting?: boolean
 }
 
 // Threshold for considering a word "mastered enough" to unlock new content
@@ -208,7 +222,25 @@ export function selectWordsForRound(
 }
 
 /**
- * Select a single word for replacement with weighted probability
+ * Options for difficulty-aware word selection
+ */
+export interface NextWordOptions {
+  excludeIds: Set<string>
+  recentlyCompleted?: string[]
+  cooldownCount?: number
+  sessionScore?: number
+  // Difficulty system options
+  difficultySettings?: DifficultySettings
+  visibleWords?: WordWithProgress[]  // Current words on board (for difficulty calculation)
+  useDifficultyTargeting?: boolean   // Enable difficulty-based selection
+}
+
+/**
+ * Select a single word for replacement with weighted probability.
+ *
+ * When useDifficultyTargeting is true, considers both:
+ * 1. Spaced repetition (struggling words prioritized)
+ * 2. Difficulty targeting (select words that help maintain expected difficulty)
  */
 export function selectNextWord(
   allWords: WordWithProgress[],
@@ -216,8 +248,19 @@ export function selectNextWord(
   excludeIds: Set<string>,
   recentlyCompleted: string[] = [],
   cooldownCount: number = 4,
-  sessionScore: number = 0
+  sessionScore: number = 0,
+  options?: {
+    difficultySettings?: DifficultySettings
+    visibleWords?: WordWithProgress[]
+    useDifficultyTargeting?: boolean
+  }
 ): Word | null {
+  const {
+    difficultySettings = DEFAULT_DIFFICULTY_SETTINGS,
+    visibleWords = [],
+    useDifficultyTargeting = false,
+  } = options || {}
+
   // Get words on cooldown
   const cooldownIds = new Set(recentlyCompleted.slice(0, cooldownCount))
   const allExcluded = new Set([...excludeIds, ...cooldownIds])
@@ -227,20 +270,43 @@ export function selectNextWord(
     w => w.unit <= currentUnit && !allExcluded.has(w.id)
   )
 
-  // Check if we should introduce from next section
-  // Conditions: 50%+ familiar, doing well in session, or need more words
-  const seenWords = available.filter(w => w.progress !== null)
-  const wordsAboveThreshold = seenWords.filter(
-    w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
-  )
-  const percentAboveThreshold = seenWords.length > 0
-    ? wordsAboveThreshold.length / seenWords.length
-    : 0
+  // Calculate difficulty context if using targeting
+  let targetDifficulty = 5 // Default moderate
+  let shouldIntroduceNew = false
 
-  const shouldIntroduceNew =
-    percentAboveThreshold >= 0.5 || // 50%+ are familiar
-    sessionScore >= 10 || // Doing well
-    available.length === 0 // Need more words
+  if (useDifficultyTargeting && visibleWords.length > 0) {
+    const boardDiff = calculateBoardDifficulty(visibleWords)
+    const expectedDiff = calculateExpectedDifficulty(difficultySettings, sessionScore)
+
+    // Calculate what difficulty we need
+    targetDifficulty = calculateWordTargetDifficulty(
+      boardDiff.score,
+      expectedDiff,
+      difficultySettings.wordCount
+    )
+
+    // Check if we should introduce new words based on difficulty
+    shouldIntroduceNew = checkShouldIntroduceNew(
+      available,
+      boardDiff.score,
+      expectedDiff,
+      difficultySettings
+    )
+  } else {
+    // Original logic for non-difficulty mode
+    const seenWords = available.filter(w => w.progress !== null)
+    const wordsAboveThreshold = seenWords.filter(
+      w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
+    )
+    const percentAboveThreshold = seenWords.length > 0
+      ? wordsAboveThreshold.length / seenWords.length
+      : 0
+
+    shouldIntroduceNew =
+      percentAboveThreshold >= 0.5 || // 50%+ are familiar
+      sessionScore >= 10 || // Doing well
+      available.length === 0 // Need more words
+  }
 
   if (shouldIntroduceNew) {
     // Include words from next unit
@@ -259,7 +325,12 @@ export function selectNextWord(
     return null
   }
 
-  // Use weighted selection for single word
+  // Use difficulty-aware selection if enabled
+  if (useDifficultyTargeting) {
+    return weightedDifficultySelect(available, targetDifficulty)
+  }
+
+  // Otherwise use original weighted selection
   const selected = weightedRandomSelect(available, 1)
   return selected[0] || null
 }

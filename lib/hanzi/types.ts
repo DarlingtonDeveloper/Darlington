@@ -44,6 +44,10 @@ export interface HanziProfile {
   current_streak: number
   longest_streak: number
   last_practice_date: string | null
+  // Difficulty settings
+  base_difficulty: number | null
+  word_count: number | null
+  show_difficulty_score: boolean | null
   created_at: string
   updated_at: string
 }
@@ -176,6 +180,58 @@ export function getWordStatus(score: number): WordStatus {
   if (score <= SCORE_THRESHOLDS.FAMILIAR_MAX) return 'familiar'
   return 'mastered'
 }
+
+// ============================================================================
+// Difficulty System Types
+// ============================================================================
+
+export interface DifficultySettings {
+  baseDifficulty: number    // 1-10, user setting
+  wordCount: number         // 3-8, user setting
+  showDifficultyScore: boolean  // Debug option
+}
+
+export const DEFAULT_DIFFICULTY_SETTINGS: DifficultySettings = {
+  baseDifficulty: 5,
+  wordCount: 4,
+  showDifficultyScore: false,
+}
+
+export interface BoardDifficultyResult {
+  score: number             // 1-10 scale
+  breakdown: {
+    wordId: string
+    difficulty: number
+  }[]
+}
+
+export type DivergenceSeverity = 'normal' | 'warning' | 'critical'
+
+export interface DivergenceResult {
+  current: number           // Board difficulty score
+  expected: number          // Expected difficulty
+  delta: number            // current - expected (positive = too hard)
+  severity: DivergenceSeverity
+  shouldReset: boolean
+}
+
+export const DIVERGENCE_THRESHOLDS = {
+  WARNING: 2.0,
+  CRITICAL: 3.5,
+} as const
+
+export type ResetPhase = 'shake' | 'fade-out' | 'fade-in' | null
+export type ResetReason = 'too-easy' | 'too-hard'
+
+export interface BoardResetState {
+  isResetting: boolean
+  phase: ResetPhase
+  reason: ResetReason | null
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
 export function getScoreChange(mode: GameMode, wasCorrect: boolean, currentScore: number = 0): number {
   switch (mode) {

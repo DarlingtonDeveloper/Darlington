@@ -8,14 +8,24 @@ import type {
   Word,
   Connection,
   LinkItem,
+  DifficultySettings,
+  ResetPhase,
+  ResetReason,
 } from '@/lib/hanzi/types'
 import { getScoreChange, getWordStatus } from '@/lib/hanzi/types'
-import { selectWordsForRound, selectNextWord, prepareRoundData } from '@/lib/hanzi/word-selection'
+import { selectWordsForRound, selectNextWord, prepareRoundData, selectWordsForReset } from '@/lib/hanzi/word-selection'
+import {
+  calculateBoardDifficulty,
+  calculateExpectedDifficulty,
+  calculateDivergence,
+  getSettingsFromProfile,
+} from '@/lib/hanzi/difficulty'
 import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
+import { SettingsModal } from './components/settings-modal'
+import { HanziNav } from './components/hanzi-nav'
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-const ITEMS_IN_PLAY = 8
 
 interface HanziClientProps {
   initialWords: WordWithProgress[]
@@ -26,6 +36,7 @@ interface HanziClientProps {
 
 export function HanziClient({
   initialWords,
+  initialProfile,
   currentUnit: initialUnit,
 }: HanziClientProps) {
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
@@ -66,8 +77,30 @@ export function HanziClient({
   const [sessionScore, setSessionScore] = useState(0)
   const [showUnitSelector, setShowUnitSelector] = useState(false)
 
+  // Difficulty system state
+  const [settings, setSettings] = useState<DifficultySettings>(() =>
+    getSettingsFromProfile(initialProfile)
+  )
+  const [showSettings, setShowSettings] = useState(false)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  // Board reset state
+  const [isResetting, setIsResetting] = useState(false)
+  const [resetPhase, setResetPhase] = useState<ResetPhase>(null)
+  const [resetNotification, setResetNotification] = useState<string | null>(null)
+
   // Ref to track if we're processing a match (prevent double-processing)
   const processingMatch = useRef(false)
+
+  // Get visible words (words currently on the board)
+  const getVisibleWords = useCallback((): WordWithProgress[] => {
+    return words.filter(w => activeWordIds.has(w.id))
+  }, [words, activeWordIds])
+
+  // Calculate current board difficulty
+  const boardDifficultyResult = calculateBoardDifficulty(getVisibleWords())
+  const expectedDifficulty = calculateExpectedDifficulty(settings, sessionScore)
+  const divergence = calculateDivergence(boardDifficultyResult.score, expectedDifficulty)
 
   // Get a new word that's not currently in play (with weighted selection and cooldown)
   const getNextWord = useCallback((): Word | null => {
@@ -77,17 +110,24 @@ export function HanziClient({
       activeWordIds,
       recentlyCompleted,
       COOLDOWN_COUNT,
-      sessionScore
+      sessionScore,
+      {
+        difficultySettings: settings,
+        visibleWords: getVisibleWords(),
+        useDifficultyTargeting: true,
+      }
     )
-  }, [words, currentUnit, activeWordIds, recentlyCompleted, sessionScore])
+  }, [words, currentUnit, activeWordIds, recentlyCompleted, sessionScore, settings, getVisibleWords])
 
   // Initialize game with first set of words
   const initializeGame = useCallback(() => {
     const selected = selectWordsForRound(words, currentUnit, {
-      roundSize: ITEMS_IN_PLAY,
+      roundSize: settings.wordCount,
       recentlyCompleted,
       cooldownCount: COOLDOWN_COUNT,
       sessionScore,
+      difficultySettings: settings,
+      useDifficultyTargeting: true,
     })
 
     if (selected.length === 0) return
@@ -103,7 +143,9 @@ export function HanziClient({
     setFlashingIds(new Map())
     setSessionScore(0)
     // Don't reset recentlyCompleted - maintain cooldown across initializations
-  }, [words, currentUnit, recentlyCompleted])
+    // Note: sessionScore is intentionally not in deps as we always reset it to 0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [words, currentUnit, recentlyCompleted, settings])
 
   // Initialize on mount or unit change
   useEffect(() => {
@@ -247,6 +289,106 @@ export function HanziClient({
     }
   }, [words])
 
+  // Save settings to database
+  const handleSaveSettings = useCallback(async (newSettings: DifficultySettings) => {
+    setIsSavingSettings(true)
+    try {
+      await supabase
+        .from('hanzi_profiles')
+        .update({
+          base_difficulty: newSettings.baseDifficulty,
+          word_count: newSettings.wordCount,
+          show_difficulty_score: newSettings.showDifficultyScore,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', USER_ID)
+
+      setSettings(newSettings)
+      setShowSettings(false)
+
+      // If word count changed, reinitialize the game
+      if (newSettings.wordCount !== settings.wordCount) {
+        setEnglishItems([])
+        setPinyinItems([])
+        setHanziItems([])
+        setActiveWordIds(new Set())
+        setConnections([])
+        setSelectedItem(null)
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }, [settings.wordCount])
+
+  // Board reset animation sequence
+  const performBoardReset = useCallback(async (reason: ResetReason) => {
+    if (isResetting) return
+
+    setIsResetting(true)
+
+    // Phase 1: Shake (300ms)
+    setResetPhase('shake')
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    // Phase 2: Fade out (200ms)
+    setResetPhase('fade-out')
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    // Select new difficulty-appropriate words
+    const newWords = selectWordsForReset(
+      words,
+      currentUnit,
+      expectedDifficulty,
+      settings.wordCount
+    )
+
+    if (newWords.length > 0) {
+      const { englishItems: newE, pinyinItems: newP, hanziItems: newH } = prepareRoundData(newWords)
+
+      setActiveWordIds(new Set(newWords.map(w => w.id)))
+      setEnglishItems(newE)
+      setPinyinItems(newP)
+      setHanziItems(newH)
+      setConnections([])
+      setSelectedItem(null)
+    }
+
+    // Phase 3: Fade in (300ms)
+    setResetPhase('fade-in')
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    // Complete
+    setResetPhase(null)
+    setIsResetting(false)
+
+    // Show notification
+    const message = reason === 'too-hard'
+      ? 'Adjusting to your pace'
+      : 'Stepping up the challenge'
+    setResetNotification(message)
+    setTimeout(() => setResetNotification(null), 2000)
+  }, [isResetting, words, currentUnit, expectedDifficulty, settings.wordCount])
+
+  // Check for divergence and trigger reset if needed
+  const checkDivergenceAndReset = useCallback(() => {
+    if (isResetting) return
+
+    const visibleWords = getVisibleWords()
+    if (visibleWords.length === 0) return
+
+    const currentDivergence = calculateDivergence(
+      calculateBoardDifficulty(visibleWords).score,
+      calculateExpectedDifficulty(settings, sessionScore)
+    )
+
+    if (currentDivergence.shouldReset) {
+      const reason: ResetReason = currentDivergence.delta > 0 ? 'too-hard' : 'too-easy'
+      performBoardReset(reason)
+    }
+  }, [isResetting, getVisibleWords, settings, sessionScore, performBoardReset])
+
   // Validate and handle a complete connection
   const handleCompleteConnection = useCallback(async (connection: Connection) => {
     if (processingMatch.current) return
@@ -310,6 +452,9 @@ export function HanziClient({
             c.hanziId === connection.hanziId)
         ))
         replaceWord(wordId)
+
+        // Check for divergence after word replacement (with small delay for state to settle)
+        setTimeout(() => checkDivergenceAndReset(), 100)
       } else {
         // Clear the incorrect connection so user can try again
         setConnections(prev => prev.filter(c =>
@@ -317,11 +462,14 @@ export function HanziClient({
             c.pinyinId === connection.pinyinId &&
             c.hanziId === connection.hanziId)
         ))
+
+        // Also check divergence after incorrect answers
+        setTimeout(() => checkDivergenceAndReset(), 100)
       }
 
       processingMatch.current = false
     }, 600) // Flash duration
-  }, [englishItems, pinyinItems, hanziItems, updateWordProgress, replaceWord])
+  }, [englishItems, pinyinItems, hanziItems, updateWordProgress, replaceWord, checkDivergenceAndReset])
 
   // Handle item selection - free selection from any column
   const handleItemSelect = useCallback(
@@ -498,8 +646,19 @@ export function HanziClient({
     )
   }
 
+  // Get animation class for reset phase
+  const getResetAnimationClass = () => {
+    if (resetPhase === 'shake') return 'animate-board-shake'
+    if (resetPhase === 'fade-out') return 'animate-word-fade-out'
+    if (resetPhase === 'fade-in') return 'animate-word-fade-in'
+    return ''
+  }
+
   return (
     <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
+      {/* Navigation with settings button */}
+      <HanziNav onSettingsClick={() => setShowSettings(true)} />
+
       {/* Header */}
       <div className="flex items-center justify-between py-3">
         <div className="flex items-center gap-3">
@@ -536,26 +695,48 @@ export function HanziClient({
         </div>
       </div>
 
-      {/* Game area */}
-      {englishItems.length > 0 ? (
-        <LinkGame
-          englishItems={englishItems}
-          pinyinItems={pinyinItems}
-          hanziItems={hanziItems}
-          connections={connections}
-          selectedItem={selectedItem}
-          isSubmitted={false}
-          onItemSelect={handleItemSelect}
-          onItemLongPress={handleClearConnection}
-          getItemConnection={getItemConnection}
-          flashingIds={flashingIds}
-          newlyAddedIds={newlyAddedIds}
-        />
-      ) : (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-neutral-500">Loading words...</p>
+      {/* Debug difficulty overlay */}
+      {settings.showDifficultyScore && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 font-mono text-xs">
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Board: <span className="text-neutral-200">{boardDifficultyResult.score.toFixed(1)}</span></span>
+            <span>Expected: <span className="text-neutral-200">{expectedDifficulty.toFixed(1)}</span></span>
+            <span>Delta: <span className={divergence.delta > 0 ? 'text-red-400' : divergence.delta < 0 ? 'text-blue-400' : 'text-neutral-200'}>
+              {divergence.delta > 0 ? '+' : ''}{divergence.delta.toFixed(1)}
+            </span></span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+              divergence.severity === 'critical' ? 'bg-red-900 text-red-300' :
+              divergence.severity === 'warning' ? 'bg-yellow-900 text-yellow-300' :
+              'bg-neutral-800 text-neutral-400'
+            }`}>
+              {divergence.severity}
+            </span>
+          </div>
         </div>
       )}
+
+      {/* Game area with reset animation */}
+      <div className={getResetAnimationClass()}>
+        {englishItems.length > 0 ? (
+          <LinkGame
+            englishItems={englishItems}
+            pinyinItems={pinyinItems}
+            hanziItems={hanziItems}
+            connections={connections}
+            selectedItem={selectedItem}
+            isSubmitted={false}
+            onItemSelect={handleItemSelect}
+            onItemLongPress={handleClearConnection}
+            getItemConnection={getItemConnection}
+            flashingIds={flashingIds}
+            newlyAddedIds={newlyAddedIds}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <p className="text-neutral-500">Loading words...</p>
+          </div>
+        )}
+      </div>
 
       {/* New word overlay */}
       {newWordOverlay && (
@@ -595,6 +776,24 @@ export function HanziClient({
           </div>
         </div>
       )}
+
+      {/* Board reset notification */}
+      {resetNotification && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-overlay-in">
+          <div className="px-4 py-2 rounded-lg border bg-neutral-900/90 border-neutral-700 text-neutral-300">
+            <span className="text-sm">{resetNotification}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Settings modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onSave={handleSaveSettings}
+        isSaving={isSavingSettings}
+      />
     </div>
   )
 }
