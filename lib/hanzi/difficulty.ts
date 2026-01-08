@@ -203,6 +203,10 @@ export function shouldIntroduceNewWords(
 
 /**
  * Select words for a board reset that match the expected difficulty.
+ *
+ * Key insight: If expected difficulty is high but all current words are mastered,
+ * we need to pull in unseen words from the next unit (difficulty 6) or
+ * struggling words (difficulty 8-10).
  */
 export function selectWordsForReset(
   allWords: WordWithProgress[],
@@ -210,29 +214,67 @@ export function selectWordsForReset(
   expectedDifficulty: number,
   wordCount: number
 ): WordWithProgress[] {
-  // Filter to available words (current unit and below)
+  // Start with current unit and below
   const available = allWords.filter(w => w.unit <= currentUnit)
 
-  if (available.length === 0) return []
-
-  // Calculate difficulty for each (based on user's score)
+  // Calculate difficulty for each
   const withDifficulty = available.map(w => ({
     word: w,
     difficulty: calculateWordDifficulty(w)
   }))
 
+  // Check if we have enough words near the expected difficulty
+  const closeEnough = withDifficulty.filter(
+    ({ difficulty }) => Math.abs(difficulty - expectedDifficulty) <= 2
+  )
+
+  // If expected difficulty is high (>= 5) and we don't have enough matching words,
+  // include unseen words from the next unit (they have difficulty 6)
+  if (expectedDifficulty >= 5 && closeEnough.length < wordCount) {
+    const nextUnitWords = allWords.filter(w => w.unit === currentUnit + 1)
+    const nextUnitWithDiff = nextUnitWords.map(w => ({
+      word: w,
+      difficulty: calculateWordDifficulty(w) // Will be 6 for unseen
+    }))
+    withDifficulty.push(...nextUnitWithDiff)
+  }
+
+  // If expected difficulty is very high (>= 7) and still not enough,
+  // look even further ahead
+  if (expectedDifficulty >= 7 && closeEnough.length < wordCount) {
+    const futureWords = allWords.filter(w => w.unit > currentUnit + 1)
+    const futureWithDiff = futureWords.map(w => ({
+      word: w,
+      difficulty: calculateWordDifficulty(w)
+    }))
+    withDifficulty.push(...futureWithDiff)
+  }
+
+  if (withDifficulty.length === 0) return []
+
   // Score by proximity to expected difficulty
-  const scored = withDifficulty.map(({ word, difficulty }) => ({
-    word,
-    difficulty,
-    proximityScore: 10 - Math.abs(difficulty - expectedDifficulty)
-  }))
+  // Use a sharper falloff to more strongly prefer exact matches
+  const scored = withDifficulty.map(({ word, difficulty }) => {
+    const delta = Math.abs(difficulty - expectedDifficulty)
+    // Exponential falloff: exact match = 100, delta 1 = 50, delta 2 = 25, etc.
+    const proximityScore = 100 / Math.pow(2, delta)
+    return { word, difficulty, proximityScore }
+  })
 
   // Sort by proximity (best matches first)
   scored.sort((a, b) => b.proximityScore - a.proximityScore)
 
-  // Select top N words
-  const selected = scored.slice(0, wordCount).map(s => s.word)
+  // Select top N words, but ensure variety by not picking duplicates
+  const selected: WordWithProgress[] = []
+  const selectedIds = new Set<string>()
+
+  for (const { word } of scored) {
+    if (selected.length >= wordCount) break
+    if (!selectedIds.has(word.id)) {
+      selected.push(word)
+      selectedIds.add(word.id)
+    }
+  }
 
   // Shuffle for variety
   return shuffle(selected)
@@ -241,6 +283,9 @@ export function selectWordsForReset(
 /**
  * Calculate combined weight for word selection considering both
  * spaced repetition (struggling words) and difficulty targeting.
+ *
+ * The difficulty weight is now stronger to ensure we actually move
+ * toward the target difficulty, not just favor struggling words.
  */
 export function calculateSelectionWeight(
   word: WordWithProgress,
@@ -257,13 +302,16 @@ export function calculateSelectionWeight(
     srWeight = Math.max(0.5, 4 - score)
   }
 
-  // Difficulty proximity weight
-  // Words closer to target difficulty get higher weight
+  // Difficulty proximity weight - use exponential falloff for stronger targeting
+  // Words closer to target difficulty get MUCH higher weight
   const diffDelta = Math.abs(wordDiff - targetDifficulty)
-  const diffWeight = Math.max(0.5, 5 - diffDelta)
+  // Exponential: delta 0 = 16, delta 1 = 8, delta 2 = 4, delta 3 = 2, etc.
+  const diffWeight = Math.pow(2, Math.max(0, 4 - diffDelta))
 
-  // Combined weight (multiply to balance both factors)
-  return srWeight * diffWeight
+  // Combined weight - multiply, but cap SR weight to prevent it from
+  // completely overriding difficulty targeting
+  const cappedSrWeight = Math.min(srWeight, 8)
+  return cappedSrWeight * diffWeight
 }
 
 /**

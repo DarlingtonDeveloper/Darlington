@@ -292,6 +292,18 @@ export function selectNextWord(
       expectedDiff,
       difficultySettings
     )
+
+    // ALSO introduce new words if target difficulty is high (>= 6) and
+    // we don't have any words close to that difficulty in the available pool
+    if (!shouldIntroduceNew && targetDifficulty >= 6) {
+      const hasHardEnoughWords = available.some(w => {
+        const wordDiff = 7 - (w.progress?.score ?? 0)
+        return Math.abs(wordDiff - targetDifficulty) <= 2
+      })
+      if (!hasHardEnoughWords) {
+        shouldIntroduceNew = true
+      }
+    }
   } else {
     // Original logic for non-difficulty mode
     const seenWords = available.filter(w => w.progress !== null)
