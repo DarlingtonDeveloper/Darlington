@@ -57,6 +57,7 @@ export interface WordSelectionOptions {
   includeReview?: boolean
   recentlyCompleted?: string[] // Word IDs to exclude (cooldown)
   cooldownCount?: number // How many completions before word can reappear
+  sessionScore?: number // Current session score (for performance-based progression)
 }
 
 // Threshold for considering a word "mastered enough" to unlock new content
@@ -88,13 +89,24 @@ export function selectWordsForRound(
   )
 
   // Check if we should introduce words from next section
-  // Condition: All seen words are above progression threshold
+  // Conditions (any of these):
+  // 1. 50%+ of seen words are above progression threshold
+  // 2. Session is going well (positive score)
+  // 3. Not enough words available
   const seenWords = availableWords.filter(w => w.progress !== null)
-  const allAboveThreshold = seenWords.length > 0 && seenWords.every(
+  const wordsAboveThreshold = seenWords.filter(
     w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
   )
+  const percentAboveThreshold = seenWords.length > 0
+    ? wordsAboveThreshold.length / seenWords.length
+    : 0
 
-  if (allAboveThreshold || availableWords.length < roundSize) {
+  const shouldIntroduceNew =
+    percentAboveThreshold >= 0.5 || // 50%+ are familiar
+    (options.sessionScore !== undefined && options.sessionScore >= 10) || // Doing well
+    availableWords.length < roundSize // Need more words
+
+  if (shouldIntroduceNew) {
     // Try to get words from next unit
     const nextUnitWords = allWords.filter(
       w => w.unit === currentUnit + 1 && !cooldownIds.has(w.id)
@@ -203,7 +215,8 @@ export function selectNextWord(
   currentUnit: number,
   excludeIds: Set<string>,
   recentlyCompleted: string[] = [],
-  cooldownCount: number = 4
+  cooldownCount: number = 4,
+  sessionScore: number = 0
 ): Word | null {
   // Get words on cooldown
   const cooldownIds = new Set(recentlyCompleted.slice(0, cooldownCount))
@@ -215,12 +228,21 @@ export function selectNextWord(
   )
 
   // Check if we should introduce from next section
+  // Conditions: 50%+ familiar, doing well in session, or need more words
   const seenWords = available.filter(w => w.progress !== null)
-  const allAboveThreshold = seenWords.length > 0 && seenWords.every(
+  const wordsAboveThreshold = seenWords.filter(
     w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
   )
+  const percentAboveThreshold = seenWords.length > 0
+    ? wordsAboveThreshold.length / seenWords.length
+    : 0
 
-  if (allAboveThreshold || available.length === 0) {
+  const shouldIntroduceNew =
+    percentAboveThreshold >= 0.5 || // 50%+ are familiar
+    sessionScore >= 10 || // Doing well
+    available.length === 0 // Need more words
+
+  if (shouldIntroduceNew) {
     // Include words from next unit
     const nextUnitWords = allWords.filter(
       w => w.unit === currentUnit + 1 && !allExcluded.has(w.id)

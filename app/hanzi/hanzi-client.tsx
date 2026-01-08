@@ -76,9 +76,10 @@ export function HanziClient({
       currentUnit,
       activeWordIds,
       recentlyCompleted,
-      COOLDOWN_COUNT
+      COOLDOWN_COUNT,
+      sessionScore
     )
-  }, [words, currentUnit, activeWordIds, recentlyCompleted])
+  }, [words, currentUnit, activeWordIds, recentlyCompleted, sessionScore])
 
   // Initialize game with first set of words
   const initializeGame = useCallback(() => {
@@ -86,6 +87,7 @@ export function HanziClient({
       roundSize: ITEMS_IN_PLAY,
       recentlyCompleted,
       cooldownCount: COOLDOWN_COUNT,
+      sessionScore,
     })
 
     if (selected.length === 0) return
@@ -141,7 +143,6 @@ export function HanziClient({
       // Show new word overlay for never-seen words
       if (isNewWord) {
         setNewWordOverlay(newWord)
-        setTimeout(() => setNewWordOverlay(null), 2000)
       }
 
       // Mark as newly added for entrance animation
@@ -558,7 +559,10 @@ export function HanziClient({
 
       {/* New word overlay */}
       {newWordOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/90 animate-overlay-in">
+        <button
+          onClick={() => setNewWordOverlay(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/90 animate-overlay-in cursor-pointer"
+        >
           <div className="text-center">
             <div className="text-xs uppercase tracking-wider text-emerald-400 mb-4">
               New Word
@@ -570,8 +574,11 @@ export function HanziClient({
               <div className="text-2xl text-neutral-300">{newWordOverlay.pinyin}</div>
               <div className="text-lg text-neutral-500">{newWordOverlay.english}</div>
             </div>
+            <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
+              Tap to continue
+            </div>
           </div>
-        </div>
+        </button>
       )}
 
       {/* Tier change notification */}

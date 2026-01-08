@@ -8,6 +8,7 @@ import Link from 'next/link'
 
 interface ReviewClientProps {
   initialWords: WordWithProgress[]
+  allHanzi: string[]
 }
 
 // Shuffle array helper
@@ -20,7 +21,7 @@ function shuffle<T>(array: T[]): T[] {
   return result
 }
 
-export function ReviewClient({ initialWords }: ReviewClientProps) {
+export function ReviewClient({ initialWords, allHanzi }: ReviewClientProps) {
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
@@ -38,21 +39,19 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
   const isComplete = currentIndex >= words.length
   const reviewLimit = Math.min(10, words.length)
 
-  // Generate 4 hanzi options (1 correct + 3 random wrong)
+  // Generate 12 hanzi options (1 correct + 11 random wrong)
   const hanziOptions = useMemo(() => {
     if (!currentWord) return []
 
-    // Get other hanzi characters (not the current one)
-    const otherHanzi = words
-      .filter(w => w.id !== currentWord.id)
-      .map(w => w.hanzi)
+    // Get other hanzi characters (not the current one) from full pool
+    const otherHanzi = allHanzi.filter(h => h !== currentWord.hanzi)
 
     // Pick 11 random wrong answers
     const wrongAnswers = shuffle(otherHanzi).slice(0, 11)
 
     // Combine with correct answer and shuffle
     return shuffle([currentWord.hanzi, ...wrongAnswers])
-  }, [currentWord, words])
+  }, [currentWord, allHanzi])
 
   const updateScore = useCallback(
     async (scoreChange: number, wasCorrect: boolean | null) => {

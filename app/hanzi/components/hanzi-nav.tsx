@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const tabs = [
+  { name: 'Learn', href: '/hanzi/lesson' },
   { name: 'Link', href: '/hanzi' },
-  { name: 'Lesson', href: '/hanzi/lesson' },
   { name: 'Review', href: '/hanzi/review' },
   { name: 'Stats', href: '/hanzi/stats' },
 ]
