@@ -1,24 +1,36 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import type { WordWithProgress } from '@/lib/hanzi/types'
-import { getScoreChange } from '@/lib/hanzi/types'
 import Link from 'next/link'
 
 interface ReviewClientProps {
   initialWords: WordWithProgress[]
 }
 
+// Shuffle array helper
+function shuffle<T>(array: T[]): T[] {
+  const result = [...array]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
 export function ReviewClient({ initialWords }: ReviewClientProps) {
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showAnswer, setShowAnswer] = useState(false)
+  const [revealed, setRevealed] = useState(false)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [results, setResults] = useState<{ correct: number; incorrect: number }>({
+  const [sessionScore, setSessionScore] = useState(0)
+  const [results, setResults] = useState<{ correct: number; incorrect: number; revealed: number }>({
     correct: 0,
     incorrect: 0,
+    revealed: 0,
   })
 
   const currentWord = words[currentIndex]
@@ -26,16 +38,30 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
   const isComplete = currentIndex >= words.length
   const reviewLimit = Math.min(10, words.length)
 
-  const handleResponse = useCallback(
-    async (correct: boolean) => {
+  // Generate 4 hanzi options (1 correct + 3 random wrong)
+  const hanziOptions = useMemo(() => {
+    if (!currentWord) return []
+
+    // Get other hanzi characters (not the current one)
+    const otherHanzi = words
+      .filter(w => w.id !== currentWord.id)
+      .map(w => w.hanzi)
+
+    // Pick 3 random wrong answers
+    const wrongAnswers = shuffle(otherHanzi).slice(0, 3)
+
+    // Combine with correct answer and shuffle
+    return shuffle([currentWord.hanzi, ...wrongAnswers])
+  }, [currentWord, words])
+
+  const updateScore = useCallback(
+    async (scoreChange: number, wasCorrect: boolean | null) => {
       if (!currentWord || isLoading) return
 
       setIsLoading(true)
 
       try {
-        // Update score in database - review mode has scaled penalty for incorrect
         const currentScore = currentWord.progress?.score ?? 0
-        const scoreChange = getScoreChange('review', correct, currentScore)
         const newScore = currentScore + scoreChange
 
         await supabase
@@ -43,9 +69,11 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
           .update({
             score: newScore,
             attempts: (currentWord.progress?.attempts ?? 0) + 1,
-            correct_streak: correct
+            correct_streak: wasCorrect === true
               ? (currentWord.progress?.correct_streak ?? 0) + 1
-              : 0,
+              : wasCorrect === false
+                ? 0
+                : currentWord.progress?.correct_streak ?? 0,
             last_seen: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
@@ -61,9 +89,11 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
                     ...w.progress!,
                     score: newScore,
                     attempts: (w.progress?.attempts ?? 0) + 1,
-                    correct_streak: correct
+                    correct_streak: wasCorrect === true
                       ? (w.progress?.correct_streak ?? 0) + 1
-                      : 0,
+                      : wasCorrect === false
+                        ? 0
+                        : w.progress?.correct_streak ?? 0,
                     last_seen: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                   },
@@ -72,32 +102,72 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
           )
         )
 
-        setResults(prev => ({
-          correct: prev.correct + (correct ? 1 : 0),
-          incorrect: prev.incorrect + (correct ? 0 : 1),
-        }))
-
-        // Move to next word (only review up to limit)
-        const nextIndex = currentIndex + 1
-        if (nextIndex >= reviewLimit) {
-          setCurrentIndex(reviewLimit) // Trigger complete state
-        } else {
-          setCurrentIndex(nextIndex)
-        }
-        setShowAnswer(false)
+        setSessionScore(prev => prev + scoreChange)
       } catch (error) {
         console.error('Error updating progress:', error)
       }
 
       setIsLoading(false)
     },
-    [currentWord, currentIndex, isLoading, reviewLimit]
+    [currentWord, currentIndex, isLoading]
   )
+
+  const handleReveal = useCallback(async () => {
+    if (revealed || !currentWord) return
+
+    setRevealed(true)
+    setResults(prev => ({ ...prev, revealed: prev.revealed + 1 }))
+    await updateScore(-1, null) // -1 for revealing
+  }, [revealed, currentWord, updateScore])
+
+  const handleSelectAnswer = useCallback(
+    async (hanzi: string) => {
+      if (revealed || selectedAnswer || !currentWord) return
+
+      setSelectedAnswer(hanzi)
+      const isCorrect = hanzi === currentWord.hanzi
+
+      if (isCorrect) {
+        setResults(prev => ({ ...prev, correct: prev.correct + 1 }))
+        await updateScore(1, true) // +1 for correct
+      } else {
+        setResults(prev => ({ ...prev, incorrect: prev.incorrect + 1 }))
+        await updateScore(-3, false) // -3 for incorrect
+      }
+
+      // Show the answer briefly then move on
+      setRevealed(true)
+      setTimeout(() => {
+        const nextIndex = currentIndex + 1
+        if (nextIndex >= reviewLimit) {
+          setCurrentIndex(reviewLimit)
+        } else {
+          setCurrentIndex(nextIndex)
+        }
+        setRevealed(false)
+        setSelectedAnswer(null)
+      }, 1500)
+    },
+    [revealed, selectedAnswer, currentWord, currentIndex, reviewLimit, updateScore]
+  )
+
+  const handleNext = useCallback(() => {
+    const nextIndex = currentIndex + 1
+    if (nextIndex >= reviewLimit) {
+      setCurrentIndex(reviewLimit)
+    } else {
+      setCurrentIndex(nextIndex)
+    }
+    setRevealed(false)
+    setSelectedAnswer(null)
+  }, [currentIndex, reviewLimit])
 
   const handleRestart = useCallback(() => {
     setCurrentIndex(0)
-    setShowAnswer(false)
-    setResults({ correct: 0, incorrect: 0 })
+    setRevealed(false)
+    setSelectedAnswer(null)
+    setResults({ correct: 0, incorrect: 0, revealed: 0 })
+    setSessionScore(0)
   }, [])
 
   // Empty state
@@ -141,12 +211,10 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
 
   // Complete state
   if (isComplete || currentIndex >= reviewLimit) {
-    const accuracy =
-      results.correct + results.incorrect > 0
-        ? Math.round(
-            (results.correct / (results.correct + results.incorrect)) * 100
-          )
-        : 0
+    const totalAttempts = results.correct + results.incorrect + results.revealed
+    const accuracy = totalAttempts > 0
+      ? Math.round((results.correct / totalAttempts) * 100)
+      : 0
 
     return (
       <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
@@ -168,14 +236,20 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
           <h2 className="text-xl font-semibold text-neutral-50 mb-2">
             Review Complete!
           </h2>
-          <p className="text-neutral-400 mb-6">
-            {results.correct} correct, {results.incorrect} incorrect
-            <br />
+          <div className="text-neutral-400 mb-2 space-y-1">
+            <p className="text-emerald-400">{results.correct} correct (+1 each)</p>
             {results.incorrect > 0 && (
-              <span className="text-red-400">
-                Incorrect words lost 2 points each
-              </span>
+              <p className="text-red-400">{results.incorrect} incorrect (-3 each)</p>
             )}
+            {results.revealed > 0 && (
+              <p className="text-yellow-400">{results.revealed} revealed (-1 each)</p>
+            )}
+          </div>
+          <p className={cn(
+            'text-lg font-medium mb-6',
+            sessionScore >= 0 ? 'text-emerald-400' : 'text-red-400'
+          )}>
+            Session: {sessionScore > 0 ? '+' : ''}{sessionScore}
           </p>
           <div className="flex gap-3">
             <button
@@ -201,22 +275,24 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
       {/* Progress header */}
       <div className="flex items-center justify-between py-3">
         <span className="text-sm text-neutral-400">
-          {currentIndex + 1} of {reviewLimit} to review
+          {currentIndex + 1} of {reviewLimit}
         </span>
-        <span className="text-sm text-neutral-500">
-          Score: {currentWord.progress?.score ?? 0}
+        <span className={cn(
+          'text-sm font-medium',
+          sessionScore >= 0 ? 'text-emerald-400' : 'text-red-400'
+        )}>
+          {sessionScore > 0 ? '+' : ''}{sessionScore}
         </span>
       </div>
 
       {/* Card */}
       <div
         className={cn(
-          'relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[400px] flex flex-col items-center justify-center transition-all duration-300',
-          showAnswer && 'border-neutral-700'
+          'relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[280px] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer',
+          revealed && 'border-neutral-700'
         )}
-        onClick={() => !showAnswer && setShowAnswer(true)}
+        onClick={handleReveal}
       >
-        {/* Show pinyin and ask for hanzi/meaning */}
         <div className="text-center">
           <div className="text-sm text-neutral-500 mb-4">
             What character is this?
@@ -224,50 +300,65 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
           <span className="text-4xl sm:text-5xl text-neutral-300">
             {currentWord.pinyin}
           </span>
+          <div className="text-lg text-neutral-500 mt-2">
+            {currentWord.english}
+          </div>
 
-          {showAnswer && (
-            <div className="mt-8 space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {revealed && (
+            <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="text-7xl">{currentWord.hanzi}</div>
-              <div className="text-lg text-neutral-400">{currentWord.english}</div>
             </div>
           )}
         </div>
 
-        {!showAnswer && (
+        {!revealed && !selectedAnswer && (
           <p className="absolute bottom-4 text-sm text-neutral-600">
-            Tap to reveal
+            Tap to reveal (-1)
           </p>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-6">
-        {!showAnswer ? (
-          <button
-            onClick={() => setShowAnswer(true)}
-            className="w-full py-3 px-4 rounded-xl bg-neutral-800 text-neutral-50 font-medium transition-colors hover:bg-neutral-700"
-          >
-            Show Answer
-          </button>
-        ) : (
-          <div className="flex gap-3">
+      {/* Hanzi options */}
+      <div className="mt-6 grid grid-cols-4 gap-3">
+        {hanziOptions.map((hanzi, i) => {
+          const isCorrect = hanzi === currentWord.hanzi
+          const isSelected = selectedAnswer === hanzi
+          const showResult = revealed || selectedAnswer
+
+          return (
             <button
-              onClick={() => handleResponse(false)}
-              disabled={isLoading}
-              className="flex-1 py-3 px-4 rounded-xl bg-red-900/30 border border-red-800/50 text-red-300 font-medium transition-colors hover:bg-red-900/50 disabled:opacity-50"
+              key={`${hanzi}-${i}`}
+              onClick={() => handleSelectAnswer(hanzi)}
+              disabled={revealed || !!selectedAnswer || isLoading}
+              className={cn(
+                'py-4 rounded-xl border text-3xl font-normal transition-all duration-150',
+                !showResult && 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700',
+                showResult && isCorrect && 'bg-emerald-500/20 border-emerald-500 text-emerald-50',
+                showResult && isSelected && !isCorrect && 'bg-red-500/20 border-red-500 text-red-50',
+                showResult && !isCorrect && !isSelected && 'bg-neutral-900 border-neutral-800 opacity-50',
+                (revealed || !!selectedAnswer || isLoading) && 'pointer-events-none'
+              )}
             >
-              Forgot (-2)
+              {hanzi}
             </button>
-            <button
-              onClick={() => handleResponse(true)}
-              disabled={isLoading}
-              className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 text-white font-medium transition-colors hover:bg-emerald-500 disabled:opacity-50"
-            >
-              Knew It (+1)
-            </button>
-          </div>
-        )}
+          )
+        })}
       </div>
+
+      {/* Scoring hint */}
+      <div className="mt-4 text-center text-xs text-neutral-600">
+        Correct: +1 · Wrong: -3 · Reveal: -1
+      </div>
+
+      {/* Next button when revealed via tap */}
+      {revealed && !selectedAnswer && (
+        <button
+          onClick={handleNext}
+          className="mt-4 w-full py-3 px-4 rounded-xl bg-neutral-800 text-neutral-50 font-medium transition-colors hover:bg-neutral-700"
+        >
+          Next
+        </button>
+      )}
 
       {/* Unit info */}
       <div className="mt-4 text-center text-xs text-neutral-600">
