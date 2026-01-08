@@ -12,6 +12,7 @@ interface LinkColumnProps {
   onItemLongPress: (item: LinkItem) => void
   getItemConnection: (item: LinkItem) => Connection | undefined
   flashingIds?: Map<string, boolean>
+  newlyAddedIds?: Set<string>
 }
 
 export function LinkColumn({
@@ -23,6 +24,7 @@ export function LinkColumn({
   onItemLongPress,
   getItemConnection,
   flashingIds,
+  newlyAddedIds,
 }: LinkColumnProps) {
   return (
     <div className="flex flex-col gap-2">
@@ -37,6 +39,7 @@ export function LinkColumn({
         const isCorrect = connection?.isCorrect ?? null
         const isFlashing = flashingIds?.has(item.id) ?? false
         const flashResult = flashingIds?.get(item.id) ?? null
+        const isNewlyAdded = newlyAddedIds?.has(item.wordId) ?? false
 
         return (
           <LinkItemCard
@@ -51,6 +54,7 @@ export function LinkColumn({
             onLongPress={onItemLongPress}
             isFlashing={isFlashing}
             flashResult={flashResult}
+            isNewlyAdded={isNewlyAdded}
           />
         )
       })}

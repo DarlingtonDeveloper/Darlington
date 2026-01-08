@@ -9,7 +9,7 @@ import type {
   Connection,
   LinkItem,
 } from '@/lib/hanzi/types'
-import { getScoreChange } from '@/lib/hanzi/types'
+import { getScoreChange, getWordStatus } from '@/lib/hanzi/types'
 import { selectWordsForRound, selectNextWord, prepareRoundData } from '@/lib/hanzi/word-selection'
 import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
@@ -47,6 +47,20 @@ export function HanziClient({
 
   // Flash state for showing correct/incorrect feedback
   const [flashingIds, setFlashingIds] = useState<Map<string, boolean>>(new Map())
+
+  // New word overlay state
+  const [newWordOverlay, setNewWordOverlay] = useState<Word | null>(null)
+
+  // Tier change notification state
+  const [tierChange, setTierChange] = useState<{
+    wordId: string
+    type: 'promoted' | 'demoted'
+    from: string
+    to: string
+  } | null>(null)
+
+  // Track newly added word IDs for entrance animation
+  const [newlyAddedIds, setNewlyAddedIds] = useState<Set<string>>(new Set())
 
   // Session stats
   const [sessionScore, setSessionScore] = useState(0)
@@ -120,6 +134,26 @@ export function HanziClient({
 
     // Add new word at random positions if available
     if (newWord) {
+      // Check if this is a truly new word (never seen before)
+      const wordWithProgress = words.find(w => w.id === newWord.id)
+      const isNewWord = !wordWithProgress?.progress
+
+      // Show new word overlay for never-seen words
+      if (isNewWord) {
+        setNewWordOverlay(newWord)
+        setTimeout(() => setNewWordOverlay(null), 2000)
+      }
+
+      // Mark as newly added for entrance animation
+      setNewlyAddedIds(prev => new Set(prev).add(newWord.id))
+      setTimeout(() => {
+        setNewlyAddedIds(prev => {
+          const next = new Set(prev)
+          next.delete(newWord.id)
+          return next
+        })
+      }, 300)
+
       const { englishItems: newE, pinyinItems: newP, hanziItems: newH } = prepareRoundData([newWord])
 
       setEnglishItems(prev => insertAtRandom(prev, newE[0]))
@@ -131,7 +165,7 @@ export function HanziClient({
         return next
       })
     }
-  }, [getNextWord])
+  }, [getNextWord, words])
 
   // Update word progress in database
   const updateWordProgress = useCallback(async (wordId: string, wasCorrect: boolean) => {
@@ -141,6 +175,21 @@ export function HanziClient({
     const currentScore = word.progress?.score ?? 0
     const scoreChange = getScoreChange('link', wasCorrect, currentScore)
     const newScore = currentScore + scoreChange
+
+    // Check for tier change
+    const oldTier = getWordStatus(currentScore)
+    const newTier = getWordStatus(newScore)
+
+    if (oldTier !== newTier) {
+      const isPromotion = wasCorrect
+      setTierChange({
+        wordId,
+        type: isPromotion ? 'promoted' : 'demoted',
+        from: oldTier,
+        to: newTier,
+      })
+      setTimeout(() => setTierChange(null), 1500)
+    }
 
     try {
       if (word.progress) {
@@ -499,10 +548,44 @@ export function HanziClient({
           onItemLongPress={handleClearConnection}
           getItemConnection={getItemConnection}
           flashingIds={flashingIds}
+          newlyAddedIds={newlyAddedIds}
         />
       ) : (
         <div className="flex items-center justify-center h-64">
           <p className="text-neutral-500">Loading words...</p>
+        </div>
+      )}
+
+      {/* New word overlay */}
+      {newWordOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/90 animate-overlay-in">
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-emerald-400 mb-4">
+              New Word
+            </div>
+            <div className="text-8xl sm:text-9xl animate-hanzi-reveal">
+              {newWordOverlay.hanzi}
+            </div>
+            <div className="mt-6 space-y-2 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
+              <div className="text-2xl text-neutral-300">{newWordOverlay.pinyin}</div>
+              <div className="text-lg text-neutral-500">{newWordOverlay.english}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tier change notification */}
+      {tierChange && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-overlay-in">
+          <div className={`px-4 py-2 rounded-lg border ${
+            tierChange.type === 'promoted'
+              ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
+              : 'bg-red-950/80 border-red-800 text-red-300'
+          }`}>
+            <span className="text-sm">
+              {tierChange.type === 'promoted' ? '↑' : '↓'} {tierChange.from} → {tierChange.to}
+            </span>
+          </div>
         </div>
       )}
     </div>

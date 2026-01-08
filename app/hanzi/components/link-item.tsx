@@ -15,6 +15,7 @@ interface LinkItemCardProps {
   onLongPress: (item: LinkItem) => void
   isFlashing?: boolean
   flashResult?: boolean | null
+  isNewlyAdded?: boolean
 }
 
 export function LinkItemCard({
@@ -28,6 +29,7 @@ export function LinkItemCard({
   onLongPress,
   isFlashing,
   flashResult,
+  isNewlyAdded,
 }: LinkItemCardProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
@@ -108,7 +110,8 @@ export function LinkItemCard({
         'border transition-all duration-150',
         'select-none touch-manipulation',
         getStyles(),
-        isSubmitted && 'pointer-events-none'
+        isSubmitted && 'pointer-events-none',
+        isNewlyAdded && 'animate-new-word'
       )}
     >
       <span
