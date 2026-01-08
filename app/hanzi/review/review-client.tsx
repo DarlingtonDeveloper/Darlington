@@ -47,8 +47,8 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
       .filter(w => w.id !== currentWord.id)
       .map(w => w.hanzi)
 
-    // Pick 3 random wrong answers
-    const wrongAnswers = shuffle(otherHanzi).slice(0, 3)
+    // Pick 11 random wrong answers
+    const wrongAnswers = shuffle(otherHanzi).slice(0, 11)
 
     // Combine with correct answer and shuffle
     return shuffle([currentWord.hanzi, ...wrongAnswers])
