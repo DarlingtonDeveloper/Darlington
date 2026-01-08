@@ -87,8 +87,8 @@ export interface LinkItem {
 }
 
 export interface Connection {
-  englishId: string
-  pinyinId: string
+  englishId: string | null
+  pinyinId: string | null
   hanziId: string | null
   wordId: string
   isComplete: boolean

@@ -85,7 +85,7 @@ export function HanziClient({
     }
   }, [words, roundWords.length, startNewRound])
 
-  // Handle item selection
+  // Handle item selection - free selection from any column
   const handleItemSelect = useCallback(
     (item: LinkItem) => {
       if (isSubmitted) return
@@ -93,97 +93,88 @@ export function HanziClient({
       // If same item clicked, deselect
       if (selectedItem?.id === item.id) {
         setSelectedItem(null)
+        setPendingConnection(null)
         return
       }
 
       // If no item selected, select this one
       if (!selectedItem) {
         setSelectedItem(item)
-
-        // Start pending connection if English selected
-        if (item.type === 'english') {
-          setPendingConnection({
-            englishId: item.id,
-            wordId: item.wordId,
-            isComplete: false,
-            isCorrect: null,
-          })
-        }
+        setPendingConnection({
+          [item.type === 'english' ? 'englishId' : item.type === 'pinyin' ? 'pinyinId' : 'hanziId']: item.id,
+          wordId: item.wordId,
+          isComplete: false,
+          isCorrect: null,
+        })
         return
       }
 
-      // If we have a selected item, check for valid connection
-      const types = [selectedItem.type, item.type]
+      // Determine which items we're working with
+      const englishItem = selectedItem.type === 'english' ? selectedItem : item.type === 'english' ? item : null
+      const pinyinItem = selectedItem.type === 'pinyin' ? selectedItem : item.type === 'pinyin' ? item : null
+      const hanziItem = selectedItem.type === 'hanzi' ? selectedItem : item.type === 'hanzi' ? item : null
 
-      // Valid progressions: english -> pinyin -> hanzi
-      if (types.includes('english') && types.includes('pinyin')) {
-        const englishItem = selectedItem.type === 'english' ? selectedItem : item
-        const pinyinItem = selectedItem.type === 'pinyin' ? selectedItem : item
+      // Find existing connection that includes either item
+      const existingConnection = connections.find(c => {
+        if (englishItem && c.englishId === englishItem.id) return true
+        if (pinyinItem && c.pinyinId === pinyinItem.id) return true
+        if (hanziItem && c.hanziId === hanziItem.id) return true
+        return false
+      })
 
-        // Check if this English is already connected
-        const existingConnection = connections.find(
-          c => c.englishId === englishItem.id
-        )
+      if (existingConnection) {
+        // Update existing connection
+        const updated: Connection = { ...existingConnection }
+        if (englishItem) updated.englishId = englishItem.id
+        if (pinyinItem) updated.pinyinId = pinyinItem.id
+        if (hanziItem) updated.hanziId = hanziItem.id
+        updated.isComplete = updated.englishId !== null && updated.pinyinId !== null && updated.hanziId !== null
 
-        if (existingConnection) {
-          // Update existing connection
-          setConnections(prev =>
-            prev.map(c =>
-              c.englishId === englishItem.id
-                ? { ...c, pinyinId: pinyinItem.id }
-                : c
-            )
-          )
-        } else {
-          // Create new connection
-          const newConnection: Connection = {
-            englishId: englishItem.id,
-            pinyinId: pinyinItem.id,
-            hanziId: null,
-            wordId: englishItem.wordId,
-            isComplete: false,
-            isCorrect: null,
-          }
-          setConnections(prev => [...prev, newConnection])
-        }
-
-        setSelectedItem(null)
-        setPendingConnection(null)
-      } else if (types.includes('pinyin') && types.includes('hanzi')) {
-        const pinyinItem = selectedItem.type === 'pinyin' ? selectedItem : item
-        const hanziItem = selectedItem.type === 'hanzi' ? selectedItem : item
-
-        // Find connection with this pinyin and complete it
-        const existingConnection = connections.find(
-          c => c.pinyinId === pinyinItem.id
-        )
-
-        if (existingConnection) {
-          setConnections(prev =>
-            prev.map(c =>
-              c.pinyinId === pinyinItem.id
-                ? { ...c, hanziId: hanziItem.id, isComplete: true }
-                : c
-            )
-          )
-        }
-
-        setSelectedItem(null)
-        setPendingConnection(null)
-      } else {
-        // Invalid combination, switch selection
-        setSelectedItem(item)
-        if (item.type === 'english') {
-          setPendingConnection({
-            englishId: item.id,
-            wordId: item.wordId,
-            isComplete: false,
-            isCorrect: null,
+        setConnections(prev =>
+          prev.map(c => {
+            if (englishItem && c.englishId === englishItem.id) return updated
+            if (pinyinItem && c.pinyinId === pinyinItem.id) return updated
+            if (hanziItem && c.hanziId === hanziItem.id) return updated
+            return c
           })
+        )
+
+        // Keep an item selected if connection not complete (for chaining)
+        if (!updated.isComplete) {
+          // Prefer keeping pinyin selected, otherwise keep the "missing" column's neighbor
+          if (pinyinItem) {
+            setSelectedItem(pinyinItem)
+          } else if (!updated.pinyinId) {
+            // Missing pinyin - keep either english or hanzi selected so user can add pinyin
+            setSelectedItem(item)
+          } else {
+            setSelectedItem(null)
+          }
         } else {
-          setPendingConnection(null)
+          setSelectedItem(null)
+        }
+      } else {
+        // Create new connection
+        const newConnection: Connection = {
+          englishId: englishItem?.id ?? null,
+          pinyinId: pinyinItem?.id ?? null,
+          hanziId: hanziItem?.id ?? null,
+          wordId: selectedItem.wordId, // Use first selected item's wordId for tracking
+          isComplete: false,
+          isCorrect: null,
+        }
+        setConnections(prev => [...prev, newConnection])
+
+        // Keep an item selected for chaining
+        if (pinyinItem) {
+          setSelectedItem(pinyinItem)
+        } else {
+          // English + Hanzi connection (no pinyin yet) - keep most recent selected for adding pinyin
+          setSelectedItem(item)
         }
       }
+
+      setPendingConnection(null)
     },
     [selectedItem, connections, isSubmitted]
   )

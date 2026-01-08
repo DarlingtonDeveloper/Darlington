@@ -17,6 +17,7 @@ interface Line {
   y2: number
   isCorrect: boolean | null
   isComplete: boolean
+  isDashed?: boolean // For incomplete connections (e.g., English + Hanzi without Pinyin)
 }
 
 export function ConnectionLines({
@@ -34,18 +35,16 @@ export function ConnectionLines({
       const newLines: Line[] = []
 
       connections.forEach(conn => {
-        // Get element positions
-        const englishEl = document.getElementById(conn.englishId)
-        const pinyinEl = document.getElementById(conn.pinyinId)
-        const hanziEl = conn.hanziId
-          ? document.getElementById(conn.hanziId)
-          : null
+        // Get element positions (all IDs can be null now)
+        const englishEl = conn.englishId ? document.getElementById(conn.englishId) : null
+        const pinyinEl = conn.pinyinId ? document.getElementById(conn.pinyinId) : null
+        const hanziEl = conn.hanziId ? document.getElementById(conn.hanziId) : null
 
+        // Draw line from English to Pinyin if both exist
         if (englishEl && pinyinEl) {
           const englishRect = englishEl.getBoundingClientRect()
           const pinyinRect = pinyinEl.getBoundingClientRect()
 
-          // Line from English to Pinyin
           newLines.push({
             id: `${conn.englishId}-${conn.pinyinId}`,
             x1: englishRect.right - containerRect.left,
@@ -55,21 +54,39 @@ export function ConnectionLines({
             isCorrect: conn.isCorrect,
             isComplete: conn.isComplete,
           })
+        }
 
-          if (hanziEl) {
-            const hanziRect = hanziEl.getBoundingClientRect()
+        // Draw line from Pinyin to Hanzi if both exist
+        if (pinyinEl && hanziEl) {
+          const pinyinRect = pinyinEl.getBoundingClientRect()
+          const hanziRect = hanziEl.getBoundingClientRect()
 
-            // Line from Pinyin to Hanzi
-            newLines.push({
-              id: `${conn.pinyinId}-${conn.hanziId}`,
-              x1: pinyinRect.right - containerRect.left,
-              y1: pinyinRect.top + pinyinRect.height / 2 - containerRect.top,
-              x2: hanziRect.left - containerRect.left,
-              y2: hanziRect.top + hanziRect.height / 2 - containerRect.top,
-              isCorrect: conn.isCorrect,
-              isComplete: conn.isComplete,
-            })
-          }
+          newLines.push({
+            id: `${conn.pinyinId}-${conn.hanziId}`,
+            x1: pinyinRect.right - containerRect.left,
+            y1: pinyinRect.top + pinyinRect.height / 2 - containerRect.top,
+            x2: hanziRect.left - containerRect.left,
+            y2: hanziRect.top + hanziRect.height / 2 - containerRect.top,
+            isCorrect: conn.isCorrect,
+            isComplete: conn.isComplete,
+          })
+        }
+
+        // Draw dashed line from English to Hanzi if pinyin is missing (incomplete connection)
+        if (englishEl && hanziEl && !pinyinEl) {
+          const englishRect = englishEl.getBoundingClientRect()
+          const hanziRect = hanziEl.getBoundingClientRect()
+
+          newLines.push({
+            id: `${conn.englishId}-${conn.hanziId}-incomplete`,
+            x1: englishRect.right - containerRect.left,
+            y1: englishRect.top + englishRect.height / 2 - containerRect.top,
+            x2: hanziRect.left - containerRect.left,
+            y2: hanziRect.top + hanziRect.height / 2 - containerRect.top,
+            isCorrect: conn.isCorrect,
+            isComplete: false,
+            isDashed: true,
+          })
         }
       })
 
@@ -138,6 +155,8 @@ export function ConnectionLines({
             stroke={stroke}
             strokeWidth={2}
             strokeLinecap="round"
+            strokeDasharray={line.isDashed ? '6 4' : undefined}
+            opacity={line.isDashed ? 0.5 : 1}
             className="transition-all duration-150"
           />
         )
