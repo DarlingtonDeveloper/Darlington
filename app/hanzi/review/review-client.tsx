@@ -33,9 +33,10 @@ export function ReviewClient({ initialWords }: ReviewClientProps) {
       setIsLoading(true)
 
       try {
-        // Update score in database - review mode has -2 penalty for incorrect
-        const scoreChange = getScoreChange('review', correct)
-        const newScore = (currentWord.progress?.score ?? 0) + scoreChange
+        // Update score in database - review mode has scaled penalty for incorrect
+        const currentScore = currentWord.progress?.score ?? 0
+        const scoreChange = getScoreChange('review', correct, currentScore)
+        const newScore = currentScore + scoreChange
 
         await supabase
           .from('user_word_progress')

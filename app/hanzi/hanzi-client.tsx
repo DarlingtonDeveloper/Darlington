@@ -139,7 +139,7 @@ export function HanziClient({
     if (!word) return
 
     const currentScore = word.progress?.score ?? 0
-    const scoreChange = getScoreChange('link', wasCorrect)
+    const scoreChange = getScoreChange('link', wasCorrect, currentScore)
     const newScore = currentScore + scoreChange
 
     try {

@@ -177,14 +177,32 @@ export function getWordStatus(score: number): WordStatus {
   return 'mastered'
 }
 
-export function getScoreChange(mode: GameMode, wasCorrect: boolean): number {
+export function getScoreChange(mode: GameMode, wasCorrect: boolean, currentScore: number = 0): number {
   switch (mode) {
-    case 'link':
-      return wasCorrect ? 1 : -1
+    case 'link': {
+      if (wasCorrect) {
+        // Reward scales with how negative the score is (struggling words give more)
+        // Score -5 → +3, Score -3 → +2, Score 0+ → +1
+        if (currentScore <= -4) return 3
+        if (currentScore <= -2) return 2
+        return 1
+      } else {
+        // Penalty scales with how positive the score is (should know better)
+        // Score 6+ → -3, Score 3-5 → -2, Score <3 → -1
+        if (currentScore >= SCORE_THRESHOLDS.MASTERED_MIN) return -3
+        if (currentScore >= SCORE_THRESHOLDS.FAMILIAR_MIN) return -2
+        return -1
+      }
+    }
     case 'lesson':
       return wasCorrect ? 1 : 0 // No penalty for "still hard"
-    case 'review':
-      return wasCorrect ? 1 : -2 // Mastered words should be known
+    case 'review': {
+      // Review mode: mastered words should be known
+      if (wasCorrect) return 1
+      // Bigger penalty for forgetting mastered words
+      if (currentScore >= SCORE_THRESHOLDS.MASTERED_MIN) return -3
+      return -2
+    }
     default:
       return 0
   }

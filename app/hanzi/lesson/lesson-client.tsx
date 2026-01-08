@@ -30,8 +30,9 @@ export function LessonClient({ initialWords }: LessonClientProps) {
 
       try {
         // Update score in database
-        const scoreChange = getScoreChange('lesson', gotIt)
-        const newScore = (currentWord.progress?.score ?? 0) + scoreChange
+        const currentScore = currentWord.progress?.score ?? 0
+        const scoreChange = getScoreChange('lesson', gotIt, currentScore)
+        const newScore = currentScore + scoreChange
 
         await supabase
           .from('user_word_progress')
