@@ -96,6 +96,14 @@ export function HanziClient({
     }
   }, [words, englishItems.length, initializeGame])
 
+  // Insert item at random position in array
+  const insertAtRandom = <T,>(arr: T[], item: T): T[] => {
+    const index = Math.floor(Math.random() * (arr.length + 1))
+    const result = [...arr]
+    result.splice(index, 0, item)
+    return result
+  }
+
   // Replace a matched word with a new one
   const replaceWord = useCallback((wordId: string) => {
     const newWord = getNextWord()
@@ -110,13 +118,13 @@ export function HanziClient({
       return next
     })
 
-    // Add new word if available
+    // Add new word at random positions if available
     if (newWord) {
       const { englishItems: newE, pinyinItems: newP, hanziItems: newH } = prepareRoundData([newWord])
 
-      setEnglishItems(prev => [...prev, ...newE])
-      setPinyinItems(prev => [...prev, ...newP])
-      setHanziItems(prev => [...prev, ...newH])
+      setEnglishItems(prev => insertAtRandom(prev, newE[0]))
+      setPinyinItems(prev => insertAtRandom(prev, newP[0]))
+      setHanziItems(prev => insertAtRandom(prev, newH[0]))
       setActiveWordIds(prev => {
         const next = new Set(prev)
         next.add(newWord.id)
