@@ -67,6 +67,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
     const [energyLevel, setEnergyLevel] = useState<'low' | 'medium' | 'high'>('medium')
     const [contextNotes, setContextNotes] = useState('')
     const [hasMounted, setHasMounted] = useState(false)
+    const [justCompletedIds, setJustCompletedIds] = useState<Set<string>>(new Set())
 
     // Partial completion modal state
     const { isOpen: isPartialOpen, targetHabitId, open: openPartial, close: closePartial } = usePartialComplete()
@@ -287,6 +288,16 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                         ? { ...h, completed_today: true, completion_id: data.id, completed_at: data.completed_at, completion_percentage: 100 }
                         : h
                 ))
+
+                // Trigger completion animation
+                setJustCompletedIds(prev => new Set(prev).add(habit.id))
+                setTimeout(() => {
+                    setJustCompletedIds(prev => {
+                        const next = new Set(prev)
+                        next.delete(habit.id)
+                        return next
+                    })
+                }, 500)
             }
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -751,6 +762,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                                 ? 'bg-neutral-900 border-neutral-800 active:bg-neutral-800'
                                                                 : 'bg-neutral-900/50 border-neutral-800/50'
                                                         }
+                                                        ${justCompletedIds.has(habit.id) ? 'animate-completion-flash' : ''}
                                                         border
                                                     `}
                                                 >
@@ -780,7 +792,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                         // Full completion or not completed - show checkbox
                                                         <div className={`
                                                             flex-shrink-0 w-6 h-6 sm:w-5 sm:h-5 rounded-md sm:rounded border-2 sm:border
-                                                            flex items-center justify-center transition-colors duration-150
+                                                            flex items-center justify-center transition-all duration-150
                                                             ${habit.completed_today
                                                                 ? canEdit
                                                                     ? 'bg-emerald-500 border-emerald-500'
@@ -789,9 +801,16 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                                     ? 'border-neutral-600'
                                                                     : 'border-neutral-700'
                                                             }
+                                                            ${justCompletedIds.has(habit.id) ? 'scale-110' : ''}
                                                         `}>
                                                             {habit.completed_today && (
-                                                                <svg className="w-4 h-4 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                <svg
+                                                                    className={`w-4 h-4 sm:w-3 sm:h-3 text-white ${justCompletedIds.has(habit.id) ? 'animate-check-pop' : ''}`}
+                                                                    fill="none"
+                                                                    viewBox="0 0 24 24"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth={3}
+                                                                >
                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                                 </svg>
                                                             )}
