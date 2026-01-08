@@ -227,21 +227,17 @@
 }
 
 /* Focus border animation for focused habits */
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes focus-border-rotate {
-  from {
-    --angle: 0deg;
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    background-position: 0% 50%;
   }
-  to {
-    --angle: 360deg;
+  50% {
+    opacity: 0.7;
+    background-position: 100% 50%;
   }
 }
 
-.animate-focus-border {
-  animation: focus-border-rotate 3s linear infinite;
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }

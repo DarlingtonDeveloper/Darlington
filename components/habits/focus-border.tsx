@@ -15,18 +15,15 @@ export function FocusBorder({ children, active = false, className }: FocusBorder
 
   return (
     <div className={cn('relative', className)}>
-      {/* Animated gradient border */}
+      {/* Pulsing glow border */}
       <div
-        className="absolute -inset-[1px] rounded-lg sm:rounded-md overflow-hidden"
+        className="absolute -inset-[1px] rounded-lg sm:rounded-md animate-pulse-glow"
         aria-hidden="true"
-      >
-        <div
-          className="absolute inset-0 animate-focus-border"
-          style={{
-            background: 'conic-gradient(from var(--angle), transparent 60%, rgba(251, 191, 36, 0.4) 80%, rgba(251, 191, 36, 0.6) 90%, rgba(251, 191, 36, 0.4) 100%, transparent)',
-          }}
-        />
-      </div>
+        style={{
+          background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.5), rgba(251, 191, 36, 0.3))',
+          backgroundSize: '200% 200%',
+        }}
+      />
       {/* Content */}
       <div className="relative">{children}</div>
     </div>
