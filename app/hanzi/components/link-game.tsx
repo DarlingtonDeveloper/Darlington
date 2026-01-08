@@ -15,6 +15,7 @@ interface LinkGameProps {
   onItemSelect: (item: LinkItem) => void
   onItemLongPress: (item: LinkItem) => void
   getItemConnection: (item: LinkItem) => Connection | undefined
+  flashingIds?: Map<string, boolean>
 }
 
 export function LinkGame({
@@ -27,6 +28,7 @@ export function LinkGame({
   onItemSelect,
   onItemLongPress,
   getItemConnection,
+  flashingIds,
 }: LinkGameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -49,6 +51,7 @@ export function LinkGame({
           onItemSelect={onItemSelect}
           onItemLongPress={onItemLongPress}
           getItemConnection={getItemConnection}
+          flashingIds={flashingIds}
         />
         <LinkColumn
           title="Pinyin"
@@ -58,6 +61,7 @@ export function LinkGame({
           onItemSelect={onItemSelect}
           onItemLongPress={onItemLongPress}
           getItemConnection={getItemConnection}
+          flashingIds={flashingIds}
         />
         <LinkColumn
           title="Hanzi"
@@ -67,6 +71,7 @@ export function LinkGame({
           onItemSelect={onItemSelect}
           onItemLongPress={onItemLongPress}
           getItemConnection={getItemConnection}
+          flashingIds={flashingIds}
         />
       </div>
     </div>

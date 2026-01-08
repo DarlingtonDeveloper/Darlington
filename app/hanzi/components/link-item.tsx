@@ -13,6 +13,8 @@ interface LinkItemCardProps {
   isSubmitted: boolean
   onSelect: (item: LinkItem) => void
   onLongPress: (item: LinkItem) => void
+  isFlashing?: boolean
+  flashResult?: boolean | null
 }
 
 export function LinkItemCard({
@@ -24,6 +26,8 @@ export function LinkItemCard({
   isSubmitted,
   onSelect,
   onLongPress,
+  isFlashing,
+  flashResult,
 }: LinkItemCardProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
@@ -59,6 +63,15 @@ export function LinkItemCard({
 
   // Determine styling based on state
   const getStyles = () => {
+    // Flashing state takes priority
+    if (isFlashing) {
+      if (flashResult === true) {
+        return 'bg-emerald-500/30 border-emerald-400 text-emerald-50 scale-105'
+      }
+      if (flashResult === false) {
+        return 'bg-red-500/30 border-red-400 text-red-50 animate-shake'
+      }
+    }
     if (isSubmitted && isCorrect === true) {
       return 'bg-emerald-950/50 border-emerald-500/50 text-emerald-50'
     }

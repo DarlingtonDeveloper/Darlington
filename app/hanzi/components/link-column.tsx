@@ -11,6 +11,7 @@ interface LinkColumnProps {
   onItemSelect: (item: LinkItem) => void
   onItemLongPress: (item: LinkItem) => void
   getItemConnection: (item: LinkItem) => Connection | undefined
+  flashingIds?: Map<string, boolean>
 }
 
 export function LinkColumn({
@@ -21,6 +22,7 @@ export function LinkColumn({
   onItemSelect,
   onItemLongPress,
   getItemConnection,
+  flashingIds,
 }: LinkColumnProps) {
   return (
     <div className="flex flex-col gap-2">
@@ -33,6 +35,8 @@ export function LinkColumn({
         const isConnected = !!connection
         const isComplete = connection?.isComplete ?? false
         const isCorrect = connection?.isCorrect ?? null
+        const isFlashing = flashingIds?.has(item.id) ?? false
+        const flashResult = flashingIds?.get(item.id) ?? null
 
         return (
           <LinkItemCard
@@ -45,6 +49,8 @@ export function LinkColumn({
             isSubmitted={isSubmitted}
             onSelect={onItemSelect}
             onLongPress={onItemLongPress}
+            isFlashing={isFlashing}
+            flashResult={flashResult}
           />
         )
       })}

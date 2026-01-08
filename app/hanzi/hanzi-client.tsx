@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type {
   WordWithProgress,
@@ -8,16 +8,14 @@ import type {
   Word,
   Connection,
   LinkItem,
-  RoundResult,
 } from '@/lib/hanzi/types'
 import { getScoreChange } from '@/lib/hanzi/types'
 import { selectWordsForRound, prepareRoundData } from '@/lib/hanzi/word-selection'
 import { LinkGame } from './components/link-game'
-import { ResultModal } from './components/result-modal'
 import { UnitSelector } from './components/unit-selector'
 
 const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-const ROUND_SIZE = 4
+const ITEMS_IN_PLAY = 4
 
 interface HanziClientProps {
   initialWords: WordWithProgress[]
@@ -33,79 +31,248 @@ export function HanziClient({
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
   const [currentUnit, setCurrentUnit] = useState(initialUnit)
 
+  // Track which word IDs are currently in play
+  const [activeWordIds, setActiveWordIds] = useState<Set<string>>(new Set())
+
   // Game state
-  const [roundWords, setRoundWords] = useState<Word[]>([])
   const [englishItems, setEnglishItems] = useState<LinkItem[]>([])
   const [pinyinItems, setPinyinItems] = useState<LinkItem[]>([])
   const [hanziItems, setHanziItems] = useState<LinkItem[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
   const [selectedItem, setSelectedItem] = useState<LinkItem | null>(null)
-  // Pending connection tracks partial link state (for future UI enhancements)
-  const [, setPendingConnection] = useState<Partial<Connection> | null>(null)
 
-  // Round state
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [results, setResults] = useState<RoundResult[]>([])
-  const [showResults, setShowResults] = useState(false)
-  const [roundScore, setRoundScore] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  // Flash state for showing correct/incorrect feedback
+  const [flashingIds, setFlashingIds] = useState<Map<string, boolean>>(new Map())
+
+  // Session stats
+  const [sessionScore, setSessionScore] = useState(0)
   const [showUnitSelector, setShowUnitSelector] = useState(false)
 
-  // Round tracking
-  const [roundNumber, setRoundNumber] = useState(0)
+  // Ref to track if we're processing a match (prevent double-processing)
+  const processingMatch = useRef(false)
 
-  // Start a new round
-  const startNewRound = useCallback(() => {
-    const selected = selectWordsForRound(words, currentUnit, { roundSize: ROUND_SIZE })
+  // Get a new word that's not currently in play
+  const getNextWord = useCallback((): Word | null => {
+    const available = words.filter(w =>
+      w.unit <= currentUnit && !activeWordIds.has(w.id)
+    )
+    if (available.length === 0) return null
 
-    if (selected.length === 0) {
-      return
-    }
+    // Use the word selection logic but for a single word
+    const selected = selectWordsForRound(
+      available.map(w => ({ ...w })),
+      currentUnit,
+      { roundSize: 1 }
+    )
+    return selected[0] || null
+  }, [words, currentUnit, activeWordIds])
+
+  // Initialize game with first set of words
+  const initializeGame = useCallback(() => {
+    const selected = selectWordsForRound(words, currentUnit, { roundSize: ITEMS_IN_PLAY })
+
+    if (selected.length === 0) return
 
     const { englishItems, pinyinItems, hanziItems } = prepareRoundData(selected)
 
-    setRoundWords(selected)
+    setActiveWordIds(new Set(selected.map(w => w.id)))
     setEnglishItems(englishItems)
     setPinyinItems(pinyinItems)
     setHanziItems(hanziItems)
     setConnections([])
     setSelectedItem(null)
-    setPendingConnection(null)
-    setIsSubmitted(false)
-    setResults([])
-    setShowResults(false)
-    setRoundScore(0)
-    setRoundNumber(prev => prev + 1)
+    setFlashingIds(new Map())
+    setSessionScore(0)
   }, [words, currentUnit])
 
-  // Initialize first round
+  // Initialize on mount or unit change
   useEffect(() => {
-    if (roundWords.length === 0 && words.length > 0) {
-      startNewRound()
+    if (englishItems.length === 0 && words.length > 0) {
+      initializeGame()
     }
-  }, [words, roundWords.length, startNewRound])
+  }, [words, englishItems.length, initializeGame])
+
+  // Replace a matched word with a new one
+  const replaceWord = useCallback((wordId: string) => {
+    const newWord = getNextWord()
+
+    // Remove the old items
+    setEnglishItems(prev => prev.filter(i => i.wordId !== wordId))
+    setPinyinItems(prev => prev.filter(i => i.wordId !== wordId))
+    setHanziItems(prev => prev.filter(i => i.wordId !== wordId))
+    setActiveWordIds(prev => {
+      const next = new Set(prev)
+      next.delete(wordId)
+      return next
+    })
+
+    // Add new word if available
+    if (newWord) {
+      const { englishItems: newE, pinyinItems: newP, hanziItems: newH } = prepareRoundData([newWord])
+
+      setEnglishItems(prev => [...prev, ...newE])
+      setPinyinItems(prev => [...prev, ...newP])
+      setHanziItems(prev => [...prev, ...newH])
+      setActiveWordIds(prev => {
+        const next = new Set(prev)
+        next.add(newWord.id)
+        return next
+      })
+    }
+  }, [getNextWord])
+
+  // Update word progress in database
+  const updateWordProgress = useCallback(async (wordId: string, wasCorrect: boolean) => {
+    const word = words.find(w => w.id === wordId)
+    if (!word) return
+
+    const currentScore = word.progress?.score ?? 0
+    const scoreChange = getScoreChange('link', wasCorrect)
+    const newScore = currentScore + scoreChange
+
+    try {
+      if (word.progress) {
+        await supabase
+          .from('user_word_progress')
+          .update({
+            score: newScore,
+            attempts: word.progress.attempts + 1,
+            correct_streak: wasCorrect ? word.progress.correct_streak + 1 : 0,
+            last_seen: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', word.progress.id)
+      } else {
+        await supabase.from('user_word_progress').insert({
+          user_id: USER_ID,
+          word_id: wordId,
+          score: newScore,
+          attempts: 1,
+          correct_streak: wasCorrect ? 1 : 0,
+          last_seen: new Date().toISOString(),
+        })
+      }
+
+      // Update local state
+      setWords(prev =>
+        prev.map(w =>
+          w.id === wordId
+            ? {
+                ...w,
+                progress: {
+                  ...(w.progress || {
+                    id: '',
+                    user_id: USER_ID,
+                    word_id: wordId,
+                    attempts: 0,
+                    correct_streak: 0,
+                    last_seen: null,
+                    introduced_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  }),
+                  score: newScore,
+                  attempts: (w.progress?.attempts ?? 0) + 1,
+                  correct_streak: wasCorrect ? (w.progress?.correct_streak ?? 0) + 1 : 0,
+                  last_seen: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              }
+            : w
+        )
+      )
+    } catch (error) {
+      console.error('Error updating progress:', error)
+    }
+  }, [words])
+
+  // Validate and handle a complete connection
+  const handleCompleteConnection = useCallback(async (connection: Connection) => {
+    if (processingMatch.current) return
+    processingMatch.current = true
+
+    const englishItem = englishItems.find(i => i.id === connection.englishId)
+    const pinyinItem = pinyinItems.find(i => i.id === connection.pinyinId)
+    const hanziItem = hanziItems.find(i => i.id === connection.hanziId)
+
+    // Check if all three match the same word
+    const isCorrect =
+      englishItem?.wordId === pinyinItem?.wordId &&
+      pinyinItem?.wordId === hanziItem?.wordId
+
+    const wordId = englishItem?.wordId || pinyinItem?.wordId || hanziItem?.wordId
+
+    // Set flash state for all three items
+    const itemIds = [connection.englishId, connection.pinyinId, connection.hanziId].filter(Boolean) as string[]
+    setFlashingIds(prev => {
+      const next = new Map(prev)
+      itemIds.forEach(id => next.set(id, isCorrect))
+      return next
+    })
+
+    // Update the connection with the result
+    setConnections(prev =>
+      prev.map(c =>
+        c.englishId === connection.englishId &&
+        c.pinyinId === connection.pinyinId &&
+        c.hanziId === connection.hanziId
+          ? { ...c, isCorrect }
+          : c
+      )
+    )
+
+    // Update score
+    setSessionScore(prev => prev + (isCorrect ? 1 : -1))
+
+    // Update database
+    if (wordId) {
+      await updateWordProgress(wordId, isCorrect)
+    }
+
+    // After flash animation, handle the result
+    setTimeout(() => {
+      // Clear flash state
+      setFlashingIds(prev => {
+        const next = new Map(prev)
+        itemIds.forEach(id => next.delete(id))
+        return next
+      })
+
+      if (isCorrect && wordId) {
+        // Remove the connection and replace the word
+        setConnections(prev => prev.filter(c =>
+          !(c.englishId === connection.englishId &&
+            c.pinyinId === connection.pinyinId &&
+            c.hanziId === connection.hanziId)
+        ))
+        replaceWord(wordId)
+      } else {
+        // Clear the incorrect connection so user can try again
+        setConnections(prev => prev.filter(c =>
+          !(c.englishId === connection.englishId &&
+            c.pinyinId === connection.pinyinId &&
+            c.hanziId === connection.hanziId)
+        ))
+      }
+
+      processingMatch.current = false
+    }, 600) // Flash duration
+  }, [englishItems, pinyinItems, hanziItems, updateWordProgress, replaceWord])
 
   // Handle item selection - free selection from any column
   const handleItemSelect = useCallback(
     (item: LinkItem) => {
-      if (isSubmitted) return
+      // Don't allow selection while flashing
+      if (flashingIds.has(item.id)) return
 
       // If same item clicked, deselect
       if (selectedItem?.id === item.id) {
         setSelectedItem(null)
-        setPendingConnection(null)
         return
       }
 
       // If no item selected, select this one
       if (!selectedItem) {
         setSelectedItem(item)
-        setPendingConnection({
-          [item.type === 'english' ? 'englishId' : item.type === 'pinyin' ? 'pinyinId' : 'hanziId']: item.id,
-          wordId: item.wordId,
-          isComplete: false,
-          isCorrect: null,
-        })
         return
       }
 
@@ -139,19 +306,19 @@ export function HanziClient({
           })
         )
 
-        // Keep an item selected if connection not complete (for chaining)
-        if (!updated.isComplete) {
-          // Prefer keeping pinyin selected, otherwise keep the "missing" column's neighbor
+        // If complete, validate it
+        if (updated.isComplete) {
+          setSelectedItem(null)
+          handleCompleteConnection(updated)
+        } else {
+          // Keep an item selected for chaining
           if (pinyinItem) {
             setSelectedItem(pinyinItem)
           } else if (!updated.pinyinId) {
-            // Missing pinyin - keep either english or hanzi selected so user can add pinyin
             setSelectedItem(item)
           } else {
             setSelectedItem(null)
           }
-        } else {
-          setSelectedItem(null)
         }
       } else {
         // Create new connection
@@ -159,142 +326,35 @@ export function HanziClient({
           englishId: englishItem?.id ?? null,
           pinyinId: pinyinItem?.id ?? null,
           hanziId: hanziItem?.id ?? null,
-          wordId: selectedItem.wordId, // Use first selected item's wordId for tracking
+          wordId: selectedItem.wordId,
           isComplete: false,
           isCorrect: null,
         }
+
+        // Check if complete
+        newConnection.isComplete =
+          newConnection.englishId !== null &&
+          newConnection.pinyinId !== null &&
+          newConnection.hanziId !== null
+
         setConnections(prev => [...prev, newConnection])
 
-        // Keep an item selected for chaining
-        if (pinyinItem) {
-          setSelectedItem(pinyinItem)
+        // If complete, validate it
+        if (newConnection.isComplete) {
+          setSelectedItem(null)
+          handleCompleteConnection(newConnection)
         } else {
-          // English + Hanzi connection (no pinyin yet) - keep most recent selected for adding pinyin
-          setSelectedItem(item)
+          // Keep an item selected for chaining
+          if (pinyinItem) {
+            setSelectedItem(pinyinItem)
+          } else {
+            setSelectedItem(item)
+          }
         }
       }
-
-      setPendingConnection(null)
     },
-    [selectedItem, connections, isSubmitted]
+    [selectedItem, connections, flashingIds, handleCompleteConnection]
   )
-
-  // Check answers
-  const handleCheckAnswers = useCallback(async () => {
-    if (isSubmitted || isLoading) return
-
-    // Only check complete connections
-    const completeConnections = connections.filter(c => c.isComplete)
-
-    if (completeConnections.length === 0) return
-
-    setIsLoading(true)
-
-    // Validate each connection
-    const validatedConnections = completeConnections.map(conn => {
-      // Get the word ID from the English item
-      const englishItem = englishItems.find(i => i.id === conn.englishId)
-      const pinyinItem = pinyinItems.find(i => i.id === conn.pinyinId)
-      const hanziItem = hanziItems.find(i => i.id === conn.hanziId)
-
-      // All three must match the same word
-      const isCorrect =
-        englishItem?.wordId === pinyinItem?.wordId &&
-        pinyinItem?.wordId === hanziItem?.wordId
-
-      return { ...conn, isCorrect }
-    })
-
-    setConnections(validatedConnections)
-    setIsSubmitted(true)
-
-    // Calculate results
-    const roundResults: RoundResult[] = validatedConnections.map(conn => ({
-      wordId: conn.wordId,
-      wasCorrect: conn.isCorrect ?? false,
-    }))
-
-    setResults(roundResults)
-
-    // Calculate score
-    const correctCount = roundResults.filter(r => r.wasCorrect).length
-    const incorrectCount = roundResults.length - correctCount
-    const score = correctCount - incorrectCount
-    setRoundScore(score)
-
-    // Update word progress in database
-    try {
-      for (const result of roundResults) {
-        const word = words.find(w => w.id === result.wordId)
-        if (!word) continue
-
-        const currentScore = word.progress?.score ?? 0
-        const scoreChange = getScoreChange('link', result.wasCorrect)
-        const newScore = currentScore + scoreChange
-
-        if (word.progress) {
-          // Update existing progress
-          await supabase
-            .from('user_word_progress')
-            .update({
-              score: newScore,
-              attempts: word.progress.attempts + 1,
-              correct_streak: result.wasCorrect
-                ? word.progress.correct_streak + 1
-                : 0,
-              last_seen: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', word.progress.id)
-        } else {
-          // Insert new progress
-          await supabase.from('user_word_progress').insert({
-            user_id: USER_ID,
-            word_id: result.wordId,
-            score: newScore,
-            attempts: 1,
-            correct_streak: result.wasCorrect ? 1 : 0,
-            last_seen: new Date().toISOString(),
-          })
-        }
-
-        // Update local state
-        setWords(prev =>
-          prev.map(w =>
-            w.id === result.wordId
-              ? {
-                  ...w,
-                  progress: {
-                    ...(w.progress || {
-                      id: '',
-                      user_id: USER_ID,
-                      word_id: result.wordId,
-                      attempts: 0,
-                      correct_streak: 0,
-                      last_seen: null,
-                      introduced_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                    }),
-                    score: newScore,
-                    attempts: (w.progress?.attempts ?? 0) + 1,
-                    correct_streak: result.wasCorrect
-                      ? (w.progress?.correct_streak ?? 0) + 1
-                      : 0,
-                    last_seen: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                }
-              : w
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error updating progress:', error)
-    }
-
-    setIsLoading(false)
-    setShowResults(true)
-  }, [connections, englishItems, pinyinItems, hanziItems, words, isSubmitted, isLoading])
 
   // Get connection state for an item
   const getItemConnection = useCallback(
@@ -309,15 +369,14 @@ export function HanziClient({
     [connections]
   )
 
-  // Clear a connection
+  // Clear a connection (long press)
   const handleClearConnection = useCallback(
     (item: LinkItem) => {
-      if (isSubmitted) return
+      if (flashingIds.has(item.id)) return
 
       const connection = getItemConnection(item)
       if (!connection) return
 
-      // If clicking on hanzi, just remove hanzi from connection
       if (item.type === 'hanzi') {
         setConnections(prev =>
           prev.map(c =>
@@ -327,29 +386,32 @@ export function HanziClient({
           )
         )
       } else {
-        // Otherwise remove entire connection
         setConnections(prev =>
           prev.filter(c => c.englishId !== connection.englishId)
         )
       }
     },
-    [isSubmitted, getItemConnection]
+    [flashingIds, getItemConnection]
   )
 
   // Handle unit change
   const handleUnitChange = useCallback((unit: number) => {
     setCurrentUnit(unit)
     setShowUnitSelector(false)
-    // Start new round will be triggered by useEffect due to currentUnit change
-    setRoundWords([])
+    setEnglishItems([])
+    setPinyinItems([])
+    setHanziItems([])
+    setActiveWordIds(new Set())
+    setConnections([])
+    setSelectedItem(null)
   }, [])
 
-  // Restart when unit changes
+  // Re-initialize when unit changes
   useEffect(() => {
-    if (roundWords.length === 0 && words.length > 0) {
-      startNewRound()
+    if (englishItems.length === 0 && words.length > 0) {
+      initializeGame()
     }
-  }, [currentUnit, roundWords.length, words.length, startNewRound])
+  }, [currentUnit, englishItems.length, words.length, initializeGame])
 
   // Calculate stats
   const unitWords = words.filter(w => w.unit <= currentUnit)
@@ -400,59 +462,32 @@ export function HanziClient({
             </span>
           )}
         </div>
-        <div className="text-sm text-neutral-400">Round {roundNumber}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-neutral-400">Score:</span>
+          <span className={`text-sm font-medium ${sessionScore >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {sessionScore > 0 ? '+' : ''}{sessionScore}
+          </span>
+        </div>
       </div>
 
       {/* Game area */}
-      {roundWords.length > 0 ? (
+      {englishItems.length > 0 ? (
         <LinkGame
           englishItems={englishItems}
           pinyinItems={pinyinItems}
           hanziItems={hanziItems}
           connections={connections}
           selectedItem={selectedItem}
-          isSubmitted={isSubmitted}
+          isSubmitted={false}
           onItemSelect={handleItemSelect}
           onItemLongPress={handleClearConnection}
           getItemConnection={getItemConnection}
+          flashingIds={flashingIds}
         />
       ) : (
         <div className="flex items-center justify-center h-64">
           <p className="text-neutral-500">Loading words...</p>
         </div>
-      )}
-
-      {/* Action button */}
-      <div className="mt-6">
-        {!isSubmitted ? (
-          <button
-            onClick={handleCheckAnswers}
-            disabled={
-              isLoading || connections.filter(c => c.isComplete).length === 0
-            }
-            className="w-full py-3 px-4 rounded-xl bg-neutral-800 text-neutral-50 font-medium transition-all hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Checking...' : 'Check Answers'}
-          </button>
-        ) : (
-          <button
-            onClick={startNewRound}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 text-white font-medium transition-all hover:bg-emerald-500"
-          >
-            Next Round
-          </button>
-        )}
-      </div>
-
-      {/* Results modal */}
-      {showResults && (
-        <ResultModal
-          results={results}
-          words={roundWords}
-          score={roundScore}
-          onClose={() => setShowResults(false)}
-          onNextRound={startNewRound}
-        />
       )}
     </div>
   )
