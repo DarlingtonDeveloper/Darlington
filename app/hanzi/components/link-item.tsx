@@ -27,9 +27,11 @@ export function LinkItemCard({
 }: LinkItemCardProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
+  const touchHandled = useRef(false)
 
   const handleTouchStart = useCallback(() => {
     isLongPress.current = false
+    touchHandled.current = true
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true
       onLongPress(item)
@@ -47,6 +49,11 @@ export function LinkItemCard({
   }, [item, onSelect])
 
   const handleClick = useCallback(() => {
+    // Prevent double-firing on touch devices (touch events already handled it)
+    if (touchHandled.current) {
+      touchHandled.current = false
+      return
+    }
     onSelect(item)
   }, [item, onSelect])
 
