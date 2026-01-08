@@ -9,6 +9,7 @@ import { DayNavigator } from '@/components/habits/day-navigator'
 import { PartialComplete, usePartialComplete } from '@/components/habits/partial-complete'
 import { WhatsNext, useWhatsNext } from '@/components/habits/whats-next'
 import { HabitSteps, type HabitStep } from '@/components/habits/habit-steps'
+import { getCachedHabits, setCachedHabits, isCacheStale } from '@/lib/habits-cache'
 
 interface Habit {
     id: string
@@ -43,16 +44,25 @@ interface HabitsClientProps {
 }
 
 export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false, focusHabitIds = [] }: HabitsClientProps) {
-    // Store focus habits for potential highlighting (feature prep)
-    const [todaysFocusHabits] = useState<string[]>(focusHabitIds)
-
     // Always use browser's local date for "today"
     const browserToday = format(new Date(), 'yyyy-MM-dd')
-    const serverDateMatches = initialDate === browserToday
 
-    const [habits, setHabits] = useState<HabitWithStatus[]>(serverDateMatches ? initialHabits : [])
+    // Check cache on initial render
+    const cachedData = typeof window !== 'undefined' ? getCachedHabits() : null
+
+    // Use cache if available and fresh, otherwise use server data
+    const initialData = cachedData || {
+        habits: initialDate === browserToday ? initialHabits : [],
+        hasCheckedInToday,
+        focusHabitIds,
+    }
+
+    const [habits, setHabits] = useState<HabitWithStatus[]>(initialData.habits)
+    const [todaysFocusHabits, setTodaysFocusHabits] = useState<string[]>(initialData.focusHabitIds)
+    const [hasCheckedIn, setHasCheckedIn] = useState(initialData.hasCheckedInToday)
     const [viewingDate, setViewingDate] = useState<Date>(new Date())
-    const [isLoading, setIsLoading] = useState(!serverDateMatches)
+    // Only show loading if we have no data at all
+    const [isLoading, setIsLoading] = useState(initialData.habits.length === 0 && initialDate !== browserToday)
     const [energyLevel, setEnergyLevel] = useState<'low' | 'medium' | 'high'>('medium')
     const [contextNotes, setContextNotes] = useState('')
     const [hasMounted, setHasMounted] = useState(false)
@@ -143,22 +153,64 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             })
 
             setHabits(habitsWithStatus)
+
+            // Cache today's data
+            if (isToday(date)) {
+                // Also fetch check-in status for today
+                const todayStr = format(date, 'yyyy-MM-dd')
+                try {
+                    const { data: checkinData } = await supabase
+                        .from('daily_checkins')
+                        .select('id, focus_habit_ids')
+                        .eq('user_id', USER_ID)
+                        .eq('checkin_date', todayStr)
+                        .single()
+
+                    const newHasCheckedIn = !!checkinData
+                    const newFocusHabitIds = checkinData?.focus_habit_ids || []
+
+                    setHasCheckedIn(newHasCheckedIn)
+                    setTodaysFocusHabits(newFocusHabitIds)
+                    setCachedHabits(habitsWithStatus, todayStr, newHasCheckedIn, newFocusHabitIds)
+                } catch {
+                    setCachedHabits(habitsWithStatus, todayStr, hasCheckedIn, todaysFocusHabits)
+                }
+            }
         } catch (error) {
             console.error('Error loading habits for date:', error)
         } finally {
             setIsLoading(false)
         }
-    }, [])
+    }, [hasCheckedIn, todaysFocusHabits])
 
-    // Re-fetch on mount if server date doesn't match browser date (timezone mismatch)
+    // On mount: check cache and refresh if needed
     useEffect(() => {
         if (!hasMounted) {
             setHasMounted(true)
-            if (!serverDateMatches) {
+
+            // If we have cached data, check if it needs refreshing
+            if (cachedData) {
+                if (isCacheStale(cachedData)) {
+                    // Background refresh - don't show loading state
+                    loadHabitsForDate(new Date())
+                }
+            } else if (initialDate !== browserToday) {
+                // No cache and server date mismatch - need to fetch
                 loadHabitsForDate(new Date())
+            } else {
+                // No cache but server data is good - cache it
+                setCachedHabits(initialHabits, browserToday, hasCheckedInToday, focusHabitIds)
             }
         }
-    }, [hasMounted, serverDateMatches, loadHabitsForDate])
+    }, [hasMounted, cachedData, initialDate, browserToday, initialHabits, hasCheckedInToday, focusHabitIds, loadHabitsForDate])
+
+    // Keep cache in sync when habits change (for today only)
+    useEffect(() => {
+        if (hasMounted && isToday(viewingDate) && habits.length > 0) {
+            const todayStr = format(viewingDate, 'yyyy-MM-dd')
+            setCachedHabits(habits, todayStr, hasCheckedIn, todaysFocusHabits)
+        }
+    }, [habits, hasMounted, viewingDate, hasCheckedIn, todaysFocusHabits])
 
     // Handle date change
     const handleDateChange = useCallback((newDate: Date) => {
@@ -563,7 +615,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             {/* Check-in prompt or completed indicator */}
             {viewingIsToday && !isLoading && (
                 <div className="px-4 sm:px-6 pt-4 sm:max-w-2xl sm:mx-auto">
-                    {!hasCheckedInToday ? (
+                    {!hasCheckedIn ? (
                         <Link
                             href="/habits/checkin"
                             className="
