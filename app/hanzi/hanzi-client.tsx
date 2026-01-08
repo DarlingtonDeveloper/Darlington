@@ -10,7 +10,7 @@ import type {
   LinkItem,
 } from '@/lib/hanzi/types'
 import { getScoreChange } from '@/lib/hanzi/types'
-import { selectWordsForRound, prepareRoundData } from '@/lib/hanzi/word-selection'
+import { selectWordsForRound, selectNextWord, prepareRoundData } from '@/lib/hanzi/word-selection'
 import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
 
@@ -34,6 +34,10 @@ export function HanziClient({
   // Track which word IDs are currently in play
   const [activeWordIds, setActiveWordIds] = useState<Set<string>>(new Set())
 
+  // Track recently completed words for cooldown (most recent first)
+  const [recentlyCompleted, setRecentlyCompleted] = useState<string[]>([])
+  const COOLDOWN_COUNT = 4
+
   // Game state
   const [englishItems, setEnglishItems] = useState<LinkItem[]>([])
   const [pinyinItems, setPinyinItems] = useState<LinkItem[]>([])
@@ -51,25 +55,24 @@ export function HanziClient({
   // Ref to track if we're processing a match (prevent double-processing)
   const processingMatch = useRef(false)
 
-  // Get a new word that's not currently in play
+  // Get a new word that's not currently in play (with weighted selection and cooldown)
   const getNextWord = useCallback((): Word | null => {
-    const available = words.filter(w =>
-      w.unit <= currentUnit && !activeWordIds.has(w.id)
-    )
-    if (available.length === 0) return null
-
-    // Use the word selection logic but for a single word
-    const selected = selectWordsForRound(
-      available.map(w => ({ ...w })),
+    return selectNextWord(
+      words,
       currentUnit,
-      { roundSize: 1 }
+      activeWordIds,
+      recentlyCompleted,
+      COOLDOWN_COUNT
     )
-    return selected[0] || null
-  }, [words, currentUnit, activeWordIds])
+  }, [words, currentUnit, activeWordIds, recentlyCompleted])
 
   // Initialize game with first set of words
   const initializeGame = useCallback(() => {
-    const selected = selectWordsForRound(words, currentUnit, { roundSize: ITEMS_IN_PLAY })
+    const selected = selectWordsForRound(words, currentUnit, {
+      roundSize: ITEMS_IN_PLAY,
+      recentlyCompleted,
+      cooldownCount: COOLDOWN_COUNT,
+    })
 
     if (selected.length === 0) return
 
@@ -83,7 +86,8 @@ export function HanziClient({
     setSelectedItem(null)
     setFlashingIds(new Map())
     setSessionScore(0)
-  }, [words, currentUnit])
+    // Don't reset recentlyCompleted - maintain cooldown across initializations
+  }, [words, currentUnit, recentlyCompleted])
 
   // Initialize on mount or unit change
   useEffect(() => {
@@ -238,6 +242,9 @@ export function HanziClient({
       })
 
       if (isCorrect && wordId) {
+        // Add to cooldown list (most recent first)
+        setRecentlyCompleted(prev => [wordId, ...prev].slice(0, 20)) // Keep last 20
+
         // Remove the connection and replace the word
         setConnections(prev => prev.filter(c =>
           !(c.englishId === connection.englishId &&
@@ -404,6 +411,7 @@ export function HanziClient({
     setActiveWordIds(new Set())
     setConnections([])
     setSelectedItem(null)
+    setRecentlyCompleted([]) // Reset cooldown for new unit
   }, [])
 
   // Re-initialize when unit changes

@@ -12,19 +12,61 @@ function shuffle<T>(array: T[]): T[] {
   return result
 }
 
+// Weighted random selection - words with lower scores have higher weight
+function weightedRandomSelect<T extends WordWithProgress>(
+  words: T[],
+  count: number
+): T[] {
+  if (words.length <= count) return shuffle(words)
+
+  const selected: T[] = []
+  const remaining = [...words]
+
+  while (selected.length < count && remaining.length > 0) {
+    // Calculate weights - lower scores get higher weight
+    const weights = remaining.map(w => {
+      const score = w.progress?.score ?? 0
+      // Negative scores get much higher weight
+      // Score -3 = weight 16, score 0 = weight 4, score 3 = weight 1, score 6+ = weight 0.5
+      if (score < 0) {
+        return Math.pow(2, Math.abs(score) + 2)
+      }
+      return Math.max(0.5, 4 - score)
+    })
+
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0)
+    let random = Math.random() * totalWeight
+
+    for (let i = 0; i < remaining.length; i++) {
+      random -= weights[i]
+      if (random <= 0) {
+        selected.push(remaining[i])
+        remaining.splice(i, 1)
+        break
+      }
+    }
+  }
+
+  return selected
+}
+
 export interface WordSelectionOptions {
   roundSize?: number
   maxStruggling?: number
   maxLearning?: number
   includeReview?: boolean
+  recentlyCompleted?: string[] // Word IDs to exclude (cooldown)
+  cooldownCount?: number // How many completions before word can reappear
 }
 
+// Threshold for considering a word "mastered enough" to unlock new content
+const PROGRESSION_THRESHOLD = 3 // Familiar level
+
 /**
- * Select words for a round based on adaptive priority:
- * 1. Struggling words (score < 0) - max 2
- * 2. Learning words (score 0-2) - fill to max 3 total
- * 3. New words at user's level - fill remainder
- * 4. Familiar words if still not enough
+ * Select words for continuous play with:
+ * - Weighted selection (negative scores appear more often)
+ * - Cooldown for recently completed words
+ * - Auto-progression to next section when ready
  */
 export function selectWordsForRound(
   allWords: WordWithProgress[],
@@ -33,13 +75,52 @@ export function selectWordsForRound(
 ): Word[] {
   const {
     roundSize = 4,
-    maxStruggling = 2,
-    maxLearning = 2,
-    includeReview = false,
+    recentlyCompleted = [],
+    cooldownCount = 4,
   } = options
 
-  // Filter to words at or below current unit
-  const availableWords = allWords.filter(w => w.unit <= currentUnit)
+  // Get words on cooldown (last N completed)
+  const cooldownIds = new Set(recentlyCompleted.slice(0, cooldownCount))
+
+  // Filter to words at or below current unit, excluding cooldown
+  let availableWords = allWords.filter(
+    w => w.unit <= currentUnit && !cooldownIds.has(w.id)
+  )
+
+  // Check if we should introduce words from next section
+  // Condition: All seen words are above progression threshold
+  const seenWords = availableWords.filter(w => w.progress !== null)
+  const allAboveThreshold = seenWords.length > 0 && seenWords.every(
+    w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
+  )
+
+  if (allAboveThreshold || availableWords.length < roundSize) {
+    // Try to get words from next unit
+    const nextUnitWords = allWords.filter(
+      w => w.unit === currentUnit + 1 && !cooldownIds.has(w.id)
+    )
+    if (nextUnitWords.length > 0) {
+      // Add some new words from next unit
+      const newFromNext = shuffle(nextUnitWords).slice(0, Math.min(2, roundSize))
+      availableWords = [...availableWords, ...newFromNext]
+    }
+
+    // If still not enough, try even further units
+    if (availableWords.length < roundSize) {
+      const furtherWords = allWords.filter(
+        w => w.unit > currentUnit + 1 && !cooldownIds.has(w.id)
+      )
+      if (furtherWords.length > 0) {
+        const needed = roundSize - availableWords.length
+        availableWords = [...availableWords, ...shuffle(furtherWords).slice(0, needed)]
+      }
+    }
+  }
+
+  if (availableWords.length === 0) {
+    // If all words are on cooldown, ignore cooldown
+    availableWords = allWords.filter(w => w.unit <= currentUnit)
+  }
 
   if (availableWords.length === 0) {
     return []
@@ -76,38 +157,89 @@ export function selectWordsForRound(
 
   const selected: WordWithProgress[] = []
 
-  // Priority 1: Struggling (max 2)
-  const struggleCount = Math.min(maxStruggling, struggling.length)
-  selected.push(...shuffle(struggling).slice(0, struggleCount))
+  // Priority 1: Struggling words with weighted selection (higher chance for lower scores)
+  if (struggling.length > 0) {
+    const struggleCount = Math.min(2, struggling.length, roundSize)
+    selected.push(...weightedRandomSelect(struggling, struggleCount))
+  }
 
-  // Priority 2: Learning (fill to max learning)
-  const learningNeeded = Math.min(maxLearning, roundSize - selected.length)
-  if (learningNeeded > 0 && learning.length > 0) {
-    selected.push(...shuffle(learning).slice(0, learningNeeded))
+  // Priority 2: Learning words
+  if (selected.length < roundSize && learning.length > 0) {
+    const learningCount = Math.min(2, learning.length, roundSize - selected.length)
+    const learningPicks = weightedRandomSelect(
+      learning.filter(w => !selected.includes(w)),
+      learningCount
+    )
+    selected.push(...learningPicks)
   }
 
   // Priority 3: New words
-  const newNeeded = roundSize - selected.length
-  if (newNeeded > 0 && newWords.length > 0) {
-    selected.push(...shuffle(newWords).slice(0, newNeeded))
+  if (selected.length < roundSize && newWords.length > 0) {
+    const newCount = roundSize - selected.length
+    selected.push(...shuffle(newWords).slice(0, newCount))
   }
 
-  // Priority 4: Familiar words if still not enough
-  const familiarNeeded = roundSize - selected.length
-  if (familiarNeeded > 0 && familiar.length > 0) {
-    selected.push(...shuffle(familiar).slice(0, familiarNeeded))
+  // Priority 4: Familiar words
+  if (selected.length < roundSize && familiar.length > 0) {
+    const familiarCount = roundSize - selected.length
+    selected.push(...shuffle(familiar).slice(0, familiarCount))
   }
 
-  // Priority 5: Mastered words for review if still not enough
-  if (includeReview) {
-    const masteredNeeded = roundSize - selected.length
-    if (masteredNeeded > 0 && mastered.length > 0) {
-      selected.push(...shuffle(mastered).slice(0, masteredNeeded))
-    }
+  // Priority 5: Mastered words if still not enough
+  if (selected.length < roundSize && mastered.length > 0) {
+    const masteredCount = roundSize - selected.length
+    selected.push(...shuffle(mastered).slice(0, masteredCount))
   }
 
-  // Shuffle final selection so struggling words aren't always first
+  // Shuffle final selection
   return shuffle(selected)
+}
+
+/**
+ * Select a single word for replacement with weighted probability
+ */
+export function selectNextWord(
+  allWords: WordWithProgress[],
+  currentUnit: number,
+  excludeIds: Set<string>,
+  recentlyCompleted: string[] = [],
+  cooldownCount: number = 4
+): Word | null {
+  // Get words on cooldown
+  const cooldownIds = new Set(recentlyCompleted.slice(0, cooldownCount))
+  const allExcluded = new Set([...excludeIds, ...cooldownIds])
+
+  // Filter available words
+  let available = allWords.filter(
+    w => w.unit <= currentUnit && !allExcluded.has(w.id)
+  )
+
+  // Check if we should introduce from next section
+  const seenWords = available.filter(w => w.progress !== null)
+  const allAboveThreshold = seenWords.length > 0 && seenWords.every(
+    w => (w.progress?.score ?? 0) >= PROGRESSION_THRESHOLD
+  )
+
+  if (allAboveThreshold || available.length === 0) {
+    // Include words from next unit
+    const nextUnitWords = allWords.filter(
+      w => w.unit === currentUnit + 1 && !allExcluded.has(w.id)
+    )
+    available = [...available, ...nextUnitWords]
+  }
+
+  if (available.length === 0) {
+    // Fall back to any word not currently in play
+    available = allWords.filter(w => !excludeIds.has(w.id))
+  }
+
+  if (available.length === 0) {
+    return null
+  }
+
+  // Use weighted selection for single word
+  const selected = weightedRandomSelect(available, 1)
+  return selected[0] || null
 }
 
 /**
