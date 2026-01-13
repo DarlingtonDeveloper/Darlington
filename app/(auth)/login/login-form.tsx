@@ -38,6 +38,11 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${redirectTo}`,
+        scopes: 'https://www.googleapis.com/auth/calendar.readonly',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     })
   }

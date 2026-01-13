@@ -8,6 +8,7 @@ const PROTECTED_ROUTES = [
   '/finance',
   '/systems',
   '/projects',
+  '/calendar',
 ]
 
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback']
