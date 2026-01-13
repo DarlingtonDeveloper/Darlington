@@ -1,7 +1,7 @@
 # Personal OS - Project Status
 
 **Last Updated:** Jan 13, 2026
-**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS complete, Health OS complete, Auth complete
+**Current Status:** Habits OS v0.3 (Health integration), Finance OS MVP live, Calendar OS complete, Health OS complete with iOS Shortcuts, Auth complete
 
 For full roadmap and system architecture, see **VISION.md**.
 
@@ -17,9 +17,9 @@ For full roadmap and system architecture, see **VISION.md**.
 - Session management with cookie refresh
 - Google Calendar scope in OAuth flow
 
-### Habits OS v0.2
-- 30 habits with categories (morning, anytime, productivity, social, evening)
-- Mobile-first Linear-inspired UI
+### Habits OS v0.3
+- ~22 active habits with categories (morning, anytime, productivity, social, evening)
+- Mobile-first Linear-inspired UI (Precision & Density design system)
 - Daily completion tracking with timestamps
 - Progress bar and completion percentage
 - Energy level selector
@@ -31,6 +31,7 @@ For full roadmap and system architecture, see **VISION.md**.
 - Multi-step habits (Yoga with 8 steps)
 - Goals table with weighted progress tracking
 - Analytics dashboard (Overview, Habits, Goals, Insights tabs)
+- Health Today section with 5 auto-tracked metrics
 - Notion data migrated to Supabase
 
 ### Finance OS MVP
@@ -56,16 +57,26 @@ For full roadmap and system architecture, see **VISION.md**.
 
 ### Health OS
 - 8 database tables (sleep, steps, diet, weight, screentime, workouts, templates, settings)
-- iOS Shortcuts webhooks (morning wake_time, evening bedtime/steps/doomscroll)
+- iOS Shortcuts webhooks (global secret + user_id authentication):
+  - `/api/health/webhook/morning` - wake_time (first call wins)
+  - `/api/health/webhook/evening` - bedtime (server timestamp, last call wins) + steps
+  - `/api/health/webhook/doomscroll` - app lock events (10 min threshold)
 - Dashboard with 6 metric cards
 - Diet: 10 signal toggles (tap=0↔100, double-tap=custom value)
 - Weight: Manual entry with 7-day trend chart
 - Sleep: Consistency scoring (60% wake time, 40% duration)
 - Steps: Progress ring with streak counter, manual fallback
 - Screen Time: Doomscroll events by app with daily/weekly trends
-- Workouts: Template-based logging with exercise checklists
-- Settings: Targets, webhook secret generation, template CRUD
-- Multi-user support via per-user webhook secrets
+- Workouts: Template-based logging with exercise checklists (Daily Workout template)
+- Settings: Targets (wake_target_time, bedtime_target, steps_target, sleep_duration)
+
+### Habits + Health Integration
+- Health Today section at top of /habits page showing 5 metrics:
+  - Wake time, Steps, Bedtime (with target progress)
+  - Diet check-in, Workout (action cards linking to /health/*)
+- Health-linked habits auto-complete based on Health OS data
+- Habits deactivated (tracked in Health OS): 15 min planning, No alcohol, 2L water, No masturbating, Mindful meal, Press-ups, Knee mobility, Yoga, Physical activity
+- habits.health_link column links habits to health data sources
 
 ### Hanzi Linker
 - Link game mode (English -> Pinyin -> Hanzi chains)
@@ -93,7 +104,7 @@ Aligned with VISION.md phases:
   - [x] Diet signals (10 toggles: no alcohol, no snacking, protein, etc.)
   - [x] iOS Shortcuts webhooks (sleep, steps, screen time)
   - [x] Workout logging with templates
-  - [ ] Reference habits in Habits OS linking to Health (future)
+  - [x] Health Today section in Habits OS with auto-tracked metrics
 - [ ] **Career module**
   - [ ] Tasks inbox (GTD-style capture)
   - [ ] Objectives (quarterly goals)

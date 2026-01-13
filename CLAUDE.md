@@ -19,10 +19,18 @@ npm run lint     # ESLint check
 - `/` - Home (3D Spline scene)
 - `/projects` - Portfolio gallery with carousel
 - `/systems` - Interactive portfolio grid
-- `/habits` - Habit tracker (standalone layout, no header/footer)
+- `/habits` - Habit tracker with Health Today section (standalone layout)
 - `/finance` - Finance OS with weekly spending summary
 - `/calendar` - Calendar OS with Google Calendar integration (standalone layout)
 - `/calendar/week` - Week view with day summaries
+- `/health` - Health OS dashboard (standalone layout)
+- `/health/diet` - Diet signal toggles
+- `/health/sleep` - Sleep tracking
+- `/health/steps` - Step tracking
+- `/health/weight` - Weight tracking with trend chart
+- `/health/workouts` - Workout logging with templates
+- `/health/screentime` - Doomscroll events
+- `/health/settings` - Health targets and webhook config
 - `/hanzi` - Chinese character learning app
 
 ### Key Directories
@@ -62,6 +70,27 @@ The `/calendar` route integrates with Google Calendar API (hybrid approach):
 - Tokens captured in `/auth/callback` and stored in `user_oauth_tokens`
 - Token refresh handled automatically in `lib/google-calendar.ts`
 
+### Health System
+
+The `/health` route tracks health metrics with iOS Shortcuts automation:
+- `app/health/page.tsx` - Server component, dashboard with 6 metric cards
+- `app/health/layout.tsx` - Standalone full-screen layout
+- `components/habits/health-today.tsx` - Health metrics in habits page
+
+**Webhook endpoints (iOS Shortcuts integration):**
+- `app/api/health/webhook/morning/route.ts` - wake_time (first call wins)
+- `app/api/health/webhook/evening/route.ts` - bedtime + steps (last call wins)
+- `app/api/health/webhook/doomscroll/route.ts` - app lock events
+
+**Authentication:** Global `HEALTH_WEBHOOK_SECRET` + `user_id` in payload (no per-user secrets)
+
+**Database tables:** `sleep_entries`, `steps_entries`, `diet_entries`, `weight_entries`, `screen_time_events`, `workout_logs`, `workout_templates`, `health_settings`
+
+**Habits integration:**
+- `habits.health_link` column links habits to health data ('wake_time', 'steps', 'bedtime')
+- Health-linked habits auto-complete based on health data
+- HealthToday component shows 5 metrics at top of habits page
+
 ### Environment Variables
 
 Required in `.env.local` and Vercel:
@@ -70,6 +99,7 @@ Required in `.env.local` and Vercel:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID (for Calendar API)
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `HEALTH_WEBHOOK_SECRET` - Global secret for iOS Shortcuts webhooks
 
 ## Conventions
 
