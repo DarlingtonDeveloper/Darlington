@@ -11,7 +11,6 @@ export interface HealthSettings {
   steps_target: number
   wake_target_time: string
   sleep_duration_target_hours: number
-  webhook_secret: string | null
 }
 
 async function loadSettings(userId: string): Promise<{

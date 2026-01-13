@@ -33,23 +33,21 @@ function SettingRow({
 export function SettingsClient({
   initialSettings,
   templates: initialTemplates,
+  userId,
 }: SettingsClientProps) {
   const [settings, setSettings] = useState<Partial<HealthSettings>>(
     initialSettings || {
       steps_target: 10000,
       wake_target_time: '07:00:00',
       sleep_duration_target_hours: 8,
-      webhook_secret: null,
     }
   )
   const [templates, setTemplates] = useState<WorkoutTemplate[]>(initialTemplates)
-  const [isSaving, setIsSaving] = useState(false)
-  const [showSecret, setShowSecret] = useState(false)
+  const [copiedUserId, setCopiedUserId] = useState(false)
   const [newTemplateName, setNewTemplateName] = useState('')
 
   const saveSettings = useCallback(
-    async (updates: Partial<HealthSettings> & { generate_new_secret?: boolean }) => {
-      setIsSaving(true)
+    async (updates: Partial<HealthSettings>) => {
       try {
         const response = await fetch('/api/health/settings', {
           method: 'PUT',
@@ -64,24 +62,16 @@ export function SettingsClient({
       } catch (error) {
         console.error('Error saving settings:', error)
         alert('Failed to save settings')
-      } finally {
-        setIsSaving(false)
       }
     },
     []
   )
 
-  const handleGenerateSecret = useCallback(async () => {
-    if (
-      settings.webhook_secret &&
-      !confirm(
-        'This will invalidate your existing webhook secret. Your iOS Shortcuts will need to be updated. Continue?'
-      )
-    ) {
-      return
-    }
-    await saveSettings({ generate_new_secret: true })
-  }, [settings.webhook_secret, saveSettings])
+  const handleCopyUserId = useCallback(() => {
+    navigator.clipboard.writeText(userId)
+    setCopiedUserId(true)
+    setTimeout(() => setCopiedUserId(false), 2000)
+  }, [userId])
 
   const handleCreateTemplate = useCallback(async () => {
     if (!newTemplateName.trim()) return
@@ -209,29 +199,21 @@ export function SettingsClient({
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <div className="text-sm text-neutral-400 mb-2">Webhook Secret</div>
-            {settings.webhook_secret ? (
-              <div className="flex items-center gap-2">
-                <code className="flex-1 px-3 py-2 bg-neutral-800 rounded font-mono text-xs text-neutral-300 overflow-hidden">
-                  {showSecret ? settings.webhook_secret : '••••••••••••••••••••••••'}
-                </code>
-                <button
-                  onClick={() => setShowSecret(!showSecret)}
-                  className="px-3 py-2 bg-neutral-700 hover:bg-neutral-600 rounded text-sm text-neutral-300"
-                >
-                  {showSecret ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            ) : (
-              <p className="text-sm text-neutral-500">No secret generated yet</p>
-            )}
-            <button
-              onClick={handleGenerateSecret}
-              disabled={isSaving}
-              className="mt-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded text-sm text-neutral-300"
-            >
-              {settings.webhook_secret ? 'Regenerate Secret' : 'Generate Secret'}
-            </button>
+            <div className="text-sm text-neutral-400 mb-2">Your User ID</div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-neutral-800 rounded font-mono text-xs text-neutral-300 overflow-hidden">
+                {userId}
+              </code>
+              <button
+                onClick={handleCopyUserId}
+                className="px-3 py-2 bg-neutral-700 hover:bg-neutral-600 rounded text-sm text-neutral-300"
+              >
+                {copiedUserId ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-xs text-neutral-600 mt-2">
+              Include this in your iOS Shortcut payload as &ldquo;user_id&rdquo;
+            </p>
           </div>
 
           <div>
@@ -254,8 +236,8 @@ export function SettingsClient({
 
           <div className="pt-2 border-t border-neutral-800/40">
             <p className="text-xs text-neutral-600">
-              Use these URLs in iOS Shortcuts. Include the webhook secret in your POST body as
-              &ldquo;secret&rdquo;.
+              iOS Shortcuts POST to these URLs with JSON body containing
+              &ldquo;secret&rdquo; (env var) and &ldquo;user_id&rdquo; (above).
             </p>
           </div>
         </div>

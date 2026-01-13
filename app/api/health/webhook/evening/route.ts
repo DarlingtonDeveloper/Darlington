@@ -14,14 +14,15 @@ interface DoomscrollLog {
 
 interface EveningPayload {
   secret: string
-  bedtime: string // ISO 8601 timestamp
+  user_id: string
+  bedtime?: string // ISO 8601 timestamp
   steps?: number
   doomscroll_logs?: DoomscrollLog[]
 }
 
 export async function POST(request: Request) {
   try {
-    const { secret, bedtime, steps, doomscroll_logs }: EveningPayload =
+    const { secret, user_id, bedtime, steps, doomscroll_logs }: EveningPayload =
       await request.json()
 
     // Validate webhook secret
@@ -29,19 +30,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
     }
 
-    // Get user from health_settings by webhook_secret
-    const { data: settings, error: settingsError } = await supabase
-      .from('health_settings')
-      .select('user_id, steps_target')
-      .eq('webhook_secret', secret)
-      .single()
-
-    if (settingsError || !settings) {
-      return NextResponse.json(
-        { error: 'No user found for this webhook secret' },
-        { status: 404 }
-      )
+    if (!user_id) {
+      return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
     }
+
+    // Get user's settings for step target (optional)
+    const { data: settings } = await supabase
+      .from('health_settings')
+      .select('steps_target')
+      .eq('user_id', user_id)
+      .single()
 
     const today = new Date().toISOString().split('T')[0]
     const results: Record<string, unknown> = {}
@@ -52,7 +50,7 @@ export async function POST(request: Request) {
         .from('sleep_entries')
         .upsert(
           {
-            user_id: settings.user_id,
+            user_id,
             sleep_date: today,
             bedtime: bedtime,
             updated_at: new Date().toISOString(),
@@ -70,13 +68,13 @@ export async function POST(request: Request) {
 
     // 2. Save steps
     if (steps !== undefined) {
-      const stepTarget = settings.steps_target || 10000
+      const stepTarget = settings?.steps_target || 10000
 
       const { data: stepsData, error: stepsError } = await supabase
         .from('steps_entries')
         .upsert(
           {
-            user_id: settings.user_id,
+            user_id,
             entry_date: today,
             step_count: steps,
             target: stepTarget,
@@ -101,7 +99,7 @@ export async function POST(request: Request) {
     // 3. Save doomscroll logs
     if (doomscroll_logs && doomscroll_logs.length > 0) {
       const events = doomscroll_logs.map((log) => ({
-        user_id: settings.user_id,
+        user_id,
         event_date: new Date(log.timestamp).toISOString().split('T')[0],
         event_time: log.timestamp,
         app_name: log.app,

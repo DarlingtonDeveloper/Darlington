@@ -8,6 +8,7 @@ const supabase = createClient(
 
 interface MorningPayload {
   secret: string
+  user_id: string
   wake_time: string // ISO 8601 timestamp
 }
 
@@ -28,30 +29,27 @@ function calculateWakeScore(wakeTime: Date, targetMinutes: number = 420): number
 
 export async function POST(request: Request) {
   try {
-    const { secret, wake_time }: MorningPayload = await request.json()
+    const { secret, user_id, wake_time }: MorningPayload = await request.json()
 
     // Validate webhook secret
     if (secret !== process.env.HEALTH_WEBHOOK_SECRET) {
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
     }
 
+    if (!user_id) {
+      return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
+    }
+
     if (!wake_time) {
       return NextResponse.json({ error: 'wake_time is required' }, { status: 400 })
     }
 
-    // Get user from health_settings by webhook_secret
-    const { data: settings, error: settingsError } = await supabase
+    // Get user's settings for wake target (optional)
+    const { data: settings } = await supabase
       .from('health_settings')
-      .select('user_id, wake_target_time')
-      .eq('webhook_secret', secret)
+      .select('wake_target_time')
+      .eq('user_id', user_id)
       .single()
-
-    if (settingsError || !settings) {
-      return NextResponse.json(
-        { error: 'No user found for this webhook secret' },
-        { status: 404 }
-      )
-    }
 
     const wakeDate = new Date(wake_time)
     // Sleep date is the previous day (we woke up from last night's sleep)
@@ -60,7 +58,7 @@ export async function POST(request: Request) {
     const sleepDateStr = sleepDate.toISOString().split('T')[0]
 
     // Calculate wake score
-    const targetMinutes = settings.wake_target_time
+    const targetMinutes = settings?.wake_target_time
       ? parseInt(settings.wake_target_time.split(':')[0]) * 60 +
         parseInt(settings.wake_target_time.split(':')[1])
       : 420 // 7:00 AM default
@@ -72,7 +70,7 @@ export async function POST(request: Request) {
       .from('sleep_entries')
       .upsert(
         {
-          user_id: settings.user_id,
+          user_id,
           sleep_date: sleepDateStr,
           wake_time: wake_time,
           wake_score: wakeScore,
