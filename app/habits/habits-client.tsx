@@ -10,7 +10,9 @@ import { PartialComplete, usePartialComplete } from '@/components/habits/partial
 import { WhatsNext, useWhatsNext } from '@/components/habits/whats-next'
 import { HabitSteps, type HabitStep } from '@/components/habits/habit-steps'
 import { FocusBorder } from '@/components/habits/focus-border'
+import { HealthToday } from '@/components/habits/health-today'
 import { getCachedHabits, setCachedHabits, isCacheStale } from '@/lib/habits-cache'
+import type { HealthTodayData } from './page'
 
 interface Habit {
     id: string
@@ -44,9 +46,10 @@ interface HabitsClientProps {
     hasCheckedInToday?: boolean
     focusHabitIds?: string[]
     userId: string
+    healthData: HealthTodayData
 }
 
-export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false, focusHabitIds = [], userId }: HabitsClientProps) {
+export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false, focusHabitIds = [], userId, healthData }: HabitsClientProps) {
     const supabase = createClient()
 
     // Use server data for initial render (no cache check during SSR)
@@ -635,6 +638,13 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     </div>
                 </div>
             </div>
+
+            {/* Health Today section */}
+            {viewingIsToday && !isLoading && (
+                <div className="px-4 sm:px-6 pt-4 sm:max-w-2xl sm:mx-auto">
+                    <HealthToday data={healthData} />
+                </div>
+            )}
 
             {/* Check-in prompt or completed indicator */}
             {viewingIsToday && !isLoading && (

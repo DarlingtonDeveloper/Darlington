@@ -41,7 +41,15 @@ interface HabitWithStatus extends Habit {
   health_value?: string | number
 }
 
-async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], date: string }> {
+export interface HealthTodayData {
+  wake: { value: string | null; target: string; met: boolean }
+  steps: { value: number | null; target: number; met: boolean }
+  bedtime: { value: string | null; target: string; met: boolean }
+  diet: { completed: boolean; signalCount: number }
+  workout: { completed: boolean; templateName: string | null }
+}
+
+async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], date: string, healthData: HealthTodayData }> {
   const supabase = await createClient()
 
   try {
@@ -63,7 +71,7 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
     }
 
     // Get today's completions, yesterday's completions (for ordering), steps, step completions, and health data
-    const [todayResult, yesterdayResult, stepsResult, stepCompletionsResult, sleepYesterday, sleepToday, stepsToday, healthSettings] = await Promise.all([
+    const [todayResult, yesterdayResult, stepsResult, stepCompletionsResult, sleepYesterday, sleepToday, stepsToday, healthSettings, dietToday, workoutToday] = await Promise.all([
       supabase
         .from('habit_completions')
         .select('*')
@@ -110,6 +118,20 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
         .from('health_settings')
         .select('wake_target_time, bedtime_target, steps_target')
         .eq('user_id', userId)
+        .single(),
+      // Diet entry for today
+      supabase
+        .from('diet_entries')
+        .select('no_alcohol, no_snacking, protein, vegetables, fruits, hydration, no_sugar_drinks, meal_timing, no_late_eating, mindful_eating')
+        .eq('user_id', userId)
+        .eq('entry_date', today)
+        .single(),
+      // Workout log for today (with template name)
+      supabase
+        .from('workout_logs')
+        .select('id, template:workout_templates(name)')
+        .eq('user_id', userId)
+        .eq('log_date', today)
         .single()
     ])
 
@@ -222,11 +244,69 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
       return a.display_order - b.display_order
     })
 
-    return { habits: habitsWithStatus, date: today }
+    // Filter out health-linked habits (they'll show in HealthToday section)
+    const regularHabits = habitsWithStatus.filter(h => !h.health_link)
+
+    // Build healthData for HealthToday section
+    const wakeCheck = checkHealthGoal('wake_time')
+    const stepsCheck = checkHealthGoal('steps')
+    const bedtimeCheck = checkHealthGoal('bedtime')
+
+    // Count diet signals that are > 0
+    const dietEntry = dietToday.data
+    const dietSignals = dietEntry ? [
+      dietEntry.no_alcohol,
+      dietEntry.no_snacking,
+      dietEntry.protein,
+      dietEntry.vegetables,
+      dietEntry.fruits,
+      dietEntry.hydration,
+      dietEntry.no_sugar_drinks,
+      dietEntry.meal_timing,
+      dietEntry.no_late_eating,
+      dietEntry.mindful_eating
+    ].filter(v => v && v > 0).length : 0
+
+    const healthData: HealthTodayData = {
+      wake: {
+        value: wakeCheck.value as string | null ?? null,
+        target: wakeTargetTime.slice(0, 5),
+        met: wakeCheck.met,
+      },
+      steps: {
+        value: stepCount ?? null,
+        target: stepsTarget,
+        met: stepsCheck.met,
+      },
+      bedtime: {
+        value: bedtimeCheck.value as string | null ?? null,
+        target: bedtimeTarget.slice(0, 5),
+        met: bedtimeCheck.met,
+      },
+      diet: {
+        completed: dietSignals > 0,
+        signalCount: dietSignals,
+      },
+      workout: {
+        completed: !!workoutToday.data,
+        templateName: workoutToday.data?.template
+          ? (workoutToday.data.template as unknown as { name: string })?.name ?? null
+          : null,
+      },
+    }
+
+    return { habits: regularHabits, date: today, healthData }
   } catch (error) {
     console.error('Error loading habits:', error)
     const today = new Date().toLocaleDateString('en-CA')
-    return { habits: [], date: today }
+    const defaultHealthData: HealthTodayData = {
+      wake: { value: null, target: '07:00', met: false },
+      steps: { value: null, target: 10000, met: false },
+      bedtime: { value: null, target: '23:00', met: false },
+      diet: { completed: false, signalCount: 0 },
+      workout: { completed: false, templateName: null },
+    }
+    return { habits: [], date: today, healthData: defaultHealthData }
   }
 }
 
@@ -260,7 +340,7 @@ export default async function HabitsPage() {
     redirect('/login')
   }
 
-  const [{ habits, date }, checkinData] = await Promise.all([
+  const [{ habits, date, healthData }, checkinData] = await Promise.all([
     loadHabits(user.id),
     getTodayCheckin(user.id),
   ])
@@ -272,6 +352,7 @@ export default async function HabitsPage() {
       hasCheckedInToday={checkinData.hasCheckedIn}
       focusHabitIds={checkinData.focusHabitIds}
       userId={user.id}
+      healthData={healthData}
     />
   )
 }
