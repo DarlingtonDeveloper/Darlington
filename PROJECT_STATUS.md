@@ -1,180 +1,182 @@
-# Habits OS v0.2 - Project Status
+# Personal OS - Project Status
 
-**Last Updated:** Jan 7, 2025
-**Current Status:** v0.2 stable, Notion migrated
-
----
-
-## ✅ Completed
-
-### Database
-- ✅ Supabase project created (see NEXT_PUBLIC_SUPABASE_URL in .env)
-- ✅ Schema deployed (users, habits, habit_completions, daily_summaries)
-- ✅ 30 habits seeded with categories and display order
-- ✅ RLS policies configured for hardcoded user (see .env for user ID)
-- ✅ Analytics views created (streaks, weekly stats, patterns)
-- ✅ Notion data migrated to Supabase
-
-### Frontend
-- ✅ `/habits` route with mobile-first Linear-inspired UI
-- ✅ `/habits/analytics` tabbed dashboard (Overview, Habits, Insights)
-- ✅ `/goals` tabbed dashboard (Overview, Goals, Insights)
-- ✅ Tab navigation between Daily, Goals, and Analytics views
-- ✅ TypeScript types generated from schema
-- ✅ Supabase client configured (lib/supabase.ts)
-- ✅ Client component for habit interactions
-- ✅ Server component for data loading
-- ✅ Progress bar and completion tracking
-- ✅ Energy level selector
-- ✅ Daily summary notes
-- ✅ Security rules documented in CLAUDE.md
-
-### CI/CD
-- ✅ GitHub repo connected
-- ✅ Vercel deployment configured
-- ✅ Build passing on CI
-- ✅ TypeScript compilation working
-- ✅ ESLint passing
-- ✅ Pre-commit hook (runs lint + build before commits)
-
-### Local Development
-- ✅ Works perfectly at localhost:3000/habits
-- ✅ Habit completion/uncompletion works
-- ✅ Real-time updates
-- ✅ Data persists to Supabase
-
-### Tier 1 Features (Complete)
-- ✅ Partial completions (percentage-based tracking)
-- ✅ Habit notes (optional notes on completions)
-- ✅ Daily check-in flow (reflection, focus selection, intention)
-
-### Tier 2 Features (Complete)
-- ✅ What's Next button (smart habit suggestion based on focus, time of day)
-- ✅ Multi-step habits (sub-steps within habits - Yoga has 8 steps)
-
-### Tier 3 Features (Complete)
-- ✅ Goals table (habits linked to goals with weighted progress tracking)
-- ✅ Goals Analytics (tabbed dashboard: Overview, Goals, Insights)
-- ✅ Habits Analytics v2 (tabbed dashboard: Overview, Habits, Insights)
+**Last Updated:** Jan 13, 2026
+**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS Phase 2 complete, Auth complete
 
 ---
 
-## 🔄 Next Steps
+## Completed
 
-### 1. Authentication
-- [ ] Add Supabase Auth
-- [ ] Replace hardcoded user ID with auth user
-- [ ] Update RLS policies
+### Authentication
+- Supabase Auth integrated
+- Login/Signup pages with Google OAuth
+- Middleware protecting routes (`/habits`, `/finance`, `/hanzi`, `/goals`, `/systems`, `/projects`, `/calendar`)
+- Auth callback handling with Google token capture
+- Session management with cookie refresh
+- Google Calendar scope in OAuth flow
 
----
+### Habits OS v0.2
+- 30 habits with categories (morning, anytime, productivity, social, evening)
+- Mobile-first Linear-inspired UI
+- Daily completion tracking with timestamps
+- Progress bar and completion percentage
+- Energy level selector
+- Daily summary notes
+- Partial completions (percentage-based tracking)
+- Habit notes (optional notes on completions)
+- Daily check-in flow (reflection, focus selection, intention)
+- What's Next button (smart habit suggestion)
+- Multi-step habits (Yoga with 8 steps)
+- Goals table with weighted progress tracking
+- Analytics dashboard (Overview, Habits, Goals, Insights tabs)
+- Notion data migrated to Supabase
 
-## 🚧 Technical Debt
+### Finance OS MVP
+- 1,146 transactions imported (Jun 2025 - Jan 2026)
+- 99.9% automatic categorization (100+ regex rules)
+- Weekly summary view (total spent, trends, category breakdown)
+- Top merchants display
+- Daily spending breakdown
+- XLS upload and import (Santander current + credit card)
+- Hash-based deduplication for imports
+- Manual categorization popup for uncategorized items
+- Multi-currency support (7 countries)
 
-### ✅ Resolved
+### Calendar OS (NEW - Jan 13, 2026)
+- Google Calendar API integration (hybrid approach)
+- Live fetch from Google for display (always fresh)
+- Summary sync to Supabase for analytics
+- Today view with timeline, events, free time blocks
+- Week view with day summaries and busy bars
+- Auto-sync on page load (if stale >1 hour)
+- Manual sync button
+- Token refresh handling
+- Calendar link in user dropdown menu
 
-**GitHub MCP / File Editing:**
-- ~~Issue: Can't make commits or edit files directly~~
-- Resolution: Using Claude Code CLI - full git and file access
+**Key files:**
+- `app/calendar/` - Today view
+- `app/calendar/week/` - Week view
+- `app/api/calendar/events/` - Live fetch from Google
+- `app/api/calendar/sync/` - Sync summaries to Supabase
+- `lib/google-calendar.ts` - Token management & API helpers
 
-**Supabase MCP:**
-- ~~Issue: OAuth flow fails~~
-- Resolution: Using Supabase dashboard + Claude Code for queries
+**Database tables:** `user_oauth_tokens`, `calendar_daily_summaries`
 
-### 🔄 Remaining
+### Hanzi Linker
+- Link game mode (English -> Pinyin -> Hanzi chains)
+- 93 characters seeded (Duolingo Section 1, 8 units)
+- Progression/unlock logic
+- Adaptive scoring system
+- Lesson mode for flashcard learning
 
-**Authentication:**
-- Current: Hardcoded user_id in RLS policies
-- Need: Proper Supabase Auth with login
-- Impact: Can't share app with others
-- Priority: High (before adding other users)
-
-**Apple Watch Integration:**
-- Goal: Sleep tracking via Shortcuts → Webhook → Supabase
-- Status: Not started
-- Priority: Low (nice to have)
-
----
-
-## 📊 30 Habits Structure
-
-### Morning (10)
-Wake 7am, Morning sunlight, No phone in bed, Shower, Teeth morning, Skincare, Minoxidil, Supplements, Creatine, 15 min planning
-
-### Anytime/Daily (10)
-Duolingo, Physical activity, Press-ups, Yoga, Knee mobility, Breath work, 1 min meditation, Walk after 1 meal, Drink 2L water, 10k steps
-
-### Social/Productivity (5)
-Respond messages, Reach out friend, Project work 30 min, 60s to camera, Podcasts over scroll
-
-### Evening (5)
-Mindful meal, Teeth evening, **Bed by 11pm** (CRITICAL), No alcohol, No masturbating
-
----
-
-## 🎯 Success Metrics
-
-**Completed:**
-- [x] Mobile-first UI redesign (Linear-inspired)
-- [x] Production deployment configured
-- [x] Pre-commit hooks for quality
-- [x] Notion data migrated
-- [x] Analytics dashboard with streaks, weekly chart, time heatmap
-- [x] Tier 1: Partial completions, habit notes, daily check-in
-- [x] Tier 2: What's Next smart suggestions
-- [x] Tier 2: Multi-step habits (Yoga)
-- [x] Tier 3: Goals table with weighted progress
-- [x] Tier 3: Habits Analytics v2 (Overview, Habits, Insights tabs)
-- [x] Tier 3: Goals Analytics (Overview, Goals, Insights tabs)
-
-**In Progress:**
-- [ ] 30 days of completion data
-
-**Future:**
-- [ ] Authentication system
-- [ ] AI Daily Scheduler
-- [ ] Calendar integration
+### Infrastructure
+- GitHub repo connected
+- Vercel deployment configured
+- Pre-commit hooks (lint + build)
+- TypeScript strict mode
+- ESLint passing
 
 ---
 
-## 🔑 Key Information
+## Potential Next Steps
 
-**Branch:** main
-**Production URL:** darlington.dev/habits
+### Calendar OS Phase 4
+- [ ] Cross-domain queries (calendar + habits + finance)
+- [ ] Insights UI showing correlations:
+  - Do busy days hurt habit completion?
+  - Spending patterns vs meeting load
+  - Best days for deep work
 
-**Environment Variables Required (set in .env.local and Vercel):**
-- NEXT_PUBLIC_SUPABASE_URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY
-- SUPABASE_SERVICE_ROLE_KEY
-- HABITS_USER_ID (for RLS policies)
+### New Personal OS Modules
+- [ ] Tasks/Projects (one-off items vs recurring habits)
+- [ ] Health Dashboard (Apple Watch data aggregation)
+- [ ] Social/Contacts CRM
+- [ ] Reading/Learning tracker
 
----
+### Cross-Domain Features
+- [ ] AI Daily Scheduler ("Claude, what should I do next?")
+- [ ] Context Engine (unified cross-domain awareness)
+- [ ] Unified insights dashboard
 
-## 📝 Lessons Learned
-
-**From This Session:**
-- ❌ Never use TypeScript `any` - use proper types
-- ❌ Never use eslint-disable to bypass linting - fix the issue
-- ❌ Never put credentials in code - use env vars
-- ❌ Never put user IDs or secrets in markdown files - use .env
-- ✅ Test locally with `npm run build` before pushing
-- ✅ Keep solutions simple - avoid over-engineering
-- ✅ Understand root cause before trying fixes
-- ✅ Use pre-commit hooks to catch errors early
-
-**TypeScript with Supabase:**
-- Generic Database types can cause inference issues
-- Making client creation conditional avoids build-time errors
-- Vercel env vars are available at both build and runtime
+### Enhancements
+- [ ] Hanzi Linker audio (listening/speaking challenges)
+- [ ] Apple Watch integration (sleep, steps via Shortcuts -> Webhook)
+- [ ] Goals feature expansion
 
 ---
 
-## 🚀 Long-Term Vision
+## Technical Debt
 
-**Roadmap:**
-1. Personal OS Foundation (Habits v0.2) ← current
-2. Goals & Calendar Integration
-3. Context Engine (all domains)
-4. AI Daily Scheduler
-5. Fully Automated Personal Assistant
+### Resolved
+- ~~GitHub MCP / File Editing~~ -> Using Claude Code CLI
+- ~~Supabase MCP~~ -> Using dashboard + Claude Code
+- ~~Authentication~~ -> Supabase Auth implemented
+- ~~Hardcoded user_id~~ -> Auth user in middleware
+- ~~Time/Calendar integration~~ -> Calendar OS implemented
 
-**Target:** "Claude, what should I do next?" with intelligent recommendations based on habits, goals, calendar, energy levels, and context.
+### Remaining
+- MCP connectors still flaky (Supabase, GitHub OAuth)
+- Local dev OAuth redirect issue (redirects to prod) - workaround: test on prod
+
+---
+
+## Key Data
+
+### Habits
+- 30 daily habits tracked
+- ~75% average completion rate
+- 10 habits at 100% consistency
+
+### Finance
+- £28,328 total spending tracked (7 months)
+- £147.54 average daily (inflated by Asia travel)
+- 91% reduction in gaming spend (£492 -> £45/mo)
+- 67% travel-related, 33% UK baseline
+
+### Calendar
+- Live Google Calendar integration
+- 37 days of summaries synced (30 past + 7 future)
+- Free time and meeting hours tracked
+
+### Hanzi
+- 93 characters available
+- 8 units of progression
+
+---
+
+## Vision
+
+**North Star:** "Claude, what should I do next?"
+
+An AI Daily Scheduler with full context across:
+- Habits (what I should do daily)
+- Finance (spending patterns, budget awareness)
+- Calendar (what's scheduled) - NOW INTEGRATED
+- Goals (what I'm working toward)
+- Energy/Health (current capacity)
+- Learning (Mandarin progress)
+
+**Core Insight:** Value comes from cross-domain patterns, not individual app sophistication.
+
+---
+
+## Technical Reference
+
+**Production URL:** darlington.dev
+**Supabase Project:** vufdabwdnpmxmgugzric
+
+**Protected Routes:**
+- `/habits` - Habit tracking
+- `/finance` - Finance dashboard
+- `/calendar` - Calendar OS (Google Calendar)
+- `/hanzi` - Mandarin learning
+- `/goals` - Goal tracking
+
+**Environment Variables:**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+**Stack:** Next.js 15, React 19, Tailwind CSS 4, Supabase, TypeScript
