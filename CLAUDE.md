@@ -20,6 +20,10 @@ npm run lint     # ESLint check
 - `/projects` - Portfolio gallery with carousel
 - `/systems` - Interactive portfolio grid
 - `/habits` - Habit tracker (standalone layout, no header/footer)
+- `/finance` - Finance OS with weekly spending summary
+- `/calendar` - Calendar OS with Google Calendar integration (standalone layout)
+- `/calendar/week` - Week view with day summaries
+- `/hanzi` - Chinese character learning app
 
 ### Key Directories
 
@@ -35,8 +39,28 @@ The `/habits` route is a personal habit tracking app using Supabase:
 - `app/habits/habits-client.tsx` - Client component with toggle/save interactions
 - `app/habits/layout.tsx` - Standalone full-screen layout (hides site header/footer)
 
-**Database tables:** `habits`, `habit_completions`, `daily_summaries`
-**User ID:** Hardcoded in RLS policies (no auth yet)
+**Database tables:** `habits`, `habit_completions`, `daily_summaries`, `daily_checkins`, `habit_steps`
+
+### Calendar System
+
+The `/calendar` route integrates with Google Calendar API (hybrid approach):
+- **Live fetch**: Events displayed are fetched directly from Google Calendar API
+- **Summary sync**: Daily summaries synced to Supabase for cross-domain analytics
+
+**Key files:**
+- `app/calendar/page.tsx` - Server component
+- `app/calendar/calendar-client.tsx` - Today view with timeline, free time blocks
+- `app/calendar/week/` - Week view with day summaries
+- `app/api/calendar/events/route.ts` - Fetches events from Google Calendar
+- `app/api/calendar/sync/route.ts` - Syncs daily summaries to Supabase
+- `lib/google-calendar.ts` - Token management and API helpers
+
+**Database tables:** `user_oauth_tokens`, `calendar_daily_summaries`
+
+**Google OAuth flow:**
+- Calendar scope added to login/signup OAuth requests
+- Tokens captured in `/auth/callback` and stored in `user_oauth_tokens`
+- Token refresh handled automatically in `lib/google-calendar.ts`
 
 ### Environment Variables
 
@@ -44,6 +68,8 @@ Required in `.env.local` and Vercel:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID (for Calendar API)
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 
 ## Conventions
 
