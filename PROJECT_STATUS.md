@@ -1,7 +1,7 @@
 # Personal OS - Project Status
 
 **Last Updated:** Jan 13, 2026
-**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS complete, Auth complete
+**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS complete, Health OS complete, Auth complete
 
 For full roadmap and system architecture, see **VISION.md**.
 
@@ -54,6 +54,19 @@ For full roadmap and system architecture, see **VISION.md**.
 - Manual sync button
 - Token refresh handling
 
+### Health OS
+- 8 database tables (sleep, steps, diet, weight, screentime, workouts, templates, settings)
+- iOS Shortcuts webhooks (morning wake_time, evening bedtime/steps/doomscroll)
+- Dashboard with 6 metric cards
+- Diet: 10 signal toggles (tap=0↔100, double-tap=custom value)
+- Weight: Manual entry with 7-day trend chart
+- Sleep: Consistency scoring (60% wake time, 40% duration)
+- Steps: Progress ring with streak counter, manual fallback
+- Screen Time: Doomscroll events by app with daily/weekly trends
+- Workouts: Template-based logging with exercise checklists
+- Settings: Targets, webhook secret generation, template CRUD
+- Multi-user support via per-user webhook secrets
+
 ### Hanzi Linker
 - Link game mode (English -> Pinyin -> Hanzi chains)
 - 93 characters seeded (Duolingo Section 1, 8 units)
@@ -75,11 +88,12 @@ For full roadmap and system architecture, see **VISION.md**.
 Aligned with VISION.md phases:
 
 ### Phase 1: Foundation
-- [ ] **Health module**
-  - [ ] Weight tracking (daily weigh-in)
-  - [ ] Diet signals (binary checkboxes: no alcohol, no snacking, etc.)
-  - [ ] Apple Health webhook (sleep, steps)
-  - [ ] Reference habits in Habits OS linking to Health
+- [x] **Health module** ✓ Complete
+  - [x] Weight tracking (daily weigh-in)
+  - [x] Diet signals (10 toggles: no alcohol, no snacking, protein, etc.)
+  - [x] iOS Shortcuts webhooks (sleep, steps, screen time)
+  - [x] Workout logging with templates
+  - [ ] Reference habits in Habits OS linking to Health (future)
 - [ ] **Career module**
   - [ ] Tasks inbox (GTD-style capture)
   - [ ] Objectives (quarterly goals)
@@ -176,6 +190,7 @@ Aligned with VISION.md phases:
 - `/habits` - Habit tracking
 - `/finance` - Finance dashboard
 - `/calendar` - Calendar OS (Google Calendar)
+- `/health` - Health OS (sleep, diet, weight, workouts)
 - `/hanzi` - Mandarin learning
 - `/goals` - Goal tracking
 
@@ -185,6 +200,7 @@ Aligned with VISION.md phases:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
+- `HEALTH_WEBHOOK_SECRET` (for iOS Shortcuts)
 
 **Stack:** Next.js 15, React 19, Tailwind CSS 4, Supabase, TypeScript
 
