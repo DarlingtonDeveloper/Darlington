@@ -65,6 +65,24 @@ export async function POST(request: Request) {
 
     const wakeScore = calculateWakeScore(wakeDate, targetMinutes)
 
+    // Check if wake_time already exists for this sleep_date (first call wins)
+    const { data: existing } = await supabase
+      .from('sleep_entries')
+      .select('id, wake_time, bedtime')
+      .eq('user_id', user_id)
+      .eq('sleep_date', sleepDateStr)
+      .single()
+
+    if (existing?.wake_time) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        message: 'Wake time already recorded for this date',
+        sleep_date: sleepDateStr,
+        existing_wake_time: existing.wake_time,
+      })
+    }
+
     // Upsert sleep entry with wake_time
     const { data, error } = await supabase
       .from('sleep_entries')

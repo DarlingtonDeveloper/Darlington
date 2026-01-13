@@ -15,14 +15,13 @@ interface DoomscrollLog {
 interface EveningPayload {
   secret: string
   user_id: string
-  bedtime?: string // ISO 8601 timestamp
   steps?: number
   doomscroll_logs?: DoomscrollLog[]
 }
 
 export async function POST(request: Request) {
   try {
-    const { secret, user_id, bedtime, steps, doomscroll_logs }: EveningPayload =
+    const { secret, user_id, steps, doomscroll_logs }: EveningPayload =
       await request.json()
 
     // Validate webhook secret
@@ -41,30 +40,30 @@ export async function POST(request: Request) {
       .eq('user_id', user_id)
       .single()
 
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const bedtime = now.toISOString() // Use server timestamp as bedtime
     const results: Record<string, unknown> = {}
 
-    // 1. Save bedtime (for tonight's sleep entry)
-    if (bedtime) {
-      const { data: sleepData, error: sleepError } = await supabase
-        .from('sleep_entries')
-        .upsert(
-          {
-            user_id,
-            sleep_date: today,
-            bedtime: bedtime,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,sleep_date' }
-        )
-        .select()
-        .single()
+    // 1. Save bedtime (last call wins - always overwrites)
+    const { data: sleepData, error: sleepError } = await supabase
+      .from('sleep_entries')
+      .upsert(
+        {
+          user_id,
+          sleep_date: today,
+          bedtime: bedtime,
+          updated_at: now.toISOString(),
+        },
+        { onConflict: 'user_id,sleep_date' }
+      )
+      .select()
+      .single()
 
-      if (sleepError) {
-        console.error('Error saving bedtime:', sleepError)
-      }
-      results.sleep = { saved: !sleepError, data: sleepData }
+    if (sleepError) {
+      console.error('Error saving bedtime:', sleepError)
     }
+    results.sleep = { saved: !sleepError, bedtime, data: sleepData }
 
     // 2. Save steps
     if (steps !== undefined) {
