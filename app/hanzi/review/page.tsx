@@ -1,17 +1,18 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { ReviewClient } from './review-client'
 import type { Word, UserWordProgress, WordWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus, SCORE_THRESHOLDS } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
+async function loadReviewData(userId: string): Promise<{ masteredWords: WordWithProgress[]; allHanzi: string[] }> {
+  const supabase = await createClient()
 
-async function loadReviewData(): Promise<{ masteredWords: WordWithProgress[]; allHanzi: string[] }> {
   // Fetch words and user progress in parallel
   const [wordsResult, progressResult] = await Promise.all([
     supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
-    supabase.from('user_word_progress').select('*').eq('user_id', USER_ID),
+    supabase.from('user_word_progress').select('*').eq('user_id', userId),
   ])
 
   if (wordsResult.error) {
@@ -56,7 +57,16 @@ async function loadReviewData(): Promise<{ masteredWords: WordWithProgress[]; al
 }
 
 export default async function ReviewPage() {
-  const { masteredWords, allHanzi } = await loadReviewData()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  return <ReviewClient initialWords={masteredWords} allHanzi={allHanzi} />
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { masteredWords, allHanzi } = await loadReviewData(user.id)
+
+  return <ReviewClient initialWords={masteredWords} allHanzi={allHanzi} userId={user.id} />
 }

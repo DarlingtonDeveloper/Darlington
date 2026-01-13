@@ -1,19 +1,19 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Word, WordWithProgress } from '@/lib/hanzi/types'
 import Link from 'next/link'
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
 interface LessonClientProps {
   initialWords: WordWithProgress[]
   unseenWords: Word[]
+  userId: string
 }
 
-export function LessonClient({ initialWords, unseenWords }: LessonClientProps) {
+export function LessonClient({ initialWords, unseenWords, userId }: LessonClientProps) {
+  const supabase = createClient()
   // Queue of word IDs to practice (words repeat until "Got It")
   const [queue, setQueue] = useState<string[]>(initialWords.map(w => w.id))
   // Map of words by ID for quick lookup
@@ -144,7 +144,7 @@ export function LessonClient({ initialWords, unseenWords }: LessonClientProps) {
         const { data } = await supabase
           .from('user_word_progress')
           .insert({
-            user_id: USER_ID,
+            user_id: userId,
             word_id: currentIntroWord.id,
             score: 0,
             attempts: 0,

@@ -1,12 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { GoalsClient } from './goals-client'
 import { subDays } from 'date-fns'
 import type { EnergyCorrelation } from '@/types/database'
 
 // Force dynamic rendering - don't try to build this at build time
 export const dynamic = 'force-dynamic'
-
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
 interface Goal {
     id: string
@@ -34,11 +33,13 @@ interface GoalsData {
     energyCorrelation: EnergyCorrelation[]
 }
 
-async function loadGoalsData(): Promise<GoalsData> {
+async function loadGoalsData(userId: string): Promise<GoalsData> {
+    const supabase = await createClient()
+
     try {
         // Fetch goals and energy correlation in parallel
         const [goalsResult, energyResult] = await Promise.all([
-            loadGoals(),
+            loadGoals(userId),
             supabase.from('energy_correlation').select('*'),
         ])
 
@@ -55,13 +56,15 @@ async function loadGoalsData(): Promise<GoalsData> {
     }
 }
 
-async function loadGoals(): Promise<GoalWithProgress[]> {
+async function loadGoals(userId: string): Promise<GoalWithProgress[]> {
+    const supabase = await createClient()
+
     try {
         // Get all active goals for user
         const { data: goalsData, error: goalsError } = await supabase
             .from('goals')
             .select('*')
-            .eq('user_id', USER_ID)
+            .eq('user_id', userId)
             .eq('status', 'active')
             .order('display_order')
 
@@ -101,7 +104,7 @@ async function loadGoals(): Promise<GoalWithProgress[]> {
         const { data: completionsData, error: completionsError } = await supabase
             .from('habit_completions')
             .select('habit_id, completion_date')
-            .eq('user_id', USER_ID)
+            .eq('user_id', userId)
             .in('habit_id', habitIds)
             .gte('completion_date', sevenDaysAgo.toISOString().split('T')[0])
             .lte('completion_date', today.toISOString().split('T')[0])
@@ -164,7 +167,16 @@ async function loadGoals(): Promise<GoalWithProgress[]> {
 }
 
 export default async function GoalsPage() {
-    const data = await loadGoalsData()
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    const data = await loadGoalsData(user.id)
 
     return <GoalsClient goals={data.goals} energyCorrelation={data.energyCorrelation} />
 }

@@ -5,6 +5,7 @@ import { NavBar } from "@/components/ui/tubelight-navbar"
 import { motion } from "framer-motion"
 import { Typewriter } from "@/components/ui/typewriter"
 import { useNavigation } from "@/hooks/use-navigation"
+import { UserMenu } from "@/components/user-menu"
 
 export function Header() {
     const navItems = [
@@ -19,9 +20,14 @@ export function Header() {
 
     return (
         <div className="h-full w-full relative flex flex-col">
-            {/* Only render navbar in header for desktop */}
+            {/* User menu - always visible, positioned top-right */}
+            <div className="absolute top-4 right-4 md:right-8 z-50">
+                <UserMenu compact={isMobile} />
+            </div>
+
+            {/* Desktop navbar */}
             {!isMobile && (
-                <div className="absolute top-4 left-0 right-0 z-50">
+                <div className="absolute top-4 left-0 right-0 z-40 flex items-center justify-center">
                     <NavBar items={navItems} />
                 </div>
             )}

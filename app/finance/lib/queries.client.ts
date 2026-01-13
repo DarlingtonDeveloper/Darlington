@@ -1,10 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { format, startOfWeek, endOfWeek, subWeeks, addDays } from 'date-fns'
 import type { WeeklySummary, CategoryTotal, MerchantTotal, DailyTotal, CategorizedTransaction } from '../types'
 import { CATEGORY_ICONS } from '../types'
 
-export async function getWeeklySummary(weekStart: Date, userId: string): Promise<WeeklySummary> {
-  const supabase = await createClient()
+export async function getWeeklySummaryClient(weekStart: Date, userId: string): Promise<WeeklySummary> {
+  const supabase = createClient()
+
   // Ensure we're working with the start of the week (Monday)
   const startDate = startOfWeek(weekStart, { weekStartsOn: 1 })
   const endDate = endOfWeek(weekStart, { weekStartsOn: 1 })
@@ -163,11 +164,11 @@ export async function getWeeklySummary(weekStart: Date, userId: string): Promise
   }
 }
 
-export async function checkDuplicates(
+export async function checkDuplicatesClient(
   hashes: string[],
   userId: string
 ): Promise<Set<string>> {
-  const supabase = await createClient()
+  const supabase = createClient()
   const { data } = await supabase
     .from('finance_transactions')
     .select('import_hash')
@@ -177,12 +178,12 @@ export async function checkDuplicates(
   return new Set((data || []).map(d => d.import_hash))
 }
 
-export async function insertTransactions(
+export async function insertTransactionsClient(
   transactions: CategorizedTransaction[],
   accountId: string,
   userId: string
 ): Promise<{ inserted: number; errors: string[] }> {
-  const supabase = await createClient()
+  const supabase = createClient()
   const errors: string[] = []
   let inserted = 0
 
@@ -223,13 +224,13 @@ export async function insertTransactions(
   return { inserted, errors }
 }
 
-export async function updateTransactionCategory(
+export async function updateTransactionCategoryClient(
   importHash: string,
   category: string,
   merchantName: string | undefined,
   userId: string
 ): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createClient()
   await supabase
     .from('finance_transactions')
     .update({ category, merchant_name: merchantName })
@@ -237,8 +238,8 @@ export async function updateTransactionCategory(
     .eq('user_id', userId)
 }
 
-export async function getAccounts(userId: string): Promise<{ id: string; name: string; type: string }[]> {
-  const supabase = await createClient()
+export async function getAccountsClient(userId: string): Promise<{ id: string; name: string; type: string }[]> {
+  const supabase = createClient()
   const { data } = await supabase
     .from('finance_accounts')
     .select('id, name, type')

@@ -3,9 +3,10 @@
 import { useState, useRef, useCallback } from 'react'
 import { parseXLSFile } from '../lib/parseXLS'
 import { categorizeTransactions } from '../lib/categorize'
-import { checkDuplicates, insertTransactions, getAccounts, updateTransactionCategory } from '../lib/queries'
+import { checkDuplicatesClient, insertTransactionsClient, getAccountsClient, updateTransactionCategoryClient } from '../lib/queries.client'
 import type { CategorizedTransaction, ImportResult } from '../types'
 import { ManualCategorize } from './ManualCategorize'
+import { useUser } from '@/hooks/use-user'
 
 interface ImportModalProps {
   isOpen: boolean
@@ -16,6 +17,7 @@ interface ImportModalProps {
 type ImportState = 'idle' | 'parsing' | 'categorizing' | 'deduping' | 'inserting' | 'done' | 'error'
 
 export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalProps) {
+  const { userId } = useUser()
   const [state, setState] = useState<ImportState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -25,6 +27,8 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = useCallback(async (file: File) => {
+    if (!userId) return
+
     try {
       setState('parsing')
       setError(null)
@@ -39,7 +43,7 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
 
       setState('deduping')
       const hashes = categorized.map(t => t.import_hash)
-      const existingHashes = await checkDuplicates(hashes)
+      const existingHashes = await checkDuplicatesClient(hashes, userId)
       const newTransactions = categorized.filter(t => !existingHashes.has(t.import_hash))
       const duplicateCount = categorized.length - newTransactions.length
 
@@ -54,11 +58,11 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
         return
       }
 
-      const accounts = await getAccounts()
+      const accounts = await getAccountsClient(userId)
       const accountId = accounts[0]?.id || 'default'
 
       setState('inserting')
-      const { inserted, errors } = await insertTransactions(newTransactions, accountId)
+      const { inserted, errors } = await insertTransactionsClient(newTransactions, accountId, userId)
 
       const uncategorizedTxns = newTransactions.filter(t => t.category === 'other')
 
@@ -80,7 +84,7 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
       setError(err instanceof Error ? err.message : 'Unknown error')
       setState('error')
     }
-  }, [onImportComplete])
+  }, [onImportComplete, userId])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -95,9 +99,10 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
   }, [handleFile])
 
   const handleCategorize = useCallback(async (category: string, merchantName?: string) => {
+    if (!userId) return
     const transaction = uncategorized[currentIndex]
     if (transaction) {
-      await updateTransactionCategory(transaction.import_hash, category, merchantName)
+      await updateTransactionCategoryClient(transaction.import_hash, category, merchantName, userId)
       if (currentIndex < uncategorized.length - 1) {
         setCurrentIndex(currentIndex + 1)
       } else {
@@ -105,7 +110,7 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
         onImportComplete()
       }
     }
-  }, [uncategorized, currentIndex, onImportComplete])
+  }, [uncategorized, currentIndex, onImportComplete, userId])
 
   const handleSkip = useCallback(() => {
     if (currentIndex < uncategorized.length - 1) {

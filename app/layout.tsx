@@ -8,6 +8,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { MobileNavBar } from "@/components/MobileNavBar";
+import { AuthProvider } from "@/contexts/auth-context";
+import { createClient } from "@/lib/supabase/server";
 
 // Optimize font loading with display swap
 const geistSans = Geist({
@@ -52,11 +54,16 @@ const portfolioOwner = {
 
 // Mobile navbar will be handled by a client component
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -91,32 +98,34 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
 
-        {/* 
-          Responsive Layout Structure:
-          - Desktop: Logo+Navbar -> Content -> Footer
-          - Mobile: Logo -> Content -> Navbar -> Footer
-        */}
-        <div className="bg-black text-white flex flex-col h-screen overflow-hidden">
-          {/* Header - fixed height */}
-          <div className="flex-none h-[100px]">
-            <Header />
-          </div>
+        <AuthProvider initialSession={session}>
+          {/*
+            Responsive Layout Structure:
+            - Desktop: Logo+Navbar -> Content -> Footer
+            - Mobile: Logo -> Content -> Navbar -> Footer
+          */}
+          <div className="bg-black text-white flex flex-col h-screen overflow-hidden">
+            {/* Header - fixed height */}
+            <div className="flex-none h-[100px]">
+              <Header />
+            </div>
 
-          {/* Main content - calculated height to fit remaining space */}
-          <div className="flex-1 h-[calc(100vh-230px)] md:h-[calc(100vh-230px)] overflow-hidden">
-            {children}
-          </div>
+            {/* Main content - calculated height to fit remaining space */}
+            <div className="flex-1 h-[calc(100vh-230px)] md:h-[calc(100vh-230px)] overflow-hidden">
+              {children}
+            </div>
 
-          {/* Mobile Navbar - only visible on mobile */}
-          <div className="md:hidden flex-none">
-            <MobileNavBar />
-          </div>
+            {/* Mobile Navbar - only visible on mobile */}
+            <div className="md:hidden flex-none">
+              <MobileNavBar />
+            </div>
 
-          {/* Footer - fixed height */}
-          <div className="flex-none h-[130px]">
-            <Footer />
+            {/* Footer - fixed height */}
+            <div className="flex-none h-[130px]">
+              <Footer />
+            </div>
           </div>
-        </div>
+        </AuthProvider>
       </body>
     </html>
   );

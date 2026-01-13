@@ -1,22 +1,23 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { LessonClient } from './lesson-client'
 import type { Word, UserWordProgress, WordWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
 interface LessonData {
   learningWords: WordWithProgress[]
   unseenWords: Word[]
 }
 
-async function loadLessonData(): Promise<LessonData> {
+async function loadLessonData(userId: string): Promise<LessonData> {
+  const supabase = await createClient()
+
   // Fetch words and user progress in parallel
   const [wordsResult, progressResult] = await Promise.all([
     supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
-    supabase.from('user_word_progress').select('*').eq('user_id', USER_ID),
+    supabase.from('user_word_progress').select('*').eq('user_id', userId),
   ])
 
   if (wordsResult.error) {
@@ -53,7 +54,16 @@ async function loadLessonData(): Promise<LessonData> {
 }
 
 export default async function LessonPage() {
-  const { learningWords, unseenWords } = await loadLessonData()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  return <LessonClient initialWords={learningWords} unseenWords={unseenWords} />
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { learningWords, unseenWords } = await loadLessonData(user.id)
+
+  return <LessonClient initialWords={learningWords} unseenWords={unseenWords} userId={user.id} />
 }

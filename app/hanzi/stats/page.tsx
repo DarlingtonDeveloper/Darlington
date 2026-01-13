@@ -1,21 +1,22 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { StatsClient } from './stats-client'
 import type { Word, UserWordProgress, HanziProfile, WordWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
-async function loadStatsData(): Promise<{
+async function loadStatsData(userId: string): Promise<{
   words: WordWithProgress[]
   profile: HanziProfile | null
 }> {
+  const supabase = await createClient()
+
   // Fetch words, progress, and profile in parallel
   const [wordsResult, progressResult, profileResult] = await Promise.all([
     supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
-    supabase.from('user_word_progress').select('*').eq('user_id', USER_ID),
-    supabase.from('hanzi_profiles').select('*').eq('user_id', USER_ID).single(),
+    supabase.from('user_word_progress').select('*').eq('user_id', userId),
+    supabase.from('hanzi_profiles').select('*').eq('user_id', userId).single(),
   ])
 
   if (wordsResult.error) {
@@ -45,7 +46,16 @@ async function loadStatsData(): Promise<{
 }
 
 export default async function StatsPage() {
-  const { words, profile } = await loadStatsData()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { words, profile } = await loadStatsData(user.id)
 
   return <StatsClient words={words} profile={profile} />
 }

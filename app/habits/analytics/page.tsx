@@ -1,11 +1,10 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { AnalyticsClient } from './analytics-client'
 import type { HabitStreak, WeeklyStat, CompletionTimePattern, DailyCompletionRate, PersonalRecords, Habit, EnergyCorrelation } from '@/types/database'
 import { subDays, format } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
-
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
 interface HabitCompletion {
     habit_id: string
@@ -44,7 +43,8 @@ interface AnalyticsData {
     energyCorrelation: EnergyCorrelation[]
 }
 
-async function loadAnalytics(): Promise<AnalyticsData> {
+async function loadAnalytics(userId: string): Promise<AnalyticsData> {
+    const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
     const sevenDaysAgo = format(subDays(new Date(), 6), 'yyyy-MM-dd')
 
@@ -79,7 +79,7 @@ async function loadAnalytics(): Promise<AnalyticsData> {
             supabase
                 .from('habit_completions')
                 .select('id', { count: 'exact' })
-                .eq('user_id', USER_ID),
+                .eq('user_id', userId),
             // Queries for enhanced Overview
             supabase
                 .from('daily_completion_rates')
@@ -93,24 +93,24 @@ async function loadAnalytics(): Promise<AnalyticsData> {
             supabase
                 .from('habit_completions')
                 .select('habit_id')
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .eq('completion_date', today),
             supabase
                 .from('habits')
                 .select('id', { count: 'exact' })
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .eq('is_active', true),
             // Queries for Habits tab
             supabase
                 .from('habits')
                 .select('*')
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .eq('is_active', true)
                 .order('display_order'),
             supabase
                 .from('habit_completions')
                 .select('habit_id, completion_date, completion_percentage, notes')
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .gte('completion_date', sevenDaysAgo)
                 .lte('completion_date', today)
                 .order('completion_date', { ascending: false }),
@@ -127,7 +127,7 @@ async function loadAnalytics(): Promise<AnalyticsData> {
                         )
                     )
                 `)
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .eq('is_active', true),
             // Query for Insights tab
             supabase
@@ -182,7 +182,16 @@ async function loadAnalytics(): Promise<AnalyticsData> {
 }
 
 export default async function AnalyticsPage() {
-    const data = await loadAnalytics()
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    const data = await loadAnalytics(user.id)
 
     return <AnalyticsClient {...data} />
 }

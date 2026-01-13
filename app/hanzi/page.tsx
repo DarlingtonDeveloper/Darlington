@@ -1,16 +1,17 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { HanziClient } from './hanzi-client'
 import type { Word, UserWordProgress, HanziProfile, WordWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
-async function loadHanziData(): Promise<{
+async function loadHanziData(userId: string): Promise<{
   words: WordWithProgress[]
   profile: HanziProfile | null
 }> {
+  const supabase = await createClient()
+
   // Fetch words and user progress in parallel
   const [wordsResult, progressResult, profileResult] = await Promise.all([
     supabase
@@ -22,11 +23,11 @@ async function loadHanziData(): Promise<{
     supabase
       .from('user_word_progress')
       .select('*')
-      .eq('user_id', USER_ID),
+      .eq('user_id', userId),
     supabase
       .from('hanzi_profiles')
       .select('*')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .single(),
   ])
 
@@ -57,7 +58,16 @@ async function loadHanziData(): Promise<{
 }
 
 export default async function HanziPage() {
-  const { words, profile } = await loadHanziData()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { words, profile } = await loadHanziData(user.id)
 
   // Calculate current unit from profile or default to 1
   const currentUnit = profile?.current_unit ?? 1
@@ -69,6 +79,7 @@ export default async function HanziPage() {
       initialProfile={profile}
       currentUnit={currentUnit}
       currentSection={currentSection}
+      userId={user.id}
     />
   )
 }

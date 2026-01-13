@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { HabitsClient } from './habits-client'
 import { subDays } from 'date-fns'
 
@@ -37,9 +38,9 @@ interface HabitWithStatus extends Habit {
   completedStepIds?: string[]
 }
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281' // Your user ID
+async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], date: string }> {
+  const supabase = await createClient()
 
-async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }> {
   try {
     // Use local date string to match user's expectation
     const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
@@ -49,7 +50,7 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
     const { data: habitsData, error: habitsError } = await supabase
       .from('habits')
       .select('*')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .eq('is_active', true)
       .order('display_order')
 
@@ -63,12 +64,12 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
       supabase
         .from('habit_completions')
         .select('*')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('completion_date', today),
       supabase
         .from('habit_completions')
         .select('habit_id, completed_at')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('completion_date', yesterday)
         .order('completed_at'),
       supabase
@@ -78,7 +79,7 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
       supabase
         .from('habit_step_completions')
         .select('step_id')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('completion_date', today)
     ])
 
@@ -141,13 +142,15 @@ async function loadHabits(): Promise<{ habits: HabitWithStatus[], date: string }
   }
 }
 
-async function getTodayCheckin(): Promise<{ hasCheckedIn: boolean; focusHabitIds: string[] }> {
+async function getTodayCheckin(userId: string): Promise<{ hasCheckedIn: boolean; focusHabitIds: string[] }> {
+  const supabase = await createClient()
+
   try {
     const today = new Date().toLocaleDateString('en-CA')
     const { data } = await supabase
       .from('daily_checkins')
       .select('id, focus_habit_ids')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .eq('checkin_date', today)
       .single()
     return {
@@ -160,9 +163,18 @@ async function getTodayCheckin(): Promise<{ hasCheckedIn: boolean; focusHabitIds
 }
 
 export default async function HabitsPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
   const [{ habits, date }, checkinData] = await Promise.all([
-    loadHabits(),
-    getTodayCheckin(),
+    loadHabits(user.id),
+    getTodayCheckin(user.id),
   ])
 
   return (
@@ -171,6 +183,7 @@ export default async function HabitsPage() {
       initialDate={date}
       hasCheckedInToday={checkinData.hasCheckedIn}
       focusHabitIds={checkinData.focusHabitIds}
+      userId={user.id}
     />
   )
 }

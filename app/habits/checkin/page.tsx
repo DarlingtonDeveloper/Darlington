@@ -1,10 +1,9 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { CheckinClient } from './checkin-client'
 import { format, subDays } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
-
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
 
 interface YesterdayData {
     completionRate: number
@@ -22,14 +21,15 @@ interface HabitWithStats {
     missedYesterday: boolean
 }
 
-async function getYesterdayData(): Promise<YesterdayData> {
+async function getYesterdayData(userId: string): Promise<YesterdayData> {
+    const supabase = await createClient()
     const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
 
     // Get all habits
     const { data: habits } = await supabase
         .from('habits')
         .select('id, name, category')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('is_active', true)
         .order('display_order')
 
@@ -37,7 +37,7 @@ async function getYesterdayData(): Promise<YesterdayData> {
     const { data: completions } = await supabase
         .from('habit_completions')
         .select('habit_id, completion_percentage, notes')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('completion_date', yesterday)
 
     const completedIds = new Set(completions?.map(c => c.habit_id) || [])
@@ -66,7 +66,8 @@ async function getYesterdayData(): Promise<YesterdayData> {
     }
 }
 
-async function getHabitsWithStats(): Promise<HabitWithStats[]> {
+async function getHabitsWithStats(userId: string): Promise<HabitWithStats[]> {
+    const supabase = await createClient()
     const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
     const weekAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd')
 
@@ -74,7 +75,7 @@ async function getHabitsWithStats(): Promise<HabitWithStats[]> {
     const { data: habits } = await supabase
         .from('habits')
         .select('id, name, category')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('is_active', true)
         .order('display_order')
 
@@ -82,7 +83,7 @@ async function getHabitsWithStats(): Promise<HabitWithStats[]> {
     const { data: completions } = await supabase
         .from('habit_completions')
         .select('habit_id, completion_date')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .gte('completion_date', weekAgo)
         .lte('completion_date', yesterday)
 
@@ -90,7 +91,7 @@ async function getHabitsWithStats(): Promise<HabitWithStats[]> {
     const { data: yesterdayCompletions } = await supabase
         .from('habit_completions')
         .select('habit_id')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('completion_date', yesterday)
 
     const yesterdayIds = new Set(yesterdayCompletions?.map(c => c.habit_id) || [])
@@ -111,13 +112,14 @@ async function getHabitsWithStats(): Promise<HabitWithStats[]> {
     }))
 }
 
-async function getTodayCheckin() {
+async function getTodayCheckin(userId: string) {
+    const supabase = await createClient()
     const today = format(new Date(), 'yyyy-MM-dd')
 
     const { data } = await supabase
         .from('daily_checkins')
         .select('*')
-        .eq('user_id', USER_ID)
+        .eq('user_id', userId)
         .eq('checkin_date', today)
         .single()
 
@@ -125,12 +127,21 @@ async function getTodayCheckin() {
 }
 
 export default async function CheckinPage() {
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect('/login')
+    }
+
     const serverToday = format(new Date(), 'yyyy-MM-dd')
 
     const [yesterdayData, existingCheckin, habitsWithStats] = await Promise.all([
-        getYesterdayData(),
-        getTodayCheckin(),
-        getHabitsWithStats(),
+        getYesterdayData(user.id),
+        getTodayCheckin(user.id),
+        getHabitsWithStats(user.id),
     ])
 
     return (
@@ -139,6 +150,7 @@ export default async function CheckinPage() {
             existingCheckin={existingCheckin}
             habitsWithStats={habitsWithStats}
             serverDate={serverToday}
+            userId={user.id}
         />
     )
 }

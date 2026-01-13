@@ -7,28 +7,31 @@ import { CategoryBreakdown } from './CategoryBreakdown'
 import { TopMerchants } from './TopMerchants'
 import { DailyBreakdown } from './DailyBreakdown'
 import { ImportModal } from './ImportModal'
-import { getWeeklySummary } from '../lib/queries'
+import { getWeeklySummaryClient } from '../lib/queries.client'
+import { useUser } from '@/hooks/use-user'
 
 interface WeeklySummaryProps {
   initialData: WeeklySummaryType
 }
 
 export function WeeklySummary({ initialData }: WeeklySummaryProps) {
+  const { userId } = useUser()
   const [data, setData] = useState<WeeklySummaryType>(initialData)
   const [isLoading, setIsLoading] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
   const loadWeek = useCallback(async (weekStart: Date) => {
+    if (!userId) return
     setIsLoading(true)
     try {
-      const newData = await getWeeklySummary(weekStart)
+      const newData = await getWeeklySummaryClient(weekStart, userId)
       setData(newData)
     } catch (error) {
       console.error('Error loading week:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [userId])
 
   const goToPrevWeek = useCallback(() => {
     const prevWeek = subWeeks(data.weekStart, 1)

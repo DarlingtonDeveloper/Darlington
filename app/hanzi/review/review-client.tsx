@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { WordWithProgress } from '@/lib/hanzi/types'
 import Link from 'next/link'
@@ -9,6 +9,7 @@ import Link from 'next/link'
 interface ReviewClientProps {
   initialWords: WordWithProgress[]
   allHanzi: string[]
+  userId: string
 }
 
 // Shuffle array helper
@@ -21,7 +22,9 @@ function shuffle<T>(array: T[]): T[] {
   return result
 }
 
-export function ReviewClient({ initialWords, allHanzi }: ReviewClientProps) {
+export function ReviewClient({ initialWords, allHanzi, userId: _userId }: ReviewClientProps) {
+  const supabase = createClient()
+  void _userId // Reserved for future RLS enforcement
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)

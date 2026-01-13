@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSwipeable } from 'react-swipeable'
 import { isToday, isYesterday, startOfDay, differenceInHours, format } from 'date-fns'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { DayNavigator } from '@/components/habits/day-navigator'
 import { PartialComplete, usePartialComplete } from '@/components/habits/partial-complete'
 import { WhatsNext, useWhatsNext } from '@/components/habits/whats-next'
@@ -35,25 +35,20 @@ interface HabitWithStatus extends Habit {
     completedStepIds?: string[]
 }
 
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
 interface HabitsClientProps {
     initialHabits: HabitWithStatus[]
     initialDate?: string
     hasCheckedInToday?: boolean
     focusHabitIds?: string[]
+    userId: string
 }
 
-export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false, focusHabitIds = [] }: HabitsClientProps) {
-    // Always use browser's local date for "today"
-    const browserToday = format(new Date(), 'yyyy-MM-dd')
+export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = false, focusHabitIds = [], userId }: HabitsClientProps) {
+    const supabase = createClient()
 
-    // Check cache on initial render
-    const cachedData = typeof window !== 'undefined' ? getCachedHabits() : null
-
-    // Use cache if available and fresh, otherwise use server data
-    const initialData = cachedData || {
-        habits: initialDate === browserToday ? initialHabits : [],
+    // Use server data for initial render (no cache check during SSR)
+    const initialData = {
+        habits: initialHabits,
         hasCheckedInToday,
         focusHabitIds,
     }
@@ -61,9 +56,16 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
     const [habits, setHabits] = useState<HabitWithStatus[]>(initialData.habits)
     const [todaysFocusHabits, setTodaysFocusHabits] = useState<string[]>(initialData.focusHabitIds)
     const [hasCheckedIn, setHasCheckedIn] = useState(initialData.hasCheckedInToday)
-    const [viewingDate, setViewingDate] = useState<Date>(new Date())
+    // Parse initialDate to avoid hydration mismatch
+    const [viewingDate, setViewingDate] = useState<Date>(() => {
+        if (initialDate) {
+            const [year, month, day] = initialDate.split('-').map(Number)
+            return new Date(year, month - 1, day)
+        }
+        return new Date()
+    })
     // Only show loading if we have no data at all
-    const [isLoading, setIsLoading] = useState(initialData.habits.length === 0 && initialDate !== browserToday)
+    const [isLoading, setIsLoading] = useState(initialData.habits.length === 0)
     const [energyLevel, setEnergyLevel] = useState<'low' | 'medium' | 'high'>('medium')
     const [contextNotes, setContextNotes] = useState('')
     const [hasMounted, setHasMounted] = useState(false)
@@ -103,7 +105,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             const { data: habitsData, error: habitsError } = await supabase
                 .from('habits')
                 .select('*')
-                .eq('user_id', USER_ID)
+                .eq('user_id', userId)
                 .eq('is_active', true)
                 .order('display_order')
 
@@ -114,7 +116,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 supabase
                     .from('habit_completions')
                     .select('*')
-                    .eq('user_id', USER_ID)
+                    .eq('user_id', userId)
                     .eq('completion_date', targetDate),
                 supabase
                     .from('habit_steps')
@@ -123,7 +125,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 supabase
                     .from('habit_step_completions')
                     .select('step_id')
-                    .eq('user_id', USER_ID)
+                    .eq('user_id', userId)
                     .eq('completion_date', targetDate)
             ])
 
@@ -164,7 +166,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     const { data: checkinData } = await supabase
                         .from('daily_checkins')
                         .select('id, focus_habit_ids')
-                        .eq('user_id', USER_ID)
+                        .eq('user_id', userId)
                         .eq('checkin_date', todayStr)
                         .single()
 
@@ -185,10 +187,13 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
         }
     }, [hasCheckedIn, todaysFocusHabits])
 
-    // On mount: check cache and refresh if needed
+    // On mount: check cache and sync dates
     useEffect(() => {
         if (!hasMounted) {
             setHasMounted(true)
+
+            const browserToday = format(new Date(), 'yyyy-MM-dd')
+            const cachedData = getCachedHabits()
 
             // If we have cached data, check if it needs refreshing
             if (cachedData) {
@@ -204,7 +209,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 setCachedHabits(initialHabits, browserToday, hasCheckedInToday, focusHabitIds)
             }
         }
-    }, [hasMounted, cachedData, initialDate, browserToday, initialHabits, hasCheckedInToday, focusHabitIds, loadHabitsForDate])
+    }, [hasMounted, initialDate, initialHabits, hasCheckedInToday, focusHabitIds, loadHabitsForDate])
 
     // Keep cache in sync when habits change (for today only)
     useEffect(() => {
@@ -272,7 +277,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     .from('habit_completions')
                     .insert({
                         habit_id: habit.id,
-                        user_id: USER_ID,
+                        user_id: userId,
                         completed_at: completedAt,
                         completion_date: dateString,
                         completion_percentage: 100,
@@ -354,7 +359,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     .from('habit_completions')
                     .insert({
                         habit_id: habitId,
-                        user_id: USER_ID,
+                        user_id: userId,
                         completed_at: completedAt,
                         completion_date: dateString,
                         completion_percentage: percentage,
@@ -393,7 +398,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     .from('habit_step_completions')
                     .delete()
                     .eq('step_id', stepId)
-                    .eq('user_id', USER_ID)
+                    .eq('user_id', userId)
                     .eq('completion_date', dateString)
 
                 if (error) throw error
@@ -410,7 +415,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                     .from('habit_step_completions')
                     .insert({
                         step_id: stepId,
-                        user_id: USER_ID,
+                        user_id: userId,
                         completion_date: dateString,
                     })
 
@@ -454,7 +459,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                 .from('habit_step_completions')
                 .insert(incompleteSteps.map(step => ({
                     step_id: step.id,
-                    user_id: USER_ID,
+                    user_id: userId,
                     completion_date: dateString,
                 })))
 
@@ -517,7 +522,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
             const { error } = await supabase
                 .from('daily_summaries')
                 .upsert({
-                    user_id: USER_ID,
+                    user_id: userId,
                     summary_date: dateString,
                     total_habits: habits.length,
                     completed_count: completedCount,
