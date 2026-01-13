@@ -1,7 +1,9 @@
 # Personal OS - Project Status
 
 **Last Updated:** Jan 13, 2026
-**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS Phase 2 complete, Auth complete
+**Current Status:** Habits OS v0.2 stable, Finance OS MVP live, Calendar OS complete, Auth complete
+
+For full roadmap and system architecture, see **VISION.md**.
 
 ---
 
@@ -42,7 +44,7 @@
 - Manual categorization popup for uncategorized items
 - Multi-currency support (7 countries)
 
-### Calendar OS (NEW - Jan 13, 2026)
+### Calendar OS
 - Google Calendar API integration (hybrid approach)
 - Live fetch from Google for display (always fresh)
 - Summary sync to Supabase for analytics
@@ -51,16 +53,6 @@
 - Auto-sync on page load (if stale >1 hour)
 - Manual sync button
 - Token refresh handling
-- Calendar link in user dropdown menu
-
-**Key files:**
-- `app/calendar/` - Today view
-- `app/calendar/week/` - Week view
-- `app/api/calendar/events/` - Live fetch from Google
-- `app/api/calendar/sync/` - Sync summaries to Supabase
-- `lib/google-calendar.ts` - Token management & API helpers
-
-**Database tables:** `user_oauth_tokens`, `calendar_daily_summaries`
 
 ### Hanzi Linker
 - Link game mode (English -> Pinyin -> Hanzi chains)
@@ -78,41 +70,61 @@
 
 ---
 
-## Potential Next Steps
+## Next Steps
 
-### Calendar OS Phase 4
-- [ ] Cross-domain queries (calendar + habits + finance)
-- [ ] Insights UI showing correlations:
-  - Do busy days hurt habit completion?
-  - Spending patterns vs meeting load
-  - Best days for deep work
+Aligned with VISION.md phases:
 
-### New Personal OS Modules
-- [ ] Tasks/Projects (one-off items vs recurring habits)
-- [ ] Health Dashboard (Apple Watch data aggregation)
-- [ ] Social/Contacts CRM
-- [ ] Reading/Learning tracker
+### Phase 1: Foundation
+- [ ] **Health module**
+  - [ ] Weight tracking (daily weigh-in)
+  - [ ] Diet signals (binary checkboxes: no alcohol, no snacking, etc.)
+  - [ ] Apple Health webhook (sleep, steps)
+  - [ ] Reference habits in Habits OS linking to Health
+- [ ] **Career module**
+  - [ ] Tasks inbox (GTD-style capture)
+  - [ ] Objectives (quarterly goals)
+- [ ] **Relationships module**
+  - [ ] WhatsApp MCP setup (Go bridge + Python server)
+  - [ ] Contact list (family, friends, professional)
+  - [ ] Last contact tracking (auto-populated from WhatsApp)
+  - [ ] "Who haven't I talked to?" surfacing
+  - [ ] Consolidate messaging (Instagram DMs, SMS → WhatsApp)
 
-### Cross-Domain Features
-- [ ] AI Daily Scheduler ("Claude, what should I do next?")
-- [ ] Context Engine (unified cross-domain awareness)
-- [ ] Unified insights dashboard
+### Phase 2: AI Daily Planner MVP
+- [ ] Custom chat UI at `/daily`
+- [ ] Morning check-in (intention-setting, ~15 min)
+- [ ] Evening check-in (reflection, ~15 min)
+- [ ] Pre-loaded context from all modules
+- [ ] Calendar output (intentions → Google Calendar events)
+- [ ] Session storage in Supabase
 
-### Enhancements
-- [ ] Hanzi Linker audio (listening/speaking challenges)
-- [ ] Apple Watch integration (sleep, steps via Shortcuts -> Webhook)
-- [ ] Goals feature expansion
+### Phase 3: Expansion
+- [ ] **Finance expansion**
+  - [ ] Budgeting (category targets vs actuals)
+  - [ ] Investing (activate seeded data, portfolio view)
+- [ ] **Growth & Learning**
+  - [ ] AI Learning tracker (courses, papers, projects)
+  - [ ] Books (reading list, notes)
+  - [ ] Media queue (intentional podcasts/YouTube)
+- [ ] **Health expansion**
+  - [ ] Strava integration (cardio sync)
+  - [ ] Workout logging (bodyweight sessions)
+
+### Phase 4: Intelligence
+- [ ] Cross-domain insights dashboard
+- [ ] Pattern detection (busy days vs habit completion, spending vs stress)
+- [ ] Predictive suggestions
 
 ---
 
 ## Technical Debt
 
 ### Resolved
-- ~~GitHub MCP / File Editing~~ -> Using Claude Code CLI
-- ~~Supabase MCP~~ -> Using dashboard + Claude Code
-- ~~Authentication~~ -> Supabase Auth implemented
-- ~~Hardcoded user_id~~ -> Auth user in middleware
-- ~~Time/Calendar integration~~ -> Calendar OS implemented
+- ~~GitHub MCP / File Editing~~ → Using Claude Code CLI
+- ~~Supabase MCP~~ → Using dashboard + Claude Code
+- ~~Authentication~~ → Supabase Auth implemented
+- ~~Hardcoded user_id~~ → Auth user in middleware
+- ~~Time/Calendar integration~~ → Calendar OS implemented
 
 ### Remaining
 - MCP connectors still flaky (Supabase, GitHub OAuth)
@@ -130,7 +142,7 @@
 ### Finance
 - £28,328 total spending tracked (7 months)
 - £147.54 average daily (inflated by Asia travel)
-- 91% reduction in gaming spend (£492 -> £45/mo)
+- 91% reduction in gaming spend (£492 → £45/mo)
 - 67% travel-related, 33% UK baseline
 
 ### Calendar
@@ -144,19 +156,14 @@
 
 ---
 
-## Vision
+## Goals (6-Month)
 
-**North Star:** "Claude, what should I do next?"
-
-An AI Daily Scheduler with full context across:
-- Habits (what I should do daily)
-- Finance (spending patterns, budget awareness)
-- Calendar (what's scheduled) - NOW INTEGRATED
-- Goals (what I'm working toward)
-- Energy/Health (current capacity)
-- Learning (Mandarin progress)
-
-**Core Insight:** Value comes from cross-domain patterns, not individual app sophistication.
+1. Deeper social networks
+2. Conversational Mandarin proficiency
+3. Improved sleep patterns
+4. Career transitions
+5. Lose weight / improve metabolic fitness
+6. Learning AI
 
 ---
 
@@ -180,3 +187,14 @@ An AI Daily Scheduler with full context across:
 - `GOOGLE_CLIENT_SECRET`
 
 **Stack:** Next.js 15, React 19, Tailwind CSS 4, Supabase, TypeScript
+
+---
+
+## Documentation
+
+| File | Purpose |
+|------|---------|
+| `VISION.md` | Strategic roadmap, system architecture, module specs |
+| `PROJECT_STATUS.md` | Operational tracking (this file) |
+| `CLAUDE.md` | Dev guidance for Claude Code |
+| ~~`FEATURES.md`~~ | Deprecated - absorbed into VISION.md |
