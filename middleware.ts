@@ -9,13 +9,20 @@ const PROTECTED_ROUTES = [
   '/systems',
   '/projects',
   '/calendar',
+  '/health',
 ]
 
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback']
 
 export async function middleware(request: NextRequest) {
-  const { user, response } = await updateSession(request)
   const { pathname } = request.nextUrl
+
+  // Skip auth for API routes - they handle their own auth
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
+  const { user, response } = await updateSession(request)
 
   const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
