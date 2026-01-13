@@ -185,7 +185,7 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
         } finally {
             setIsLoading(false)
         }
-    }, [hasCheckedIn, todaysFocusHabits])
+    }, [supabase, userId, hasCheckedIn, todaysFocusHabits])
 
     // On mount: check cache and sync dates
     useEffect(() => {

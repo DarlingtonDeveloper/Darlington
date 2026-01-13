@@ -287,7 +287,7 @@ export function HanziClient({
     } catch (error) {
       console.error('Error updating progress:', error)
     }
-  }, [words])
+  }, [supabase, userId, words])
 
   // Save settings to database
   const handleSaveSettings = useCallback(async (newSettings: DifficultySettings) => {
@@ -320,7 +320,7 @@ export function HanziClient({
     } finally {
       setIsSavingSettings(false)
     }
-  }, [settings.wordCount])
+  }, [supabase, userId, settings.wordCount])
 
   // Board reset animation sequence
   const performBoardReset = useCallback(async (reason: ResetReason) => {

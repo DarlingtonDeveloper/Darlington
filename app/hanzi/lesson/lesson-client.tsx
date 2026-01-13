@@ -101,7 +101,7 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
 
       setIsLoading(false)
     },
-    [currentWord, isLoading]
+    [supabase, currentWord, isLoading]
   )
 
   const handleRestart = useCallback(() => {
@@ -177,7 +177,7 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
       setIntroducingWords([])
       setCurrentIntroIndex(0)
     }
-  }, [introducingWords, currentIntroIndex])
+  }, [supabase, userId, introducingWords, currentIntroIndex])
 
   // Empty state (no words to practice, but may have new words to introduce)
   if (!hasWords && !isIntroducing) {

@@ -111,7 +111,7 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
 
       setIsLoading(false)
     },
-    [currentWord, currentIndex, isLoading]
+    [supabase, currentWord, currentIndex, isLoading]
   )
 
   const handleReveal = useCallback(async () => {
