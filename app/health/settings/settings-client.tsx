@@ -39,6 +39,7 @@ export function SettingsClient({
     initialSettings || {
       steps_target: 10000,
       wake_target_time: '07:00:00',
+      bedtime_target: '23:00:00',
       sleep_duration_target_hours: 8,
     }
   )
@@ -163,6 +164,19 @@ export function SettingsClient({
                 setSettings((prev) => ({ ...prev, wake_target_time: value }))
               }}
               onBlur={() => saveSettings({ wake_target_time: settings.wake_target_time })}
+              className="px-3 py-2 bg-neutral-800 border border-neutral-700 rounded font-mono text-neutral-50"
+            />
+          </SettingRow>
+
+          <SettingRow label="Bedtime" description="Target bedtime for sleep scoring">
+            <input
+              type="time"
+              value={settings.bedtime_target?.slice(0, 5) || '23:00'}
+              onChange={(e) => {
+                const value = e.target.value + ':00'
+                setSettings((prev) => ({ ...prev, bedtime_target: value }))
+              }}
+              onBlur={() => saveSettings({ bedtime_target: settings.bedtime_target })}
               className="px-3 py-2 bg-neutral-800 border border-neutral-700 rounded font-mono text-neutral-50"
             />
           </SettingRow>

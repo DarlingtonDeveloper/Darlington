@@ -17,6 +17,7 @@ interface Habit {
   is_active: boolean
   created_at: string
   updated_at: string
+  health_link?: string | null
 }
 
 interface HabitStep {
@@ -36,6 +37,8 @@ interface HabitWithStatus extends Habit {
   notes?: string | null
   steps?: HabitStep[]
   completedStepIds?: string[]
+  health_auto_completed?: boolean
+  health_value?: string | number
 }
 
 async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], date: string }> {
@@ -59,8 +62,8 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
       throw habitsError
     }
 
-    // Get today's completions, yesterday's completions (for ordering), steps, and step completions
-    const [todayResult, yesterdayResult, stepsResult, stepCompletionsResult] = await Promise.all([
+    // Get today's completions, yesterday's completions (for ordering), steps, step completions, and health data
+    const [todayResult, yesterdayResult, stepsResult, stepCompletionsResult, sleepYesterday, sleepToday, stepsToday, healthSettings] = await Promise.all([
       supabase
         .from('habit_completions')
         .select('*')
@@ -80,7 +83,34 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
         .from('habit_step_completions')
         .select('step_id')
         .eq('user_id', userId)
-        .eq('completion_date', today)
+        .eq('completion_date', today),
+      // Health data: yesterday's sleep entry (contains this morning's wake_time)
+      supabase
+        .from('sleep_entries')
+        .select('wake_time')
+        .eq('user_id', userId)
+        .eq('sleep_date', yesterday)
+        .single(),
+      // Health data: today's sleep entry (contains tonight's bedtime)
+      supabase
+        .from('sleep_entries')
+        .select('bedtime')
+        .eq('user_id', userId)
+        .eq('sleep_date', today)
+        .single(),
+      // Health data: today's steps
+      supabase
+        .from('steps_entries')
+        .select('step_count')
+        .eq('user_id', userId)
+        .eq('entry_date', today)
+        .single(),
+      // Health settings for targets
+      supabase
+        .from('health_settings')
+        .select('wake_target_time, bedtime_target, steps_target')
+        .eq('user_id', userId)
+        .single()
     ])
 
     if (todayResult.error) throw todayResult.error
@@ -90,6 +120,58 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
     const stepsData = stepsResult.data || []
     const stepCompletionsData = stepCompletionsResult.data || []
     const completedStepIds = stepCompletionsData.map(sc => sc.step_id)
+
+    // Health data (may be null if no entries)
+    const wakeTime = sleepYesterday.data?.wake_time
+    const bedtime = sleepToday.data?.bedtime
+    const stepCount = stepsToday.data?.step_count
+    const settings = healthSettings.data
+
+    // Parse targets from settings (with defaults)
+    const wakeTargetTime = settings?.wake_target_time || '07:00:00' // HH:mm:ss format
+    const bedtimeTarget = settings?.bedtime_target || '23:00:00'
+    const stepsTarget = settings?.steps_target || 10000
+
+    // Calculate targets in minutes from midnight
+    const [wakeTargetHour, wakeTargetMin] = wakeTargetTime.split(':').map(Number)
+    const wakeTargetMinutes = wakeTargetHour * 60 + wakeTargetMin
+    const [bedtimeTargetHour, bedtimeTargetMin] = bedtimeTarget.split(':').map(Number)
+    const bedtimeTargetMinutes = bedtimeTargetHour * 60 + bedtimeTargetMin
+
+    // Helper to check if health goal is met
+    const checkHealthGoal = (healthLink: string | null | undefined): { met: boolean; value?: string | number } => {
+      if (!healthLink) return { met: false }
+
+      switch (healthLink) {
+        case 'wake_time': {
+          if (!wakeTime) return { met: false }
+          const wake = new Date(wakeTime)
+          const wakeHour = wake.getHours()
+          const wakeMinute = wake.getMinutes()
+          const wakeMinutes = wakeHour * 60 + wakeMinute
+          // Allow 15 min grace period after target
+          const met = wakeMinutes <= wakeTargetMinutes + 15
+          return { met, value: `${wakeHour}:${wakeMinute.toString().padStart(2, '0')}` }
+        }
+        case 'bedtime': {
+          if (!bedtime) return { met: false }
+          const bed = new Date(bedtime)
+          const bedHour = bed.getHours()
+          const bedMinute = bed.getMinutes()
+          const bedMinutes = bedHour * 60 + bedMinute
+          // Allow 15 min grace period after target
+          const met = bedMinutes <= bedtimeTargetMinutes + 15
+          return { met, value: `${bedHour}:${bedMinute.toString().padStart(2, '0')}` }
+        }
+        case 'steps': {
+          if (!stepCount) return { met: false }
+          const met = stepCount >= stepsTarget
+          return { met, value: stepCount }
+        }
+        default:
+          return { met: false }
+      }
+    }
 
     // Create a map of habit_id -> completion order from yesterday
     const yesterdayOrder = new Map<string, number>()
@@ -105,15 +187,21 @@ async function loadHabits(userId: string): Promise<{ habits: HabitWithStatus[], 
         .filter(s => completedStepIds.includes(s.id))
         .map(s => s.id)
 
+      // Check health-linked habits
+      const healthCheck = checkHealthGoal(habit.health_link)
+      const isHealthAutoCompleted = habit.health_link && healthCheck.met
+
       return {
         ...habit,
-        completed_today: !!completion,
+        completed_today: !!completion || isHealthAutoCompleted,
         completion_id: completion?.id,
         completed_at: completion?.completed_at,
-        completion_percentage: completion?.completion_percentage ?? (completion ? 100 : 0),
+        completion_percentage: completion?.completion_percentage ?? (completion || isHealthAutoCompleted ? 100 : 0),
         notes: completion?.notes ?? null,
         steps: habitSteps.length > 0 ? habitSteps : undefined,
         completedStepIds: habitCompletedStepIds.length > 0 ? habitCompletedStepIds : undefined,
+        health_auto_completed: isHealthAutoCompleted || false,
+        health_value: healthCheck.value,
       }
     })
 

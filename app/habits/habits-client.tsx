@@ -23,6 +23,7 @@ interface Habit {
     is_active: boolean
     created_at: string
     updated_at: string
+    health_link?: string | null
 }
 
 interface HabitWithStatus extends Habit {
@@ -33,6 +34,8 @@ interface HabitWithStatus extends Habit {
     notes?: string | null
     steps?: HabitStep[]
     completedStepIds?: string[]
+    health_auto_completed?: boolean
+    health_value?: string | number
 }
 
 interface HabitsClientProps {
@@ -251,6 +254,8 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
 
     async function toggleHabit(habit: HabitWithStatus) {
         if (!canEdit) return
+        // Health-linked habits are auto-tracked, can't be manually toggled
+        if (habit.health_link) return
 
         try {
             if (habit.completed_today && habit.completion_id) {
@@ -487,6 +492,8 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
     // Handle habit click with double-click detection
     function handleHabitClick(habit: HabitWithStatus) {
         if (!canEdit) return
+        // Health-linked habits are auto-tracked via Health OS
+        if (habit.health_link) return
 
         // If clicking a different habit, cancel any pending timeout
         if (lastClickedHabitRef.current !== habit.id && clickTimeoutRef.current) {
@@ -843,7 +850,19 @@ export function HabitsClient({ initialHabits, initialDate, hasCheckedInToday = f
                                                                 </svg>
                                                             )}
                                                         </div>
-                                                        {habit.completed_at && (
+                                                        {/* Health-linked habits show value from Health OS */}
+                                                        {habit.health_link ? (
+                                                            <span className={`flex items-center gap-1.5 font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${habit.health_auto_completed ? 'text-emerald-500' : 'text-neutral-500'}`}>
+                                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                                                                </svg>
+                                                                {habit.health_value !== undefined
+                                                                    ? (typeof habit.health_value === 'number'
+                                                                        ? habit.health_value.toLocaleString()
+                                                                        : habit.health_value)
+                                                                    : '—'}
+                                                            </span>
+                                                        ) : habit.completed_at && (
                                                             <span className={`font-mono text-sm sm:text-xs tabular-nums ml-3 flex-shrink-0 ${canEdit ? 'text-neutral-500' : 'text-neutral-600'}`}>
                                                                 {(habit.completion_percentage ?? 100) < 100 && (
                                                                     <span className="text-amber-500/80 mr-1">{habit.completion_percentage}%</span>

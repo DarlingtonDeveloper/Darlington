@@ -10,6 +10,7 @@ export interface HealthSettings {
   user_id: string
   steps_target: number
   wake_target_time: string
+  bedtime_target: string
   sleep_duration_target_hours: number
 }
 
