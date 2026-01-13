@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { format, addDays, subDays } from 'date-fns'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { format, addDays, subDays, formatDistanceToNow } from 'date-fns'
 
 interface CalendarEvent {
   id: string
@@ -50,6 +50,53 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [requiresReauth, setRequiresReauth] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
+  const syncChecked = useRef(false)
+
+  // Check sync status and auto-sync if stale
+  useEffect(() => {
+    if (syncChecked.current) return
+    syncChecked.current = true
+
+    async function checkAndSync() {
+      try {
+        const res = await fetch('/api/calendar/sync')
+        const { lastSyncedAt: syncTime, isStale } = await res.json()
+        setLastSyncedAt(syncTime)
+
+        if (isStale) {
+          // Auto-sync in background
+          setSyncing(true)
+          const syncRes = await fetch('/api/calendar/sync', { method: 'POST' })
+          if (syncRes.ok) {
+            const { synced } = await syncRes.json()
+            setLastSyncedAt(new Date().toISOString())
+            console.log(`Synced ${synced} days to Supabase`)
+          }
+          setSyncing(false)
+        }
+      } catch (err) {
+        console.error('Sync check failed:', err)
+      }
+    }
+
+    checkAndSync()
+  }, [])
+
+  const handleManualSync = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/calendar/sync', { method: 'POST' })
+      if (res.ok) {
+        setLastSyncedAt(new Date().toISOString())
+      }
+    } catch (err) {
+      console.error('Manual sync failed:', err)
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const fetchCalendarData = useCallback(async () => {
     setLoading(true)
@@ -220,6 +267,29 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
                   {data.summary.totalEvents === 1 ? 'event' : 'events'}
                 </p>
               </div>
+            </div>
+
+            {/* Sync status */}
+            <div className="mt-3 pt-3 border-t border-neutral-800/50 flex items-center justify-between">
+              <p className="text-[10px] text-neutral-600">
+                {syncing ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 border border-neutral-500 border-t-emerald-500 rounded-full animate-spin" />
+                    Syncing...
+                  </span>
+                ) : lastSyncedAt ? (
+                  `Synced ${formatDistanceToNow(new Date(lastSyncedAt), { addSuffix: true })}`
+                ) : (
+                  'Not synced'
+                )}
+              </p>
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="text-[10px] text-neutral-500 hover:text-neutral-300 disabled:opacity-50 transition-colors"
+              >
+                Sync now
+              </button>
             </div>
           </div>
 
