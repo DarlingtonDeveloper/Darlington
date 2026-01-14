@@ -15,7 +15,7 @@ interface DoomscrollPayload {
 
 export async function POST(request: Request) {
   try {
-    const { secret, user_id, app, duration_minutes = 10 }: DoomscrollPayload =
+    const { secret, user_id, app, duration_minutes = 3 }: DoomscrollPayload =
       await request.json()
 
     if (secret !== process.env.HEALTH_WEBHOOK_SECRET) {
