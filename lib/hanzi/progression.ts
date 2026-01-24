@@ -18,6 +18,7 @@ export const SECTION_1_UNITS: UnitInfo[] = [
   { section: 1, unit: 6, unitName: 'Talk about places you visit' },
   { section: 1, unit: 7, unitName: 'Order drinks' },
   { section: 1, unit: 8, unitName: 'Locate travel essentials' },
+  { section: 1, unit: 9, unitName: 'Introduce yourself and your classes' }
 ]
 
 /**
