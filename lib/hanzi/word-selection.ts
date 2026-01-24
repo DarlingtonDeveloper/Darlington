@@ -182,39 +182,72 @@ export function selectWordsForRound(
   )
 
   const selected: WordWithProgress[] = []
+  const selectedPinyin = new Set<string>() // Track pinyin to prevent duplicates
+
+  // Helper to add words while avoiding pinyin collisions
+  const addWithPinyinCheck = (candidates: WordWithProgress[], maxCount: number) => {
+    const filtered = candidates.filter(
+      w => !selected.includes(w) && !selectedPinyin.has(w.pinyin)
+    )
+    const picks = weightedRandomSelect(filtered, maxCount)
+    for (const word of picks) {
+      if (selected.length >= roundSize) break
+      if (!selectedPinyin.has(word.pinyin)) {
+        selected.push(word)
+        selectedPinyin.add(word.pinyin)
+      }
+    }
+  }
 
   // Priority 1: Struggling words with weighted selection (higher chance for lower scores)
   if (struggling.length > 0) {
     const struggleCount = Math.min(2, struggling.length, roundSize)
-    selected.push(...weightedRandomSelect(struggling, struggleCount))
+    addWithPinyinCheck(struggling, struggleCount)
   }
 
   // Priority 2: Learning words
   if (selected.length < roundSize && learning.length > 0) {
     const learningCount = Math.min(2, learning.length, roundSize - selected.length)
-    const learningPicks = weightedRandomSelect(
-      learning.filter(w => !selected.includes(w)),
-      learningCount
-    )
-    selected.push(...learningPicks)
+    addWithPinyinCheck(learning, learningCount)
   }
 
   // Priority 3: New words
   if (selected.length < roundSize && newWords.length > 0) {
     const newCount = roundSize - selected.length
-    selected.push(...shuffle(newWords).slice(0, newCount))
+    const filtered = newWords.filter(w => !selectedPinyin.has(w.pinyin))
+    for (const word of shuffle(filtered).slice(0, newCount)) {
+      if (selected.length >= roundSize) break
+      if (!selectedPinyin.has(word.pinyin)) {
+        selected.push(word)
+        selectedPinyin.add(word.pinyin)
+      }
+    }
   }
 
   // Priority 4: Familiar words
   if (selected.length < roundSize && familiar.length > 0) {
     const familiarCount = roundSize - selected.length
-    selected.push(...shuffle(familiar).slice(0, familiarCount))
+    const filtered = familiar.filter(w => !selectedPinyin.has(w.pinyin))
+    for (const word of shuffle(filtered).slice(0, familiarCount)) {
+      if (selected.length >= roundSize) break
+      if (!selectedPinyin.has(word.pinyin)) {
+        selected.push(word)
+        selectedPinyin.add(word.pinyin)
+      }
+    }
   }
 
   // Priority 5: Mastered words if still not enough
   if (selected.length < roundSize && mastered.length > 0) {
     const masteredCount = roundSize - selected.length
-    selected.push(...shuffle(mastered).slice(0, masteredCount))
+    const filtered = mastered.filter(w => !selectedPinyin.has(w.pinyin))
+    for (const word of shuffle(filtered).slice(0, masteredCount)) {
+      if (selected.length >= roundSize) break
+      if (!selectedPinyin.has(word.pinyin)) {
+        selected.push(word)
+        selectedPinyin.add(word.pinyin)
+      }
+    }
   }
 
   // Shuffle final selection
@@ -253,21 +286,25 @@ export function selectNextWord(
     difficultySettings?: DifficultySettings
     visibleWords?: WordWithProgress[]
     useDifficultyTargeting?: boolean
+    visiblePinyin?: Set<string> // Pinyin values currently on board
   }
 ): Word | null {
   const {
     difficultySettings = DEFAULT_DIFFICULTY_SETTINGS,
     visibleWords = [],
     useDifficultyTargeting = false,
+    visiblePinyin,
   } = options || {}
 
   // Get words on cooldown
   const cooldownIds = new Set(recentlyCompleted.slice(0, cooldownCount))
   const allExcluded = new Set([...excludeIds, ...cooldownIds])
 
-  // Filter available words
+  // Filter available words (exclude same pinyin to prevent duplicates on board)
   let available = allWords.filter(
-    w => w.unit <= currentUnit && !allExcluded.has(w.id)
+    w => w.unit <= currentUnit &&
+         !allExcluded.has(w.id) &&
+         !visiblePinyin?.has(w.pinyin)
   )
 
   // Calculate difficulty context if using targeting
@@ -321,16 +358,20 @@ export function selectNextWord(
   }
 
   if (shouldIntroduceNew) {
-    // Include words from next unit
+    // Include words from next unit (also exclude matching pinyin)
     const nextUnitWords = allWords.filter(
-      w => w.unit === currentUnit + 1 && !allExcluded.has(w.id)
+      w => w.unit === currentUnit + 1 &&
+           !allExcluded.has(w.id) &&
+           !visiblePinyin?.has(w.pinyin)
     )
     available = [...available, ...nextUnitWords]
   }
 
   if (available.length === 0) {
-    // Fall back to any word not currently in play
-    available = allWords.filter(w => !excludeIds.has(w.id))
+    // Fall back to any word not currently in play (still avoid pinyin collisions)
+    available = allWords.filter(
+      w => !excludeIds.has(w.id) && !visiblePinyin?.has(w.pinyin)
+    )
   }
 
   if (available.length === 0) {

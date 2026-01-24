@@ -104,6 +104,13 @@ export function HanziClient({
 
   // Get a new word that's not currently in play (with weighted selection and cooldown)
   const getNextWord = useCallback((): Word | null => {
+    // Get pinyin of words currently on board to prevent duplicates
+    const visiblePinyin = new Set(
+      Array.from(activeWordIds)
+        .map(id => words.find(w => w.id === id)?.pinyin)
+        .filter((p): p is string => p !== undefined)
+    )
+
     return selectNextWord(
       words,
       currentUnit,
@@ -115,6 +122,7 @@ export function HanziClient({
         difficultySettings: settings,
         visibleWords: getVisibleWords(),
         useDifficultyTargeting: true,
+        visiblePinyin,
       }
     )
   }, [words, currentUnit, activeWordIds, recentlyCompleted, sessionScore, settings, getVisibleWords])
