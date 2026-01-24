@@ -236,6 +236,7 @@ export function HanziClient({
 
     try {
       if (word.progress) {
+        // Update existing progress
         await supabase
           .from('user_word_progress')
           .update({
@@ -246,44 +247,55 @@ export function HanziClient({
             updated_at: new Date().toISOString(),
           })
           .eq('id', word.progress.id)
-      } else {
-        await supabase.from('user_word_progress').insert({
-          user_id: userId,
-          word_id: wordId,
-          score: newScore,
-          attempts: 1,
-          correct_streak: wasCorrect ? 1 : 0,
-          last_seen: new Date().toISOString(),
-        })
-      }
 
-      // Update local state
-      setWords(prev =>
-        prev.map(w =>
-          w.id === wordId
-            ? {
-                ...w,
-                progress: {
-                  ...(w.progress || {
-                    id: '',
-                    user_id: userId,
-                    word_id: wordId,
-                    attempts: 0,
-                    correct_streak: 0,
-                    last_seen: null,
-                    introduced_at: new Date().toISOString(),
+        // Update local state with incremented values
+        setWords(prev =>
+          prev.map(w =>
+            w.id === wordId
+              ? {
+                  ...w,
+                  progress: {
+                    ...w.progress!,
+                    score: newScore,
+                    attempts: w.progress!.attempts + 1,
+                    correct_streak: wasCorrect ? w.progress!.correct_streak + 1 : 0,
+                    last_seen: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
-                  }),
-                  score: newScore,
-                  attempts: (w.progress?.attempts ?? 0) + 1,
-                  correct_streak: wasCorrect ? (w.progress?.correct_streak ?? 0) + 1 : 0,
-                  last_seen: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                },
-              }
-            : w
+                  },
+                }
+              : w
+          )
         )
-      )
+      } else {
+        // Insert new progress and get the real row back with its ID
+        const { data: insertedProgress } = await supabase
+          .from('user_word_progress')
+          .insert({
+            user_id: userId,
+            word_id: wordId,
+            score: newScore,
+            attempts: 1,
+            correct_streak: wasCorrect ? 1 : 0,
+            last_seen: new Date().toISOString(),
+          })
+          .select()
+          .single()
+
+        // Update local state with the real progress object (including real ID)
+        if (insertedProgress) {
+          setWords(prev =>
+            prev.map(w =>
+              w.id === wordId
+                ? {
+                    ...w,
+                    progress: insertedProgress,
+                    status: getWordStatus(newScore),
+                  }
+                : w
+            )
+          )
+        }
+      }
     } catch (error) {
       console.error('Error updating progress:', error)
     }
