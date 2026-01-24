@@ -70,8 +70,6 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
 
   const currentWord = words[currentIndex]
   const hasWords = words.length > 0
-  const reviewLimit = Math.min(10, words.length)
-  const isComplete = currentIndex >= reviewLimit
 
   // Generate 12 hanzi options (1 correct + 11 random wrong)
   const hanziOptions = useMemo(() => {
@@ -96,21 +94,16 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
     // Show the correct answer briefly
     setSelectedAnswer('timeout')
 
-    // Move to next after delay
+    // Move to next after delay (wrap around for infinite play)
     setTimeout(() => {
-      const nextIndex = currentIndex + 1
-      if (nextIndex < reviewLimit) {
-        setCurrentIndex(nextIndex)
-        setSelectedAnswer(null)
-      } else {
-        setCurrentIndex(reviewLimit)
-      }
+      setCurrentIndex((currentIndex + 1) % words.length)
+      setSelectedAnswer(null)
     }, 1500)
-  }, [selectedAnswer, isLoading, currentIndex, reviewLimit])
+  }, [selectedAnswer, isLoading, currentIndex, words.length])
 
   // Timer logic
   useEffect(() => {
-    if (!hasWords || isComplete || selectedAnswer) return
+    if (!hasWords || selectedAnswer) return
 
     startTimeRef.current = Date.now()
     setTimeRemaining(TIMER_DURATION)
@@ -133,7 +126,7 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
         clearInterval(timerRef.current)
       }
     }
-  }, [currentIndex, hasWords, isComplete, selectedAnswer, handleTimeUp])
+  }, [currentIndex, hasWords, selectedAnswer, handleTimeUp])
 
   const updateProgress = useCallback(
     async (wasCorrect: boolean) => {
@@ -191,28 +184,14 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
       // Update database (no score changes, just tracking)
       await updateProgress(isCorrect)
 
-      // Move to next after delay
+      // Move to next after delay (wrap around for infinite play)
       setTimeout(() => {
-        const nextIndex = currentIndex + 1
-        if (nextIndex < reviewLimit) {
-          setCurrentIndex(nextIndex)
-          setSelectedAnswer(null)
-        } else {
-          setCurrentIndex(reviewLimit)
-        }
+        setCurrentIndex((currentIndex + 1) % words.length)
+        setSelectedAnswer(null)
       }, 1500)
     },
-    [selectedAnswer, isLoading, currentWord, currentIndex, reviewLimit, updateProgress]
+    [selectedAnswer, isLoading, currentWord, currentIndex, words.length, updateProgress]
   )
-
-  const handleRestart = useCallback(() => {
-    setCurrentIndex(0)
-    setSelectedAnswer(null)
-    setCurrentStreak(0)
-    setTotalCorrect(0)
-    setTotalAttempted(0)
-    // Keep best streak across restarts
-  }, [])
 
   // Timer progress (0 to 1)
   const timerProgress = timeRemaining / TIMER_DURATION
@@ -256,72 +235,12 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
     )
   }
 
-  // Complete state
-  if (isComplete) {
-    const accuracy = totalAttempted > 0
-      ? Math.round((totalCorrect / totalAttempted) * 100)
-      : 0
-
-    return (
-      <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <div
-            className={cn(
-              'size-16 rounded-full flex items-center justify-center mb-4',
-              accuracy >= 80
-                ? 'bg-emerald-900/30'
-                : accuracy >= 50
-                  ? 'bg-yellow-900/30'
-                  : 'bg-red-900/30'
-            )}
-          >
-            <span className="text-2xl font-bold text-neutral-50">
-              {accuracy}%
-            </span>
-          </div>
-          <h2 className="text-xl font-semibold text-neutral-50 mb-2">
-            Review Complete!
-          </h2>
-
-          {/* Stats */}
-          <div className="text-neutral-400 mb-4 space-y-2">
-            <p>
-              <span className="text-emerald-400 font-medium">{totalCorrect}</span>
-              <span className="text-neutral-500"> / {totalAttempted} correct</span>
-            </p>
-            <div className="flex gap-6 justify-center">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-amber-400">{bestStreak}</div>
-                <div className="text-xs text-neutral-500">Best Streak</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleRestart}
-              className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-50 hover:bg-neutral-700 transition-colors"
-            >
-              Review More
-            </button>
-            <Link
-              href="/hanzi"
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
-            >
-              Back to Link Mode
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
       {/* Progress header with streak */}
       <div className="flex items-center justify-between py-3">
-        <span className="text-sm text-neutral-400">
-          {currentIndex + 1} of {reviewLimit}
+        <span className="text-sm text-neutral-400 font-mono tabular-nums">
+          {totalCorrect}/{totalAttempted}
         </span>
         <div className="flex items-center gap-4">
           {/* Current streak */}
