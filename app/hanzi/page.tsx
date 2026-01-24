@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { HanziClient } from './hanzi-client'
-import type { Word, UserWordProgress, HanziProfile, WordWithProgress } from '@/lib/hanzi/types'
+import type { Word, UserWordProgress, WordWithProgress, HanziProfile } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
+import { calculateCurrentUnit } from '@/lib/hanzi/progression'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,7 @@ async function loadHanziData(userId: string): Promise<{
 
   const words = (wordsResult.data || []) as Word[]
   const progress = (progressResult.data || []) as UserWordProgress[]
-  const profile = profileResult.data as HanziProfile | null
+  let profile = profileResult.data as HanziProfile | null
 
   // Create a map for quick progress lookup
   const progressMap = new Map<string, UserWordProgress>()
@@ -54,6 +55,35 @@ async function loadHanziData(userId: string): Promise<{
     }
   })
 
+  // Calculate actual current unit from progress
+  const calculatedUnit = calculateCurrentUnit(wordsWithProgress)
+  const wordsSeen = progress.length
+  const masteredCount = progress.filter(p => p.score >= 6).length
+
+  // Create or update profile if needed
+  if (!profile || profile.current_unit !== calculatedUnit) {
+    const { data: upsertedProfile } = await supabase
+      .from('hanzi_profiles')
+      .upsert(
+        {
+          user_id: userId,
+          current_section: 1,
+          current_unit: calculatedUnit,
+          total_words_seen: wordsSeen,
+          mastered_count: masteredCount,
+          last_practice_date: new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      )
+      .select()
+      .single()
+
+    if (upsertedProfile) {
+      profile = upsertedProfile as HanziProfile
+    }
+  }
+
   return { words: wordsWithProgress, profile }
 }
 
@@ -68,8 +98,6 @@ export default async function HanziPage() {
   }
 
   const { words, profile } = await loadHanziData(user.id)
-
-  // Calculate current unit from profile or default to 1
   const currentUnit = profile?.current_unit ?? 1
   const currentSection = profile?.current_section ?? 1
 
