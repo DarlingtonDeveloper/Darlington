@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { WordWithProgress } from '@/lib/hanzi/types'
@@ -17,160 +17,205 @@ function shuffle<T>(array: T[]): T[] {
   const result = [...array]
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[result[i], result[j]] = [result[j], result[i]]
+      ;[result[i], result[j]] = [result[j], result[i]]
   }
   return result
 }
 
+// Sort words by score (highest first) but shuffle within similar scores
+function sortByScoreWithVariation(words: WordWithProgress[]): WordWithProgress[] {
+  // Group words by score buckets (e.g., 10+, 8-9, 6-7)
+  const buckets: Map<number, WordWithProgress[]> = new Map()
+
+  words.forEach(word => {
+    const score = word.progress?.score ?? 0
+    // Create buckets of 2 points each
+    const bucket = Math.floor(score / 2) * 2
+    if (!buckets.has(bucket)) {
+      buckets.set(bucket, [])
+    }
+    buckets.get(bucket)!.push(word)
+  })
+
+  // Sort buckets by score (highest first), shuffle within each bucket
+  const sortedBuckets = Array.from(buckets.entries())
+    .sort((a, b) => b[0] - a[0])
+
+  // Flatten with shuffled buckets
+  return sortedBuckets.flatMap(([, words]) => shuffle(words))
+}
+
+const TIMER_DURATION = 5000 // 5 seconds in ms
+
 export function ReviewClient({ initialWords, allHanzi, userId: _userId }: ReviewClientProps) {
   const supabase = createClient()
   void _userId // Reserved for future RLS enforcement
-  const [words, setWords] = useState<WordWithProgress[]>(initialWords)
+
+  // Sort words: highest score first, but randomized within score bands
+  const [words] = useState<WordWithProgress[]>(() => sortByScoreWithVariation(initialWords))
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [revealed, setRevealed] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionScore, setSessionScore] = useState(0)
-  const [results, setResults] = useState<{ correct: number; incorrect: number; revealed: number }>({
-    correct: 0,
-    incorrect: 0,
-    revealed: 0,
-  })
+
+  // Streak tracking (replaces session score)
+  const [currentStreak, setCurrentStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [totalCorrect, setTotalCorrect] = useState(0)
+  const [totalAttempted, setTotalAttempted] = useState(0)
+
+  // Timer state
+  const [timeRemaining, setTimeRemaining] = useState(TIMER_DURATION)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number>(Date.now())
 
   const currentWord = words[currentIndex]
   const hasWords = words.length > 0
-  const isComplete = currentIndex >= words.length
   const reviewLimit = Math.min(10, words.length)
+  const isComplete = currentIndex >= reviewLimit
 
   // Generate 12 hanzi options (1 correct + 11 random wrong)
   const hanziOptions = useMemo(() => {
     if (!currentWord) return []
-
-    // Get other hanzi characters (not the current one) from full pool
     const otherHanzi = allHanzi.filter(h => h !== currentWord.hanzi)
-
-    // Pick 11 random wrong answers
     const wrongAnswers = shuffle(otherHanzi).slice(0, 11)
-
-    // Combine with correct answer and shuffle
     return shuffle([currentWord.hanzi, ...wrongAnswers])
   }, [currentWord, allHanzi])
 
-  const updateScore = useCallback(
-    async (scoreChange: number, wasCorrect: boolean | null) => {
+  // Handle timer expiration
+  const handleTimeUp = useCallback(() => {
+    if (selectedAnswer || isLoading) return
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+
+    // Break streak on timeout
+    setCurrentStreak(0)
+    setTotalAttempted(prev => prev + 1)
+
+    // Show the correct answer briefly
+    setSelectedAnswer('timeout')
+
+    // Move to next after delay
+    setTimeout(() => {
+      const nextIndex = currentIndex + 1
+      if (nextIndex < reviewLimit) {
+        setCurrentIndex(nextIndex)
+        setSelectedAnswer(null)
+      } else {
+        setCurrentIndex(reviewLimit)
+      }
+    }, 1500)
+  }, [selectedAnswer, isLoading, currentIndex, reviewLimit])
+
+  // Timer logic
+  useEffect(() => {
+    if (!hasWords || isComplete || selectedAnswer) return
+
+    startTimeRef.current = Date.now()
+    setTimeRemaining(TIMER_DURATION)
+
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current
+      const remaining = Math.max(0, TIMER_DURATION - elapsed)
+      setTimeRemaining(remaining)
+
+      if (remaining <= 0) {
+        // Time's up - count as miss, break streak
+        handleTimeUp()
+      }
+    }
+
+    timerRef.current = setInterval(tick, 50) // Update frequently for smooth animation
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+  }, [currentIndex, hasWords, isComplete, selectedAnswer, handleTimeUp])
+
+  const updateProgress = useCallback(
+    async (wasCorrect: boolean) => {
       if (!currentWord || isLoading) return
 
       setIsLoading(true)
 
       try {
-        const currentScore = currentWord.progress?.score ?? 0
-        const newScore = currentScore + scoreChange
-
+        // Only update last_seen, don't change score (no penalties)
         await supabase
           .from('user_word_progress')
           .update({
-            score: newScore,
             attempts: (currentWord.progress?.attempts ?? 0) + 1,
-            correct_streak: wasCorrect === true
+            correct_streak: wasCorrect
               ? (currentWord.progress?.correct_streak ?? 0) + 1
-              : wasCorrect === false
-                ? 0
-                : currentWord.progress?.correct_streak ?? 0,
+              : 0,
             last_seen: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', currentWord.progress?.id)
-
-        // Update local state
-        setWords(prev =>
-          prev.map((w, i) =>
-            i === currentIndex
-              ? {
-                  ...w,
-                  progress: {
-                    ...w.progress!,
-                    score: newScore,
-                    attempts: (w.progress?.attempts ?? 0) + 1,
-                    correct_streak: wasCorrect === true
-                      ? (w.progress?.correct_streak ?? 0) + 1
-                      : wasCorrect === false
-                        ? 0
-                        : w.progress?.correct_streak ?? 0,
-                    last_seen: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                }
-              : w
-          )
-        )
-
-        setSessionScore(prev => prev + scoreChange)
       } catch (error) {
         console.error('Error updating progress:', error)
+      } finally {
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     },
-    [supabase, currentWord, currentIndex, isLoading]
+    [currentWord, isLoading, supabase]
   )
-
-  const handleReveal = useCallback(async () => {
-    if (revealed || !currentWord) return
-
-    setRevealed(true)
-    setResults(prev => ({ ...prev, revealed: prev.revealed + 1 }))
-    await updateScore(-1, null) // -1 for revealing
-  }, [revealed, currentWord, updateScore])
 
   const handleSelectAnswer = useCallback(
     async (hanzi: string) => {
-      if (revealed || selectedAnswer || !currentWord) return
+      if (selectedAnswer || isLoading || !currentWord) return
+
+      // Stop timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
 
       setSelectedAnswer(hanzi)
       const isCorrect = hanzi === currentWord.hanzi
 
+      // Update streak
+      setTotalAttempted(prev => prev + 1)
       if (isCorrect) {
-        setResults(prev => ({ ...prev, correct: prev.correct + 1 }))
-        await updateScore(1, true) // +1 for correct
+        setTotalCorrect(prev => prev + 1)
+        setCurrentStreak(prev => {
+          const newStreak = prev + 1
+          setBestStreak(best => Math.max(best, newStreak))
+          return newStreak
+        })
       } else {
-        setResults(prev => ({ ...prev, incorrect: prev.incorrect + 1 }))
-        await updateScore(-3, false) // -3 for incorrect
+        setCurrentStreak(0)
       }
 
-      // Show the answer briefly then move on
-      setRevealed(true)
+      // Update database (no score changes, just tracking)
+      await updateProgress(isCorrect)
+
+      // Move to next after delay
       setTimeout(() => {
         const nextIndex = currentIndex + 1
-        if (nextIndex >= reviewLimit) {
-          setCurrentIndex(reviewLimit)
-        } else {
+        if (nextIndex < reviewLimit) {
           setCurrentIndex(nextIndex)
+          setSelectedAnswer(null)
+        } else {
+          setCurrentIndex(reviewLimit)
         }
-        setRevealed(false)
-        setSelectedAnswer(null)
       }, 1500)
     },
-    [revealed, selectedAnswer, currentWord, currentIndex, reviewLimit, updateScore]
+    [selectedAnswer, isLoading, currentWord, currentIndex, reviewLimit, updateProgress]
   )
-
-  const handleNext = useCallback(() => {
-    const nextIndex = currentIndex + 1
-    if (nextIndex >= reviewLimit) {
-      setCurrentIndex(reviewLimit)
-    } else {
-      setCurrentIndex(nextIndex)
-    }
-    setRevealed(false)
-    setSelectedAnswer(null)
-  }, [currentIndex, reviewLimit])
 
   const handleRestart = useCallback(() => {
     setCurrentIndex(0)
-    setRevealed(false)
     setSelectedAnswer(null)
-    setResults({ correct: 0, incorrect: 0, revealed: 0 })
-    setSessionScore(0)
+    setCurrentStreak(0)
+    setTotalCorrect(0)
+    setTotalAttempted(0)
+    // Keep best streak across restarts
   }, [])
+
+  // Timer progress (0 to 1)
+  const timerProgress = timeRemaining / TIMER_DURATION
 
   // Empty state
   if (!hasWords) {
@@ -212,10 +257,9 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
   }
 
   // Complete state
-  if (isComplete || currentIndex >= reviewLimit) {
-    const totalAttempts = results.correct + results.incorrect + results.revealed
-    const accuracy = totalAttempts > 0
-      ? Math.round((results.correct / totalAttempts) * 100)
+  if (isComplete) {
+    const accuracy = totalAttempted > 0
+      ? Math.round((totalCorrect / totalAttempted) * 100)
       : 0
 
     return (
@@ -238,21 +282,21 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
           <h2 className="text-xl font-semibold text-neutral-50 mb-2">
             Review Complete!
           </h2>
-          <div className="text-neutral-400 mb-2 space-y-1">
-            <p className="text-emerald-400">{results.correct} correct (+1 each)</p>
-            {results.incorrect > 0 && (
-              <p className="text-red-400">{results.incorrect} incorrect (-3 each)</p>
-            )}
-            {results.revealed > 0 && (
-              <p className="text-yellow-400">{results.revealed} revealed (-1 each)</p>
-            )}
+
+          {/* Stats */}
+          <div className="text-neutral-400 mb-4 space-y-2">
+            <p>
+              <span className="text-emerald-400 font-medium">{totalCorrect}</span>
+              <span className="text-neutral-500"> / {totalAttempted} correct</span>
+            </p>
+            <div className="flex gap-6 justify-center">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-400">{bestStreak}</div>
+                <div className="text-xs text-neutral-500">Best Streak</div>
+              </div>
+            </div>
           </div>
-          <p className={cn(
-            'text-lg font-medium mb-6',
-            sessionScore >= 0 ? 'text-emerald-400' : 'text-red-400'
-          )}>
-            Session: {sessionScore > 0 ? '+' : ''}{sessionScore}
-          </p>
+
           <div className="flex gap-3">
             <button
               onClick={handleRestart}
@@ -274,26 +318,81 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
 
   return (
     <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
-      {/* Progress header */}
+      {/* Progress header with streak */}
       <div className="flex items-center justify-between py-3">
         <span className="text-sm text-neutral-400">
           {currentIndex + 1} of {reviewLimit}
         </span>
-        <span className={cn(
-          'text-sm font-medium',
-          sessionScore >= 0 ? 'text-emerald-400' : 'text-red-400'
-        )}>
-          {sessionScore > 0 ? '+' : ''}{sessionScore}
-        </span>
+        <div className="flex items-center gap-4">
+          {/* Current streak */}
+          <div className="flex items-center gap-1">
+            <span className="text-amber-400">🔥</span>
+            <span className={cn(
+              'text-sm font-medium',
+              currentStreak > 0 ? 'text-amber-400' : 'text-neutral-500'
+            )}>
+              {currentStreak}
+            </span>
+          </div>
+          {/* Best streak */}
+          {bestStreak > 0 && (
+            <span className="text-xs text-neutral-500">
+              Best: {bestStreak}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Timer ring */}
+      <div className="flex justify-center mb-4">
+        <div className="relative size-16">
+          <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+            {/* Background circle */}
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-neutral-800"
+            />
+            {/* Progress circle */}
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={`${timerProgress * 100.53} 100.53`}
+              className={cn(
+                'transition-all duration-100',
+                timerProgress > 0.5 ? 'text-emerald-500' :
+                  timerProgress > 0.25 ? 'text-amber-500' : 'text-red-500'
+              )}
+            />
+          </svg>
+          {/* Time text */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className={cn(
+              'text-sm font-mono font-medium',
+              timerProgress > 0.5 ? 'text-emerald-400' :
+                timerProgress > 0.25 ? 'text-amber-400' : 'text-red-400'
+            )}>
+              {(timeRemaining / 1000).toFixed(1)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Card */}
       <div
         className={cn(
-          'relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[280px] flex flex-col items-center justify-center transition-all duration-300 cursor-pointer',
-          revealed && 'border-neutral-700'
+          'relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[220px] flex flex-col items-center justify-center transition-all duration-300',
+          selectedAnswer && 'border-neutral-700'
         )}
-        onClick={handleReveal}
       >
         <div className="text-center">
           <div className="text-sm text-neutral-500 mb-4">
@@ -306,18 +405,16 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
             {currentWord.english}
           </div>
 
-          {revealed && (
+          {/* Show answer on selection or timeout */}
+          {selectedAnswer && (
             <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="text-7xl">{currentWord.hanzi}</div>
+              {selectedAnswer === 'timeout' && (
+                <div className="text-red-400 text-sm mt-2">Time&apos;s up!</div>
+              )}
             </div>
           )}
         </div>
-
-        {!revealed && !selectedAnswer && (
-          <p className="absolute bottom-4 text-sm text-neutral-600">
-            Tap to reveal (-1)
-          </p>
-        )}
       </div>
 
       {/* Hanzi options */}
@@ -325,20 +422,20 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
         {hanziOptions.map((hanzi, i) => {
           const isCorrect = hanzi === currentWord.hanzi
           const isSelected = selectedAnswer === hanzi
-          const showResult = revealed || selectedAnswer
+          const showResult = !!selectedAnswer
 
           return (
             <button
               key={`${hanzi}-${i}`}
               onClick={() => handleSelectAnswer(hanzi)}
-              disabled={revealed || !!selectedAnswer || isLoading}
+              disabled={!!selectedAnswer || isLoading}
               className={cn(
                 'py-4 rounded-xl border text-3xl font-normal transition-all duration-150',
                 !showResult && 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700',
                 showResult && isCorrect && 'bg-emerald-500/20 border-emerald-500 text-emerald-50',
                 showResult && isSelected && !isCorrect && 'bg-red-500/20 border-red-500 text-red-50',
                 showResult && !isCorrect && !isSelected && 'bg-neutral-900 border-neutral-800 opacity-50',
-                (revealed || !!selectedAnswer || isLoading) && 'pointer-events-none'
+                (!!selectedAnswer || isLoading) && 'pointer-events-none'
               )}
             >
               {hanzi}
@@ -347,23 +444,13 @@ export function ReviewClient({ initialWords, allHanzi, userId: _userId }: Review
         })}
       </div>
 
-      {/* Scoring hint */}
+      {/* Info hint */}
       <div className="mt-4 text-center text-xs text-neutral-600">
-        Correct: +1 · Wrong: -3 · Reveal: -1
+        Answer quickly to build your streak!
       </div>
 
-      {/* Next button when revealed via tap */}
-      {revealed && !selectedAnswer && (
-        <button
-          onClick={handleNext}
-          className="mt-4 w-full py-3 px-4 rounded-xl bg-neutral-800 text-neutral-50 font-medium transition-colors hover:bg-neutral-700"
-        >
-          Next
-        </button>
-      )}
-
       {/* Unit info */}
-      <div className="mt-4 text-center text-xs text-neutral-600">
+      <div className="mt-2 text-center text-xs text-neutral-600">
         Unit {currentWord.unit}: {currentWord.unit_name}
       </div>
     </div>
