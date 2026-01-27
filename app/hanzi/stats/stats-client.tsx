@@ -2,20 +2,30 @@
 
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import type { WordWithProgress, HanziProfile } from '@/lib/hanzi/types'
+import type { WordWithProgress, HanziProfile, SentenceWithProgress } from '@/lib/hanzi/types'
 import { SCORE_THRESHOLDS } from '@/lib/hanzi/types'
 import { getSectionProgress } from '@/lib/hanzi/progression'
 import Link from 'next/link'
 
-interface StatsClientProps {
-  words: WordWithProgress[]
-  profile: HanziProfile | null
+interface HighScores {
+  wordsTap: number
+  wordsType: number
+  sentencesTap: number
+  sentencesType: number
 }
 
-export function StatsClient({ words, profile }: StatsClientProps) {
+interface StatsClientProps {
+  words: WordWithProgress[]
+  sentences: SentenceWithProgress[]
+  profile: HanziProfile | null
+  highScores: HighScores
+}
+
+export function StatsClient({ words, sentences, profile, highScores }: StatsClientProps) {
   const currentUnit = profile?.current_unit ?? 1
 
-  const stats = useMemo(() => {
+  // Word stats
+  const wordStats = useMemo(() => {
     const wordsSeen = words.filter(w => w.progress !== null).length
     const mastered = words.filter(
       w => w.progress && w.progress.score >= SCORE_THRESHOLDS.MASTERED_MIN
@@ -40,37 +50,63 @@ export function StatsClient({ words, profile }: StatsClientProps) {
       w => w.progress && w.progress.score < SCORE_THRESHOLDS.LEARNING_MIN
     ).length
 
-    const totalAttempts = words.reduce(
-      (sum, w) => sum + (w.progress?.attempts ?? 0),
-      0
-    )
-    const totalCorrect = words.reduce((sum, w) => {
-      const attempts = w.progress?.attempts ?? 0
-      const score = w.progress?.score ?? 0
-      // Estimate correct from score and attempts
-      return sum + Math.max(0, Math.floor((attempts + score) / 2))
-    }, 0)
-    const accuracy =
-      totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0
-
     return {
-      totalWords: words.length,
-      wordsSeen,
+      total: words.length,
+      seen: wordsSeen,
       mastered,
       familiar,
       learning,
       struggling,
-      accuracy,
-      totalAttempts,
     }
   }, [words])
+
+  // Sentence stats
+  const sentenceStats = useMemo(() => {
+    const sentencesSeen = sentences.filter(s => s.progress !== null).length
+    const mastered = sentences.filter(
+      s => s.progress && s.progress.score >= SCORE_THRESHOLDS.MASTERED_MIN
+    ).length
+    const familiar = sentences.filter(s => {
+      const score = s.progress?.score ?? 0
+      return (
+        s.progress !== null &&
+        score >= SCORE_THRESHOLDS.FAMILIAR_MIN &&
+        score <= SCORE_THRESHOLDS.FAMILIAR_MAX
+      )
+    }).length
+    const learning = sentences.filter(s => {
+      const score = s.progress?.score ?? 0
+      return (
+        s.progress !== null &&
+        score >= SCORE_THRESHOLDS.LEARNING_MIN &&
+        score <= SCORE_THRESHOLDS.LEARNING_MAX
+      )
+    }).length
+    const struggling = sentences.filter(
+      s => s.progress && s.progress.score < SCORE_THRESHOLDS.LEARNING_MIN
+    ).length
+
+    return {
+      total: sentences.length,
+      seen: sentencesSeen,
+      mastered,
+      familiar,
+      learning,
+      struggling,
+    }
+  }, [sentences])
 
   const unitProgress = useMemo(
     () => getSectionProgress(words, 1, currentUnit),
     [words, currentUnit]
   )
 
-  const overallProgress = Math.round((stats.wordsSeen / stats.totalWords) * 100)
+  const wordProgress = wordStats.total > 0
+    ? Math.round((wordStats.seen / wordStats.total) * 100)
+    : 0
+  const sentenceProgress = sentenceStats.total > 0
+    ? Math.round((sentenceStats.seen / sentenceStats.total) * 100)
+    : 0
 
   return (
     <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto py-4">
@@ -78,27 +114,66 @@ export function StatsClient({ words, profile }: StatsClientProps) {
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-4">
           <div className="text-3xl font-bold text-neutral-50">
-            {stats.wordsSeen}
+            {wordStats.seen}
           </div>
           <div className="text-sm text-neutral-500">Words Learned</div>
           <div className="mt-2 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-600 rounded-full"
-              style={{ width: `${overallProgress}%` }}
+              style={{ width: `${wordProgress}%` }}
             />
           </div>
           <div className="text-xs text-neutral-600 mt-1">
-            {overallProgress}% of {stats.totalWords}
+            {wordProgress}% of {wordStats.total}
           </div>
         </div>
 
         <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-4">
-          <div className="text-3xl font-bold text-emerald-400">
-            {profile?.current_streak ?? 0}
+          <div className="text-3xl font-bold text-neutral-50">
+            {sentenceStats.seen}
           </div>
-          <div className="text-sm text-neutral-500">Day Streak</div>
-          <div className="text-xs text-neutral-600 mt-4">
-            Best: {profile?.longest_streak ?? 0} days
+          <div className="text-sm text-neutral-500">Sentences Learned</div>
+          <div className="mt-2 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-600 rounded-full"
+              style={{ width: `${sentenceProgress}%` }}
+            />
+          </div>
+          <div className="text-xs text-neutral-600 mt-1">
+            {sentenceProgress}% of {sentenceStats.total}
+          </div>
+        </div>
+      </div>
+
+      {/* High Scores */}
+      <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-4 mb-6">
+        <h3 className="text-sm font-medium text-neutral-50 mb-4">
+          Review High Scores
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-400">Words (Tap)</span>
+            <span className="text-sm font-mono tabular-nums text-amber-400">
+              {highScores.wordsTap}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-400">Words (Type)</span>
+            <span className="text-sm font-mono tabular-nums text-amber-400">
+              {highScores.wordsType}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-400">Sentences (Tap)</span>
+            <span className="text-sm font-mono tabular-nums text-amber-400">
+              {highScores.sentencesTap}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-400">Sentences (Type)</span>
+            <span className="text-sm font-mono tabular-nums text-amber-400">
+              {highScores.sentencesType}
+            </span>
           </div>
         </div>
       </div>
@@ -111,30 +186,65 @@ export function StatsClient({ words, profile }: StatsClientProps) {
         <div className="space-y-3">
           <StatusRow
             label="Mastered"
-            count={stats.mastered}
-            total={stats.totalWords}
+            count={wordStats.mastered}
+            total={wordStats.total}
             color="emerald"
           />
           <StatusRow
             label="Familiar"
-            count={stats.familiar}
-            total={stats.totalWords}
+            count={wordStats.familiar}
+            total={wordStats.total}
             color="blue"
           />
           <StatusRow
             label="Learning"
-            count={stats.learning}
-            total={stats.totalWords}
+            count={wordStats.learning}
+            total={wordStats.total}
             color="neutral"
           />
           <StatusRow
             label="Struggling"
-            count={stats.struggling}
-            total={stats.totalWords}
+            count={wordStats.struggling}
+            total={wordStats.total}
             color="red"
           />
         </div>
       </div>
+
+      {/* Sentence status breakdown */}
+      {sentenceStats.total > 0 && (
+        <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-4 mb-6">
+          <h3 className="text-sm font-medium text-neutral-50 mb-4">
+            Sentence Status
+          </h3>
+          <div className="space-y-3">
+            <StatusRow
+              label="Mastered"
+              count={sentenceStats.mastered}
+              total={sentenceStats.total}
+              color="emerald"
+            />
+            <StatusRow
+              label="Familiar"
+              count={sentenceStats.familiar}
+              total={sentenceStats.total}
+              color="blue"
+            />
+            <StatusRow
+              label="Learning"
+              count={sentenceStats.learning}
+              total={sentenceStats.total}
+              color="neutral"
+            />
+            <StatusRow
+              label="Struggling"
+              count={sentenceStats.struggling}
+              total={sentenceStats.total}
+              color="red"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Unit breakdown */}
       <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-4 mb-6">
@@ -210,25 +320,25 @@ export function StatsClient({ words, profile }: StatsClientProps) {
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
-        {stats.struggling > 0 && (
+        {wordStats.struggling > 0 && (
           <Link
             href="/hanzi/lesson"
             className="bg-red-900/20 border border-red-800/30 rounded-xl p-4 hover:bg-red-900/30 transition-colors"
           >
             <div className="text-lg font-semibold text-red-400">
-              {stats.struggling}
+              {wordStats.struggling}
             </div>
             <div className="text-sm text-red-300">Struggling Words</div>
             <div className="text-xs text-red-400/60 mt-1">Tap to practice</div>
           </Link>
         )}
-        {stats.mastered > 0 && (
+        {wordStats.mastered > 0 && (
           <Link
             href="/hanzi/review"
             className="bg-emerald-900/20 border border-emerald-800/30 rounded-xl p-4 hover:bg-emerald-900/30 transition-colors"
           >
             <div className="text-lg font-semibold text-emerald-400">
-              {stats.mastered}
+              {wordStats.mastered}
             </div>
             <div className="text-sm text-emerald-300">Mastered Words</div>
             <div className="text-xs text-emerald-400/60 mt-1">

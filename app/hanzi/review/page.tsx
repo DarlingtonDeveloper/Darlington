@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ReviewClient } from './review-client'
 import type { Word, UserWordProgress, WordWithProgress, HanziProfile, Sentence, UserSentenceProgress, SentenceWithProgress } from '@/lib/hanzi/types'
-import { getWordStatus, SCORE_THRESHOLDS } from '@/lib/hanzi/types'
+import { getWordStatus, SCORE_THRESHOLDS, getHighScoreKey } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,10 +32,23 @@ async function loadReviewData(userId: string): Promise<ReviewData> {
   const profile = profileData as HanziProfile | null
   const contentMode = (profile?.content_mode as 'words' | 'sentences') ?? 'words'
 
+  const contentFilter = profile?.content_filter ?? 'hsk1'
+  const inputMethod = (profile?.input_method as 'tap' | 'type') ?? 'tap'
+  const highScoreKey = getHighScoreKey(contentMode, inputMethod)
+
   if (contentMode === 'sentences') {
     // Load sentences for sentence mode
+    let sentencesQuery = supabase.from('sentences').select('*')
+
+    // Apply HSK1 filter if enabled
+    if (contentFilter === 'hsk1') {
+      sentencesQuery = sentencesQuery.eq('hsk_level', 1)
+    }
+
+    sentencesQuery = sentencesQuery.order('difficulty').order('id')
+
     const [sentencesResult, sentenceProgressResult] = await Promise.all([
-      supabase.from('sentences').select('*').order('difficulty').order('id'),
+      sentencesQuery,
       supabase.from('user_sentence_progress').select('*').eq('user_id', userId),
     ])
 
@@ -80,14 +93,23 @@ async function loadReviewData(userId: string): Promise<ReviewData> {
       allHanzi: [],
       masteredSentences,
       allEnglish,
-      lifetimeHighScore: profile?.review_lifetime_high_score ?? 0,
-      inputMethod: (profile?.input_method as 'tap' | 'type') ?? 'tap',
+      lifetimeHighScore: profile?.[highScoreKey] ?? 0,
+      inputMethod,
     }
   }
 
   // Default: Load words for word mode
+  let wordsQuery = supabase.from('words').select('*').eq('section', 1)
+
+  // Apply HSK1 filter if enabled
+  if (contentFilter === 'hsk1') {
+    wordsQuery = wordsQuery.or('hsk_level.is.null,hsk_level.eq.1')
+  }
+
+  wordsQuery = wordsQuery.order('unit').order('id')
+
   const [wordsResult, progressResult] = await Promise.all([
-    supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
+    wordsQuery,
     supabase.from('user_word_progress').select('*').eq('user_id', userId),
   ])
 
@@ -135,8 +157,8 @@ async function loadReviewData(userId: string): Promise<ReviewData> {
     allHanzi,
     masteredSentences: [],
     allEnglish: [],
-    lifetimeHighScore: profile?.review_lifetime_high_score ?? 0,
-    inputMethod: (profile?.input_method as 'tap' | 'type') ?? 'tap'
+    lifetimeHighScore: profile?.[highScoreKey] ?? 0,
+    inputMethod,
   }
 }
 

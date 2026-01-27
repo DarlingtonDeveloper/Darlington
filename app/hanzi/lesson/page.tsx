@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LessonClient } from './lesson-client'
-import type { Word, UserWordProgress, WordWithProgress } from '@/lib/hanzi/types'
+import type { Word, UserWordProgress, WordWithProgress, HanziProfile } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
@@ -14,9 +14,28 @@ interface LessonData {
 async function loadLessonData(userId: string): Promise<LessonData> {
   const supabase = await createClient()
 
+  // First fetch profile to get content_filter setting
+  const { data: profileData } = await supabase
+    .from('hanzi_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  const profile = profileData as HanziProfile | null
+  const contentFilter = profile?.content_filter ?? 'hsk1'
+
+  // Build words query with HSK1 filter if enabled
+  let wordsQuery = supabase.from('words').select('*').eq('section', 1)
+
+  if (contentFilter === 'hsk1') {
+    wordsQuery = wordsQuery.or('hsk_level.is.null,hsk_level.eq.1')
+  }
+
+  wordsQuery = wordsQuery.order('unit').order('id')
+
   // Fetch words and user progress in parallel
   const [wordsResult, progressResult] = await Promise.all([
-    supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
+    wordsQuery,
     supabase.from('user_word_progress').select('*').eq('user_id', userId),
   ])
 

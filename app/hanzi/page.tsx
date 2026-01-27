@@ -13,23 +13,36 @@ async function loadHanziData(userId: string): Promise<{
 }> {
   const supabase = await createClient()
 
+  // First fetch profile to get content_filter setting
+  const { data: profileData } = await supabase
+    .from('hanzi_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  let profile = profileData as HanziProfile | null
+  const contentFilter = profile?.content_filter ?? 'hsk1'
+
+  // Build words query with HSK1 filter if enabled
+  let wordsQuery = supabase
+    .from('words')
+    .select('*')
+    .eq('section', 1)
+
+  // Apply HSK1 filter: only show words with hsk_level=1 or null (core words)
+  if (contentFilter === 'hsk1') {
+    wordsQuery = wordsQuery.or('hsk_level.is.null,hsk_level.eq.1')
+  }
+
+  wordsQuery = wordsQuery.order('unit').order('id')
+
   // Fetch words and user progress in parallel
-  const [wordsResult, progressResult, profileResult] = await Promise.all([
-    supabase
-      .from('words')
-      .select('*')
-      .eq('section', 1)
-      .order('unit')
-      .order('id'),
+  const [wordsResult, progressResult] = await Promise.all([
+    wordsQuery,
     supabase
       .from('user_word_progress')
       .select('*')
       .eq('user_id', userId),
-    supabase
-      .from('hanzi_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single(),
   ])
 
   if (wordsResult.error) {
@@ -38,7 +51,6 @@ async function loadHanziData(userId: string): Promise<{
 
   const words = (wordsResult.data || []) as Word[]
   const progress = (progressResult.data || []) as UserWordProgress[]
-  let profile = profileResult.data as HanziProfile | null
 
   // Create a map for quick progress lookup
   const progressMap = new Map<string, UserWordProgress>()

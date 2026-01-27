@@ -3,7 +3,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import type { WordWithProgress, SentenceWithProgress } from '@/lib/hanzi/types'
+import type { WordWithProgress, SentenceWithProgress, HighScoreKey } from '@/lib/hanzi/types'
+import { getHighScoreKey } from '@/lib/hanzi/types'
 import Link from 'next/link'
 import { PinyinInput } from '../components/pinyin-input'
 import { ReviewSettingsModal } from './review-settings-modal'
@@ -55,8 +56,11 @@ function sortByScoreWithVariation<T extends { progress: { score: number } | null
   return sortedBuckets.flatMap(([, items]) => shuffle(items))
 }
 
-const TIMER_DURATION_TAP = 5000 // 5 seconds for tap mode
-const TIMER_DURATION_TYPE = 10000 // 10 seconds for typing mode
+// Timer durations by mode
+const TIMER_WORDS_TAP = 5000       // 5 seconds for words tap
+const TIMER_WORDS_TYPE = 10000     // 10 seconds for words typing
+const TIMER_SENTENCES_TAP = 10000  // 10 seconds for sentences tap
+const TIMER_SENTENCES_TYPE = 20000 // 20 seconds for sentences typing
 
 export function ReviewClient({
   contentMode,
@@ -73,7 +77,9 @@ export function ReviewClient({
   const [showSettings, setShowSettings] = useState(false)
   const isTypingMode = currentInputMethod === 'type'
   const isSentenceMode = contentMode === 'sentences'
-  const TIMER_DURATION = isTypingMode ? TIMER_DURATION_TYPE : TIMER_DURATION_TAP
+  const TIMER_DURATION = isSentenceMode
+    ? (isTypingMode ? TIMER_SENTENCES_TYPE : TIMER_SENTENCES_TAP)
+    : (isTypingMode ? TIMER_WORDS_TYPE : TIMER_WORDS_TAP)
 
   // Sort items: highest score first, but randomized within score bands
   const [words] = useState<WordWithProgress[]>(() => sortByScoreWithVariation(initialWords))
@@ -168,14 +174,19 @@ export function ReviewClient({
     }
   }, [currentIndex, hasItems, selectedAnswer, handleTimeUp])
 
-  // Update lifetime high score in database
+  // Update lifetime high score in database (mode-specific column)
+  const highScoreKey: HighScoreKey = getHighScoreKey(
+    contentMode,
+    currentInputMethod
+  )
+
   const updateLifetimeHighScore = useCallback(
     async (newHighScore: number) => {
       try {
         await supabase
           .from('hanzi_profiles')
           .update({
-            review_lifetime_high_score: newHighScore,
+            [highScoreKey]: newHighScore,
             updated_at: new Date().toISOString(),
           })
           .eq('user_id', userId)
@@ -183,7 +194,7 @@ export function ReviewClient({
         console.error('Error updating lifetime high score:', error)
       }
     },
-    [supabase, userId]
+    [supabase, userId, highScoreKey]
   )
 
   const updateProgress = useCallback(

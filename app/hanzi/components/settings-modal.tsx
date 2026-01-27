@@ -7,6 +7,7 @@ interface LinkSettings {
   baseDifficulty: number
   wordCount: number
   showDifficultyScore: boolean
+  viewBy: 'units' | 'word_type'
 }
 
 interface SettingsModalProps {
@@ -64,7 +65,8 @@ export function SettingsModal({
   const hasChanges =
     localSettings.baseDifficulty !== settings.baseDifficulty ||
     localSettings.wordCount !== settings.wordCount ||
-    localSettings.showDifficultyScore !== settings.showDifficultyScore
+    localSettings.showDifficultyScore !== settings.showDifficultyScore ||
+    localSettings.viewBy !== settings.viewBy
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -206,6 +208,42 @@ export function SettingsModal({
             </div>
             <p className="mt-2.5 text-xs text-neutral-500 leading-relaxed">
               Fewer words are easier to track. More words add variety.
+            </p>
+          </div>
+
+          {/* Group By Setting */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-neutral-300 block mb-3">
+              Group Words By
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, viewBy: 'units' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border',
+                  localSettings.viewBy === 'units'
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600'
+                )}
+              >
+                Units
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, viewBy: 'word_type' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border',
+                  localSettings.viewBy === 'word_type'
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600'
+                )}
+              >
+                Word Type
+              </button>
+            </div>
+            <p className="mt-2.5 text-xs text-neutral-500 leading-relaxed">
+              Choose how words are organized in the selector.
             </p>
           </div>
 

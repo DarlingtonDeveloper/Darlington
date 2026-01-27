@@ -108,11 +108,31 @@ export interface HanziProfile {
   input_method: 'tap' | 'type' | null
   view_by: 'units' | 'word_type' | null
   content_filter: 'hsk1' | 'all' | null
-  // High scores
+  // High scores (legacy)
   review_session_high_score: number | null
   review_lifetime_high_score: number | null
+  // High scores (split by mode)
+  high_score_words_tap: number | null
+  high_score_words_type: number | null
+  high_score_sentences_tap: number | null
+  high_score_sentences_type: number | null
   created_at: string
   updated_at: string
+}
+
+// High score key type for mode-specific tracking
+export type HighScoreKey =
+  | 'high_score_words_tap'
+  | 'high_score_words_type'
+  | 'high_score_sentences_tap'
+  | 'high_score_sentences_type'
+
+// Helper to get the correct highscore column based on mode
+export function getHighScoreKey(
+  contentMode: 'words' | 'sentences',
+  inputMethod: 'tap' | 'type'
+): HighScoreKey {
+  return `high_score_${contentMode}_${inputMethod}` as HighScoreKey
 }
 
 export interface GameSession {
@@ -176,6 +196,37 @@ export interface LinkGameState {
   connections: Connection[]
   selectedItem: LinkItem | null
   pendingConnection: Partial<Connection> | null
+  isSubmitted: boolean
+  results: RoundResult[]
+}
+
+// Sentence Link Mode Types
+export type SentenceColumnType = 'chinese' | 'pinyin' | 'english'
+
+export interface SentenceLinkItem {
+  id: string
+  sentenceId: string
+  content: string
+  type: SentenceColumnType
+}
+
+export interface SentenceConnection {
+  chineseId: string | null
+  pinyinId: string | null
+  englishId: string | null
+  sentenceId: string
+  isComplete: boolean
+  isCorrect: boolean | null
+}
+
+export interface SentenceLinkGameState {
+  sentences: Sentence[]
+  chineseItems: SentenceLinkItem[]
+  pinyinItems: SentenceLinkItem[]
+  englishItems: SentenceLinkItem[]
+  connections: SentenceConnection[]
+  selectedItem: SentenceLinkItem | null
+  pendingConnection: Partial<SentenceConnection> | null
   isSubmitted: boolean
   results: RoundResult[]
 }

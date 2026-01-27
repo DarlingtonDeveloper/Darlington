@@ -11,6 +11,7 @@ import type {
   HanziSettings,
   ResetPhase,
   ResetReason,
+  WordType,
 } from '@/lib/hanzi/types'
 import { getScoreChange, getWordStatus } from '@/lib/hanzi/types'
 import { selectWordsForRound, selectNextWord, prepareRoundData, selectWordsForReset } from '@/lib/hanzi/word-selection'
@@ -22,6 +23,7 @@ import {
 } from '@/lib/hanzi/difficulty'
 import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
+import { WordTypeSelector } from './components/word-type-selector'
 import { SettingsModal } from './components/settings-modal'
 
 interface HanziClientProps {
@@ -76,6 +78,7 @@ export function HanziClient({
   // Session stats
   const [sessionScore, setSessionScore] = useState(0)
   const [showUnitSelector, setShowUnitSelector] = useState(false)
+  const [selectedWordType, setSelectedWordType] = useState<WordType | 'all'>('all')
 
   // Difficulty system state
   const [settings, setSettings] = useState<HanziSettings>(() =>
@@ -102,6 +105,14 @@ export function HanziClient({
   const expectedDifficulty = calculateExpectedDifficulty(settings, sessionScore)
   const divergence = calculateDivergence(boardDifficultyResult.score, expectedDifficulty)
 
+  // Get filtered words based on word type selection
+  const getFilteredWords = useCallback((): WordWithProgress[] => {
+    if (settings.viewBy === 'word_type' && selectedWordType !== 'all') {
+      return words.filter(w => w.word_type === selectedWordType)
+    }
+    return words
+  }, [words, settings.viewBy, selectedWordType])
+
   // Get a new word that's not currently in play (with weighted selection and cooldown)
   const getNextWord = useCallback((): Word | null => {
     // Get pinyin of words currently on board to prevent duplicates
@@ -111,8 +122,10 @@ export function HanziClient({
         .filter((p): p is string => p !== undefined)
     )
 
+    const filteredWords = getFilteredWords()
+
     return selectNextWord(
-      words,
+      filteredWords,
       currentUnit,
       activeWordIds,
       recentlyCompleted,
@@ -125,11 +138,12 @@ export function HanziClient({
         visiblePinyin,
       }
     )
-  }, [words, currentUnit, activeWordIds, recentlyCompleted, sessionScore, settings, getVisibleWords])
+  }, [getFilteredWords, currentUnit, activeWordIds, recentlyCompleted, sessionScore, settings, getVisibleWords, words])
 
   // Initialize game with first set of words
   const initializeGame = useCallback(() => {
-    const selected = selectWordsForRound(words, currentUnit, {
+    const filteredWords = getFilteredWords()
+    const selected = selectWordsForRound(filteredWords, currentUnit, {
       roundSize: settings.wordCount,
       recentlyCompleted,
       cooldownCount: COOLDOWN_COUNT,
@@ -153,7 +167,7 @@ export function HanziClient({
     // Don't reset recentlyCompleted - maintain cooldown across initializations
     // Note: sessionScore is intentionally not in deps as we always reset it to 0
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [words, currentUnit, recentlyCompleted, settings])
+  }, [getFilteredWords, currentUnit, recentlyCompleted, settings])
 
   // Initialize on mount or unit change
   useEffect(() => {
@@ -314,6 +328,7 @@ export function HanziClient({
     baseDifficulty: number
     wordCount: number
     showDifficultyScore: boolean
+    viewBy: 'units' | 'word_type'
   }) => {
     setIsSavingSettings(true)
     try {
@@ -323,6 +338,7 @@ export function HanziClient({
           base_difficulty: linkSettings.baseDifficulty,
           word_count: linkSettings.wordCount,
           show_difficulty_score: linkSettings.showDifficultyScore,
+          view_by: linkSettings.viewBy,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
@@ -332,6 +348,7 @@ export function HanziClient({
         baseDifficulty: linkSettings.baseDifficulty,
         wordCount: linkSettings.wordCount,
         showDifficultyScore: linkSettings.showDifficultyScore,
+        viewBy: linkSettings.viewBy,
       }))
       setShowSettings(false)
 
@@ -366,8 +383,9 @@ export function HanziClient({
     await new Promise(resolve => setTimeout(resolve, 200))
 
     // Select new difficulty-appropriate words
+    const filteredWords = getFilteredWords()
     const newWords = selectWordsForReset(
-      words,
+      filteredWords,
       currentUnit,
       expectedDifficulty,
       settings.wordCount
@@ -398,7 +416,7 @@ export function HanziClient({
       : 'Stepping up the challenge'
     setResetNotification(message)
     setTimeout(() => setResetNotification(null), 2000)
-  }, [isResetting, words, currentUnit, expectedDifficulty, settings.wordCount])
+  }, [isResetting, getFilteredWords, currentUnit, expectedDifficulty, settings.wordCount])
 
   // Check for divergence and trigger reset if needed
   const checkDivergenceAndReset = useCallback(() => {
@@ -662,7 +680,34 @@ export function HanziClient({
     w => w.progress && w.progress.score < 0
   ).length
 
+  // Handle word type change
+  const handleWordTypeChange = useCallback((wordType: WordType | 'all') => {
+    setSelectedWordType(wordType)
+    setShowUnitSelector(false)
+    // Reinitialize the game with new word type filter
+    setEnglishItems([])
+    setPinyinItems([])
+    setHanziItems([])
+    setActiveWordIds(new Set())
+    setConnections([])
+    setSelectedItem(null)
+  }, [])
+
   if (showUnitSelector) {
+    // Show WordTypeSelector when viewBy is 'word_type'
+    if (settings.viewBy === 'word_type') {
+      return (
+        <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
+          <WordTypeSelector
+            words={words}
+            selectedType={selectedWordType}
+            onSelectType={handleWordTypeChange}
+            onClose={() => setShowUnitSelector(false)}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
         <UnitSelector
@@ -692,7 +737,11 @@ export function HanziClient({
             onClick={() => setShowUnitSelector(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 transition-colors"
           >
-            <span className="text-sm text-neutral-400">Unit {currentUnit}</span>
+            <span className="text-sm text-neutral-400">
+              {settings.viewBy === 'word_type'
+                ? (selectedWordType === 'all' ? 'All Types' : selectedWordType.replace('_', ' '))
+                : `Unit ${currentUnit}`}
+            </span>
             <svg
               className="size-4 text-neutral-500"
               fill="none"
@@ -847,6 +896,7 @@ export function HanziClient({
           baseDifficulty: settings.baseDifficulty,
           wordCount: settings.wordCount,
           showDifficultyScore: settings.showDifficultyScore,
+          viewBy: settings.viewBy,
         }}
         onSave={handleSaveSettings}
         isSaving={isSavingSettings}
