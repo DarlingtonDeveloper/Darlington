@@ -55,7 +55,8 @@ function sortByScoreWithVariation<T extends { progress: { score: number } | null
   return sortedBuckets.flatMap(([, items]) => shuffle(items))
 }
 
-const TIMER_DURATION = 5000 // 5 seconds in ms
+const TIMER_DURATION_TAP = 5000 // 5 seconds for tap mode
+const TIMER_DURATION_TYPE = 10000 // 10 seconds for typing mode
 
 export function ReviewClient({
   contentMode,
@@ -72,6 +73,7 @@ export function ReviewClient({
   const [showSettings, setShowSettings] = useState(false)
   const isTypingMode = currentInputMethod === 'type'
   const isSentenceMode = contentMode === 'sentences'
+  const TIMER_DURATION = isTypingMode ? TIMER_DURATION_TYPE : TIMER_DURATION_TAP
 
   // Sort items: highest score first, but randomized within score bands
   const [words] = useState<WordWithProgress[]>(() => sortByScoreWithVariation(initialWords))
