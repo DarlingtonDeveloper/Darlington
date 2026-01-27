@@ -12,6 +12,10 @@ import type {
   ResetPhase,
   ResetReason,
   WordType,
+  SentenceWithProgress,
+  Sentence,
+  SentenceLinkItem,
+  SentenceConnection,
 } from '@/lib/hanzi/types'
 import { getScoreChange, getWordStatus } from '@/lib/hanzi/types'
 import { selectWordsForRound, selectNextWord, prepareRoundData, selectWordsForReset } from '@/lib/hanzi/word-selection'
@@ -22,12 +26,15 @@ import {
   getHanziSettingsFromProfile,
 } from '@/lib/hanzi/difficulty'
 import { LinkGame } from './components/link-game'
+import { SentenceLinkGame } from './components/sentence-link-game'
 import { UnitSelector } from './components/unit-selector'
 import { WordTypeSelector } from './components/word-type-selector'
 import { SettingsModal } from './components/settings-modal'
 
 interface HanziClientProps {
+  contentMode: 'words' | 'sentences'
   initialWords: WordWithProgress[]
+  initialSentences: SentenceWithProgress[]
   initialProfile: HanziProfile | null
   currentUnit: number
   currentSection: number
@@ -35,34 +42,48 @@ interface HanziClientProps {
 }
 
 export function HanziClient({
+  contentMode,
   initialWords,
+  initialSentences,
   initialProfile,
   currentUnit: initialUnit,
   userId,
 }: HanziClientProps) {
   const supabase = createClient()
+  const isSentenceMode = contentMode === 'sentences'
   const [words, setWords] = useState<WordWithProgress[]>(initialWords)
+  const [sentences, setSentences] = useState<SentenceWithProgress[]>(initialSentences)
   const [currentUnit, setCurrentUnit] = useState(initialUnit)
 
   // Track which word IDs are currently in play
   const [activeWordIds, setActiveWordIds] = useState<Set<string>>(new Set())
+  // Track which sentence IDs are currently in play (for sentence mode)
+  const [activeSentenceIds, setActiveSentenceIds] = useState<Set<string>>(new Set())
 
-  // Track recently completed words for cooldown (most recent first)
+  // Track recently completed items for cooldown (most recent first)
   const [recentlyCompleted, setRecentlyCompleted] = useState<string[]>([])
   const COOLDOWN_COUNT = 4
 
-  // Game state
+  // Word game state
   const [englishItems, setEnglishItems] = useState<LinkItem[]>([])
   const [pinyinItems, setPinyinItems] = useState<LinkItem[]>([])
   const [hanziItems, setHanziItems] = useState<LinkItem[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
   const [selectedItem, setSelectedItem] = useState<LinkItem | null>(null)
 
+  // Sentence game state
+  const [sentenceChineseItems, setSentenceChineseItems] = useState<SentenceLinkItem[]>([])
+  const [sentencePinyinItems, setSentencePinyinItems] = useState<SentenceLinkItem[]>([])
+  const [sentenceEnglishItems, setSentenceEnglishItems] = useState<SentenceLinkItem[]>([])
+  const [sentenceConnections, setSentenceConnections] = useState<SentenceConnection[]>([])
+  const [selectedSentenceItem, setSelectedSentenceItem] = useState<SentenceLinkItem | null>(null)
+
   // Flash state for showing correct/incorrect feedback
   const [flashingIds, setFlashingIds] = useState<Map<string, boolean>>(new Map())
 
-  // New word overlay state
+  // New item overlay state
   const [newWordOverlay, setNewWordOverlay] = useState<Word | null>(null)
+  const [newSentenceOverlay, setNewSentenceOverlay] = useState<Sentence | null>(null)
 
   // Tier change notification state
   const [tierChange, setTierChange] = useState<{
@@ -169,12 +190,74 @@ export function HanziClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getFilteredWords, currentUnit, recentlyCompleted, settings])
 
-  // Initialize on mount or unit change
-  useEffect(() => {
-    if (englishItems.length === 0 && words.length > 0) {
-      initializeGame()
+  // Helper to prepare sentence round data
+  const prepareSentenceRoundData = useCallback((selectedSentences: SentenceWithProgress[]) => {
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const result = [...arr]
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[result[i], result[j]] = [result[j], result[i]]
+      }
+      return result
     }
-  }, [words, englishItems.length, initializeGame])
+
+    const chineseItems: SentenceLinkItem[] = shuffle(selectedSentences.map(s => ({
+      id: `chinese-${s.id}`,
+      sentenceId: s.id,
+      content: s.chinese,
+      type: 'chinese' as const,
+    })))
+
+    const pinyinItems: SentenceLinkItem[] = shuffle(selectedSentences.map(s => ({
+      id: `pinyin-${s.id}`,
+      sentenceId: s.id,
+      content: s.pinyin,
+      type: 'pinyin' as const,
+    })))
+
+    const englishItems: SentenceLinkItem[] = shuffle(selectedSentences.map(s => ({
+      id: `english-${s.id}`,
+      sentenceId: s.id,
+      content: s.english,
+      type: 'english' as const,
+    })))
+
+    return { chineseItems, pinyinItems, englishItems }
+  }, [])
+
+  // Initialize sentence game
+  const initializeSentenceGame = useCallback(() => {
+    // Select random sentences for the round
+    const availableSentences = sentences.filter(s => !activeSentenceIds.has(s.id))
+    const shuffled = [...availableSentences].sort(() => Math.random() - 0.5)
+    const selected = shuffled.slice(0, settings.wordCount)
+
+    if (selected.length === 0) return
+
+    const { chineseItems, pinyinItems, englishItems } = prepareSentenceRoundData(selected)
+
+    setActiveSentenceIds(new Set(selected.map(s => s.id)))
+    setSentenceChineseItems(chineseItems)
+    setSentencePinyinItems(pinyinItems)
+    setSentenceEnglishItems(englishItems)
+    setSentenceConnections([])
+    setSelectedSentenceItem(null)
+    setFlashingIds(new Map())
+    setSessionScore(0)
+  }, [sentences, activeSentenceIds, settings.wordCount, prepareSentenceRoundData])
+
+  // Initialize on mount or mode change
+  useEffect(() => {
+    if (isSentenceMode) {
+      if (sentenceChineseItems.length === 0 && sentences.length > 0) {
+        initializeSentenceGame()
+      }
+    } else {
+      if (englishItems.length === 0 && words.length > 0) {
+        initializeGame()
+      }
+    }
+  }, [isSentenceMode, words, sentences, englishItems.length, sentenceChineseItems.length, initializeGame, initializeSentenceGame])
 
   // Insert item at random position in array
   const insertAtRandom = <T,>(arr: T[], item: T): T[] => {
@@ -654,6 +737,313 @@ export function HanziClient({
     [flashingIds, getItemConnection]
   )
 
+  // ============= SENTENCE LINK MODE HANDLERS =============
+
+  // Get connection state for a sentence item
+  const getSentenceItemConnection = useCallback(
+    (item: SentenceLinkItem): SentenceConnection | undefined => {
+      return sentenceConnections.find(c => {
+        if (item.type === 'chinese') return c.chineseId === item.id
+        if (item.type === 'pinyin') return c.pinyinId === item.id
+        if (item.type === 'english') return c.englishId === item.id
+        return false
+      })
+    },
+    [sentenceConnections]
+  )
+
+  // Clear a sentence connection (long press)
+  const handleClearSentenceConnection = useCallback(
+    (item: SentenceLinkItem) => {
+      if (flashingIds.has(item.id)) return
+
+      const connection = getSentenceItemConnection(item)
+      if (!connection) return
+
+      setSentenceConnections(prev =>
+        prev.filter(c => c.chineseId !== connection.chineseId)
+      )
+    },
+    [flashingIds, getSentenceItemConnection]
+  )
+
+  // Update sentence progress in database
+  const updateSentenceProgress = useCallback(async (sentenceId: string, wasCorrect: boolean) => {
+    const sentence = sentences.find(s => s.id === sentenceId)
+    if (!sentence) return
+
+    const currentScore = sentence.progress?.score ?? 0
+    const scoreChange = getScoreChange('link', wasCorrect, currentScore)
+    const newScore = currentScore + scoreChange
+
+    try {
+      if (sentence.progress) {
+        await supabase
+          .from('user_sentence_progress')
+          .update({
+            score: newScore,
+            attempts: sentence.progress.attempts + 1,
+            correct_streak: wasCorrect ? sentence.progress.correct_streak + 1 : 0,
+            last_seen: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', sentence.progress.id)
+
+        setSentences(prev =>
+          prev.map(s =>
+            s.id === sentenceId
+              ? {
+                  ...s,
+                  progress: {
+                    ...s.progress!,
+                    score: newScore,
+                    attempts: s.progress!.attempts + 1,
+                    correct_streak: wasCorrect ? s.progress!.correct_streak + 1 : 0,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                }
+              : s
+          )
+        )
+      } else {
+        const { data: insertedProgress } = await supabase
+          .from('user_sentence_progress')
+          .insert({
+            user_id: userId,
+            sentence_id: sentenceId,
+            score: newScore,
+            attempts: 1,
+            correct_streak: wasCorrect ? 1 : 0,
+            last_seen: new Date().toISOString(),
+          })
+          .select()
+          .single()
+
+        if (insertedProgress) {
+          setSentences(prev =>
+            prev.map(s =>
+              s.id === sentenceId
+                ? {
+                    ...s,
+                    progress: insertedProgress,
+                    status: getWordStatus(newScore),
+                  }
+                : s
+            )
+          )
+        }
+      }
+    } catch (error) {
+      console.error('Error updating sentence progress:', error)
+    }
+  }, [supabase, userId, sentences])
+
+  // Replace a matched sentence with a new one
+  const replaceSentence = useCallback((sentenceId: string) => {
+    // Remove the old items
+    setSentenceChineseItems(prev => prev.filter(i => i.sentenceId !== sentenceId))
+    setSentencePinyinItems(prev => prev.filter(i => i.sentenceId !== sentenceId))
+    setSentenceEnglishItems(prev => prev.filter(i => i.sentenceId !== sentenceId))
+    setActiveSentenceIds(prev => {
+      const next = new Set(prev)
+      next.delete(sentenceId)
+      return next
+    })
+
+    // Get a new sentence
+    const availableSentences = sentences.filter(
+      s => !activeSentenceIds.has(s.id) && !recentlyCompleted.includes(s.id)
+    )
+    if (availableSentences.length === 0) return
+
+    const newSentence = availableSentences[Math.floor(Math.random() * availableSentences.length)]
+
+    // Check if this is a truly new sentence
+    const isNewSentence = !newSentence.progress
+    if (isNewSentence) {
+      setNewSentenceOverlay(newSentence)
+    }
+
+    // Add new sentence items
+    const insertAtRandom = <T,>(arr: T[], item: T): T[] => {
+      const index = Math.floor(Math.random() * (arr.length + 1))
+      const result = [...arr]
+      result.splice(index, 0, item)
+      return result
+    }
+
+    setSentenceChineseItems(prev => insertAtRandom(prev, {
+      id: `chinese-${newSentence.id}`,
+      sentenceId: newSentence.id,
+      content: newSentence.chinese,
+      type: 'chinese' as const,
+    }))
+    setSentencePinyinItems(prev => insertAtRandom(prev, {
+      id: `pinyin-${newSentence.id}`,
+      sentenceId: newSentence.id,
+      content: newSentence.pinyin,
+      type: 'pinyin' as const,
+    }))
+    setSentenceEnglishItems(prev => insertAtRandom(prev, {
+      id: `english-${newSentence.id}`,
+      sentenceId: newSentence.id,
+      content: newSentence.english,
+      type: 'english' as const,
+    }))
+    setActiveSentenceIds(prev => new Set(prev).add(newSentence.id))
+  }, [sentences, activeSentenceIds, recentlyCompleted])
+
+  // Validate and handle a complete sentence connection
+  const handleCompleteSentenceConnection = useCallback(async (connection: SentenceConnection) => {
+    const chineseItem = sentenceChineseItems.find(i => i.id === connection.chineseId)
+    const pinyinItem = sentencePinyinItems.find(i => i.id === connection.pinyinId)
+    const englishItem = sentenceEnglishItems.find(i => i.id === connection.englishId)
+
+    // Check if all three match the same sentence
+    const isCorrect =
+      chineseItem?.sentenceId === pinyinItem?.sentenceId &&
+      pinyinItem?.sentenceId === englishItem?.sentenceId
+
+    const sentenceId = chineseItem?.sentenceId || pinyinItem?.sentenceId || englishItem?.sentenceId
+
+    // Set flash state
+    const itemIds = [connection.chineseId, connection.pinyinId, connection.englishId].filter(Boolean) as string[]
+    setFlashingIds(prev => {
+      const next = new Map(prev)
+      itemIds.forEach(id => next.set(id, isCorrect))
+      return next
+    })
+
+    // Update the connection with the result
+    setSentenceConnections(prev =>
+      prev.map(c =>
+        c.chineseId === connection.chineseId
+          ? { ...c, isCorrect }
+          : c
+      )
+    )
+
+    // Update score
+    setSessionScore(prev => prev + (isCorrect ? 1 : -1))
+
+    // Update database
+    if (sentenceId) {
+      await updateSentenceProgress(sentenceId, isCorrect)
+    }
+
+    // After flash animation, handle the result
+    setTimeout(() => {
+      setFlashingIds(prev => {
+        const next = new Map(prev)
+        itemIds.forEach(id => next.delete(id))
+        return next
+      })
+
+      if (isCorrect && sentenceId) {
+        setRecentlyCompleted(prev => [sentenceId, ...prev].slice(0, 20))
+        setSentenceConnections(prev => prev.filter(c => c.chineseId !== connection.chineseId))
+        replaceSentence(sentenceId)
+      } else {
+        setSentenceConnections(prev => prev.filter(c => c.chineseId !== connection.chineseId))
+      }
+    }, 600)
+  }, [sentenceChineseItems, sentencePinyinItems, sentenceEnglishItems, updateSentenceProgress, replaceSentence])
+
+  // Handle sentence item selection
+  const handleSentenceItemSelect = useCallback(
+    (item: SentenceLinkItem) => {
+      if (flashingIds.has(item.id)) return
+
+      // If same item clicked, deselect
+      if (selectedSentenceItem?.id === item.id) {
+        setSelectedSentenceItem(null)
+        return
+      }
+
+      // If no item selected, select this one
+      if (!selectedSentenceItem) {
+        setSelectedSentenceItem(item)
+        return
+      }
+
+      // Determine which items we're working with
+      const chineseItem = selectedSentenceItem.type === 'chinese' ? selectedSentenceItem : item.type === 'chinese' ? item : null
+      const pinyinItem = selectedSentenceItem.type === 'pinyin' ? selectedSentenceItem : item.type === 'pinyin' ? item : null
+      const englishItem = selectedSentenceItem.type === 'english' ? selectedSentenceItem : item.type === 'english' ? item : null
+
+      // Find existing connection
+      const existingConnection = sentenceConnections.find(c => {
+        if (chineseItem && c.chineseId === chineseItem.id) return true
+        if (pinyinItem && c.pinyinId === pinyinItem.id) return true
+        if (englishItem && c.englishId === englishItem.id) return true
+        return false
+      })
+
+      if (existingConnection) {
+        // Update existing connection
+        const updated: SentenceConnection = { ...existingConnection }
+        if (chineseItem) updated.chineseId = chineseItem.id
+        if (pinyinItem) updated.pinyinId = pinyinItem.id
+        if (englishItem) updated.englishId = englishItem.id
+        updated.isComplete = updated.chineseId !== null && updated.pinyinId !== null && updated.englishId !== null
+
+        setSentenceConnections(prev =>
+          prev.map(c => {
+            if (chineseItem && c.chineseId === chineseItem.id) return updated
+            if (pinyinItem && c.pinyinId === pinyinItem.id) return updated
+            if (englishItem && c.englishId === englishItem.id) return updated
+            return c
+          })
+        )
+
+        if (updated.isComplete) {
+          setSelectedSentenceItem(null)
+          handleCompleteSentenceConnection(updated)
+        } else {
+          if (pinyinItem) {
+            setSelectedSentenceItem(pinyinItem)
+          } else if (!updated.pinyinId) {
+            setSelectedSentenceItem(item)
+          } else {
+            setSelectedSentenceItem(null)
+          }
+        }
+      } else {
+        // Create new connection
+        const newConnection: SentenceConnection = {
+          chineseId: chineseItem?.id ?? null,
+          pinyinId: pinyinItem?.id ?? null,
+          englishId: englishItem?.id ?? null,
+          sentenceId: selectedSentenceItem.sentenceId,
+          isComplete: false,
+          isCorrect: null,
+        }
+
+        newConnection.isComplete =
+          newConnection.chineseId !== null &&
+          newConnection.pinyinId !== null &&
+          newConnection.englishId !== null
+
+        setSentenceConnections(prev => [...prev, newConnection])
+
+        if (newConnection.isComplete) {
+          setSelectedSentenceItem(null)
+          handleCompleteSentenceConnection(newConnection)
+        } else {
+          if (pinyinItem) {
+            setSelectedSentenceItem(pinyinItem)
+          } else {
+            setSelectedSentenceItem(item)
+          }
+        }
+      }
+    },
+    [selectedSentenceItem, sentenceConnections, flashingIds, handleCompleteSentenceConnection]
+  )
+
+  // ============= END SENTENCE LINK MODE HANDLERS =============
+
   // Handle unit change
   const handleUnitChange = useCallback((unit: number) => {
     setCurrentUnit(unit)
@@ -819,24 +1209,44 @@ export function HanziClient({
 
       {/* Game area with reset animation */}
       <div className={getResetAnimationClass()}>
-        {englishItems.length > 0 ? (
-          <LinkGame
-            englishItems={englishItems}
-            pinyinItems={pinyinItems}
-            hanziItems={hanziItems}
-            connections={connections}
-            selectedItem={selectedItem}
-            isSubmitted={false}
-            onItemSelect={handleItemSelect}
-            onItemLongPress={handleClearConnection}
-            getItemConnection={getItemConnection}
-            flashingIds={flashingIds}
-            newlyAddedIds={newlyAddedIds}
-          />
+        {isSentenceMode ? (
+          sentenceChineseItems.length > 0 ? (
+            <SentenceLinkGame
+              chineseItems={sentenceChineseItems}
+              pinyinItems={sentencePinyinItems}
+              englishItems={sentenceEnglishItems}
+              selectedItem={selectedSentenceItem}
+              onItemSelect={handleSentenceItemSelect}
+              onItemLongPress={handleClearSentenceConnection}
+              getItemConnection={getSentenceItemConnection}
+              flashingIds={flashingIds}
+              newlyAddedIds={newlyAddedIds}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-neutral-500">Loading sentences...</p>
+            </div>
+          )
         ) : (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-neutral-500">Loading words...</p>
-          </div>
+          englishItems.length > 0 ? (
+            <LinkGame
+              englishItems={englishItems}
+              pinyinItems={pinyinItems}
+              hanziItems={hanziItems}
+              connections={connections}
+              selectedItem={selectedItem}
+              isSubmitted={false}
+              onItemSelect={handleItemSelect}
+              onItemLongPress={handleClearConnection}
+              getItemConnection={getItemConnection}
+              flashingIds={flashingIds}
+              newlyAddedIds={newlyAddedIds}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-neutral-500">Loading words...</p>
+            </div>
+          )
         )}
       </div>
 
@@ -856,6 +1266,30 @@ export function HanziClient({
             <div className="mt-6 space-y-2 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
               <div className="text-2xl text-neutral-300">{newWordOverlay.pinyin}</div>
               <div className="text-lg text-neutral-500">{newWordOverlay.english}</div>
+            </div>
+            <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
+              Tap to continue
+            </div>
+          </div>
+        </button>
+      )}
+
+      {/* New sentence overlay */}
+      {newSentenceOverlay && (
+        <button
+          onClick={() => setNewSentenceOverlay(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/90 animate-overlay-in cursor-pointer"
+        >
+          <div className="text-center px-8 max-w-lg">
+            <div className="text-xs uppercase tracking-wider text-emerald-400 mb-4">
+              New Sentence
+            </div>
+            <div className="text-3xl sm:text-4xl animate-hanzi-reveal leading-relaxed">
+              {newSentenceOverlay.chinese}
+            </div>
+            <div className="mt-6 space-y-3 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
+              <div className="text-xl text-neutral-300">{newSentenceOverlay.pinyin}</div>
+              <div className="text-lg text-neutral-500">{newSentenceOverlay.english}</div>
             </div>
             <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
               Tap to continue

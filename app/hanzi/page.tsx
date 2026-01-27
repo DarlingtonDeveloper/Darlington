@@ -1,19 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { HanziClient } from './hanzi-client'
-import type { Word, UserWordProgress, WordWithProgress, HanziProfile } from '@/lib/hanzi/types'
+import type { Word, UserWordProgress, WordWithProgress, HanziProfile, Sentence, UserSentenceProgress, SentenceWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 import { calculateCurrentUnit } from '@/lib/hanzi/progression'
 
 export const dynamic = 'force-dynamic'
 
-async function loadHanziData(userId: string): Promise<{
+interface HanziData {
+  contentMode: 'words' | 'sentences'
   words: WordWithProgress[]
+  sentences: SentenceWithProgress[]
   profile: HanziProfile | null
-}> {
+}
+
+async function loadHanziData(userId: string): Promise<HanziData> {
   const supabase = await createClient()
 
-  // First fetch profile to get content_filter setting
+  // First fetch profile to get content_filter and content_mode settings
   const { data: profileData } = await supabase
     .from('hanzi_profiles')
     .select('*')
@@ -22,8 +26,54 @@ async function loadHanziData(userId: string): Promise<{
 
   let profile = profileData as HanziProfile | null
   const contentFilter = profile?.content_filter ?? 'hsk1'
+  const contentMode = (profile?.content_mode as 'words' | 'sentences') ?? 'words'
 
-  // Build words query with HSK1 filter if enabled
+  if (contentMode === 'sentences') {
+    // Load sentences for sentence mode
+    let sentencesQuery = supabase.from('sentences').select('*')
+
+    if (contentFilter === 'hsk1') {
+      sentencesQuery = sentencesQuery.eq('hsk_level', 1)
+    }
+
+    sentencesQuery = sentencesQuery.order('difficulty').order('id')
+
+    const [sentencesResult, progressResult] = await Promise.all([
+      sentencesQuery,
+      supabase.from('user_sentence_progress').select('*').eq('user_id', userId),
+    ])
+
+    if (sentencesResult.error) {
+      console.error('Error fetching sentences:', sentencesResult.error)
+    }
+
+    const sentences = (sentencesResult.data || []) as Sentence[]
+    const progress = (progressResult.data || []) as UserSentenceProgress[]
+
+    // Create a map for quick progress lookup
+    const progressMap = new Map<string, UserSentenceProgress>()
+    progress.forEach(p => progressMap.set(p.sentence_id, p))
+
+    // Merge sentences with progress
+    const sentencesWithProgress: SentenceWithProgress[] = sentences.map(sentence => {
+      const sentenceProgress = progressMap.get(sentence.id) || null
+      const score = sentenceProgress?.score ?? 0
+      return {
+        ...sentence,
+        progress: sentenceProgress,
+        status: getWordStatus(score),
+      }
+    })
+
+    return {
+      contentMode: 'sentences',
+      words: [],
+      sentences: sentencesWithProgress,
+      profile,
+    }
+  }
+
+  // Default: Load words for word mode
   let wordsQuery = supabase
     .from('words')
     .select('*')
@@ -96,7 +146,12 @@ async function loadHanziData(userId: string): Promise<{
     }
   }
 
-  return { words: wordsWithProgress, profile }
+  return {
+    contentMode: 'words',
+    words: wordsWithProgress,
+    sentences: [],
+    profile,
+  }
 }
 
 export default async function HanziPage() {
@@ -109,14 +164,16 @@ export default async function HanziPage() {
     redirect('/login')
   }
 
-  const { words, profile } = await loadHanziData(user.id)
-  const currentUnit = profile?.current_unit ?? 1
-  const currentSection = profile?.current_section ?? 1
+  const data = await loadHanziData(user.id)
+  const currentUnit = data.profile?.current_unit ?? 1
+  const currentSection = data.profile?.current_section ?? 1
 
   return (
     <HanziClient
-      initialWords={words}
-      initialProfile={profile}
+      contentMode={data.contentMode}
+      initialWords={data.words}
+      initialSentences={data.sentences}
+      initialProfile={data.profile}
       currentUnit={currentUnit}
       currentSection={currentSection}
       userId={user.id}

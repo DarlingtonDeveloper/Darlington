@@ -3,44 +3,79 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import type { Word, WordWithProgress } from '@/lib/hanzi/types'
+import type { Word, WordWithProgress, Sentence, SentenceWithProgress } from '@/lib/hanzi/types'
 import Link from 'next/link'
 
 interface LessonClientProps {
+  contentMode: 'words' | 'sentences'
   initialWords: WordWithProgress[]
   unseenWords: Word[]
+  initialSentences: SentenceWithProgress[]
+  unseenSentences: Sentence[]
   userId: string
 }
 
-export function LessonClient({ initialWords, unseenWords, userId }: LessonClientProps) {
+export function LessonClient({
+  contentMode,
+  initialWords,
+  unseenWords,
+  initialSentences,
+  unseenSentences,
+  userId,
+}: LessonClientProps) {
   const supabase = createClient()
-  // Queue of word IDs to practice (words repeat until "Got It")
-  const [queue, setQueue] = useState<string[]>(initialWords.map(w => w.id))
+  const isSentenceMode = contentMode === 'sentences'
+
+  // Queue of IDs to practice (items repeat until "Got It")
+  const [queue, setQueue] = useState<string[]>(
+    isSentenceMode ? initialSentences.map(s => s.id) : initialWords.map(w => w.id)
+  )
+
   // Map of words by ID for quick lookup
   const [wordsMap, setWordsMap] = useState<Map<string, WordWithProgress>>(
     new Map(initialWords.map(w => [w.id, w]))
   )
-  // Track which unseen words are still available
+
+  // Map of sentences by ID for quick lookup
+  const [sentencesMap, setSentencesMap] = useState<Map<string, SentenceWithProgress>>(
+    new Map(initialSentences.map(s => [s.id, s]))
+  )
+
+  // Track which unseen items are still available
   const [availableNewWords, setAvailableNewWords] = useState<Word[]>(unseenWords)
+  const [availableNewSentences, setAvailableNewSentences] = useState<Sentence[]>(unseenSentences)
+
   const [showAnswer, setShowAnswer] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [completedCount, setCompletedCount] = useState(0)
   const [totalAttempts, setTotalAttempts] = useState(0)
   const [sessionScore, setSessionScore] = useState(0)
 
-  // New word introduction overlay
+  // New item introduction overlay
   const [introducingWords, setIntroducingWords] = useState<Word[]>([])
+  const [introducingSentences, setIntroducingSentences] = useState<Sentence[]>([])
   const [currentIntroIndex, setCurrentIntroIndex] = useState(0)
-  const isIntroducing = introducingWords.length > 0
+  const isIntroducing = isSentenceMode ? introducingSentences.length > 0 : introducingWords.length > 0
 
-  const currentWordId = queue[0]
-  const currentWord = currentWordId ? wordsMap.get(currentWordId) : undefined
-  const hasWords = initialWords.length > 0 || queue.length > 0
+  // Current item
+  const currentId = queue[0]
+  const currentWord = !isSentenceMode && currentId ? wordsMap.get(currentId) : undefined
+  const currentSentence = isSentenceMode && currentId ? sentencesMap.get(currentId) : undefined
+
+  const hasItems = isSentenceMode
+    ? (initialSentences.length > 0 || queue.length > 0)
+    : (initialWords.length > 0 || queue.length > 0)
   const isComplete = queue.length === 0 && !isIntroducing
+
+  const availableNewItems = isSentenceMode ? availableNewSentences : availableNewWords
 
   const handleResponse = useCallback(
     async (gotIt: boolean) => {
-      if (!currentWord || isLoading) return
+      if (isSentenceMode) {
+        if (!currentSentence || isLoading) return
+      } else {
+        if (!currentWord || isLoading) return
+      }
 
       setIsLoading(true)
       setTotalAttempts(prev => prev + 1)
@@ -48,29 +83,49 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
       try {
         // Scoring: Got It = +1, Still Hard = -1
         const scoreChange = gotIt ? 1 : -1
-        const currentScore = currentWord.progress?.score ?? 0
-        const newScore = currentScore + scoreChange
 
-        await supabase
-          .from('user_word_progress')
-          .update({
-            score: newScore,
-            attempts: (currentWord.progress?.attempts ?? 0) + 1,
-            correct_streak: gotIt
-              ? (currentWord.progress?.correct_streak ?? 0) + 1
-              : 0,
-            last_seen: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+        if (isSentenceMode && currentSentence) {
+          const currentScore = currentSentence.progress?.score ?? 0
+          const newScore = currentScore + scoreChange
+
+          await supabase
+            .from('user_sentence_progress')
+            .update({
+              score: newScore,
+              attempts: (currentSentence.progress?.attempts ?? 0) + 1,
+              correct_streak: gotIt
+                ? (currentSentence.progress?.correct_streak ?? 0) + 1
+                : 0,
+              last_seen: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', currentSentence.progress?.id)
+
+          // Update sentences map with new score
+          setSentencesMap(prev => {
+            const next = new Map(prev)
+            next.set(currentSentence.id, {
+              ...currentSentence,
+              progress: {
+                ...currentSentence.progress!,
+                score: newScore,
+                attempts: (currentSentence.progress?.attempts ?? 0) + 1,
+                correct_streak: gotIt
+                  ? (currentSentence.progress?.correct_streak ?? 0) + 1
+                  : 0,
+                last_seen: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            })
+            return next
           })
-          .eq('id', currentWord.progress?.id)
+        } else if (currentWord) {
+          const currentScore = currentWord.progress?.score ?? 0
+          const newScore = currentScore + scoreChange
 
-        // Update words map with new score
-        setWordsMap(prev => {
-          const next = new Map(prev)
-          next.set(currentWord.id, {
-            ...currentWord,
-            progress: {
-              ...currentWord.progress!,
+          await supabase
+            .from('user_word_progress')
+            .update({
               score: newScore,
               attempts: (currentWord.progress?.attempts ?? 0) + 1,
               correct_streak: gotIt
@@ -78,10 +133,28 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
                 : 0,
               last_seen: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-            },
+            })
+            .eq('id', currentWord.progress?.id)
+
+          // Update words map with new score
+          setWordsMap(prev => {
+            const next = new Map(prev)
+            next.set(currentWord.id, {
+              ...currentWord,
+              progress: {
+                ...currentWord.progress!,
+                score: newScore,
+                attempts: (currentWord.progress?.attempts ?? 0) + 1,
+                correct_streak: gotIt
+                  ? (currentWord.progress?.correct_streak ?? 0) + 1
+                  : 0,
+                last_seen: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            })
+            return next
           })
-          return next
-        })
+        }
 
         setSessionScore(prev => prev + scoreChange)
 
@@ -101,86 +174,155 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
 
       setIsLoading(false)
     },
-    [supabase, currentWord, isLoading]
+    [supabase, currentWord, currentSentence, isLoading, isSentenceMode]
   )
 
   const handleRestart = useCallback(() => {
-    // Reset queue with all words that still need work (score < 3)
-    const wordsNeedingWork = Array.from(wordsMap.values())
-      .filter(w => (w.progress?.score ?? 0) < 3)
-      .sort((a, b) => (a.progress?.score ?? 0) - (b.progress?.score ?? 0))
-    setQueue(wordsNeedingWork.map(w => w.id))
+    if (isSentenceMode) {
+      // Reset queue with all sentences that still need work (score < 3)
+      const sentencesNeedingWork = Array.from(sentencesMap.values())
+        .filter(s => (s.progress?.score ?? 0) < 3)
+        .sort((a, b) => (a.progress?.score ?? 0) - (b.progress?.score ?? 0))
+      setQueue(sentencesNeedingWork.map(s => s.id))
+    } else {
+      // Reset queue with all words that still need work (score < 3)
+      const wordsNeedingWork = Array.from(wordsMap.values())
+        .filter(w => (w.progress?.score ?? 0) < 3)
+        .sort((a, b) => (a.progress?.score ?? 0) - (b.progress?.score ?? 0))
+      setQueue(wordsNeedingWork.map(w => w.id))
+    }
     setShowAnswer(false)
     setCompletedCount(0)
     setTotalAttempts(0)
     setSessionScore(0)
-  }, [wordsMap])
+  }, [wordsMap, sentencesMap, isSentenceMode])
 
-  // Introduce new words with animation sequence
-  const handleIntroduceNewWords = useCallback(async () => {
-    if (availableNewWords.length === 0) return
+  // Introduce new items with animation sequence
+  const handleIntroduceNewItems = useCallback(async () => {
+    if (isSentenceMode) {
+      if (availableNewSentences.length === 0) return
 
-    // Pick up to 3 random new words
-    const shuffled = [...availableNewWords].sort(() => Math.random() - 0.5)
-    const wordsToIntroduce = shuffled.slice(0, 3)
+      // Pick up to 3 random new sentences
+      const shuffled = [...availableNewSentences].sort(() => Math.random() - 0.5)
+      const sentencesToIntroduce = shuffled.slice(0, 3)
 
-    // Start the introduction sequence
-    setIntroducingWords(wordsToIntroduce)
-    setCurrentIntroIndex(0)
+      // Start the introduction sequence
+      setIntroducingSentences(sentencesToIntroduce)
+      setCurrentIntroIndex(0)
 
-    // Remove these from available pool
-    setAvailableNewWords(prev =>
-      prev.filter(w => !wordsToIntroduce.find(intro => intro.id === w.id))
-    )
-  }, [availableNewWords])
+      // Remove these from available pool
+      setAvailableNewSentences(prev =>
+        prev.filter(s => !sentencesToIntroduce.find(intro => intro.id === s.id))
+      )
+    } else {
+      if (availableNewWords.length === 0) return
+
+      // Pick up to 3 random new words
+      const shuffled = [...availableNewWords].sort(() => Math.random() - 0.5)
+      const wordsToIntroduce = shuffled.slice(0, 3)
+
+      // Start the introduction sequence
+      setIntroducingWords(wordsToIntroduce)
+      setCurrentIntroIndex(0)
+
+      // Remove these from available pool
+      setAvailableNewWords(prev =>
+        prev.filter(w => !wordsToIntroduce.find(intro => intro.id === w.id))
+      )
+    }
+  }, [availableNewWords, availableNewSentences, isSentenceMode])
 
   // Handle tapping through the introduction sequence
   const handleNextIntro = useCallback(async () => {
-    const currentIntroWord = introducingWords[currentIntroIndex]
+    if (isSentenceMode) {
+      const currentIntroSentence = introducingSentences[currentIntroIndex]
 
-    // Create progress record for this word
-    if (currentIntroWord) {
-      try {
-        const { data } = await supabase
-          .from('user_word_progress')
-          .insert({
-            user_id: userId,
-            word_id: currentIntroWord.id,
-            score: 0,
-            attempts: 0,
-            correct_streak: 0,
-            last_seen: new Date().toISOString(),
-          })
-          .select()
-          .single()
+      // Create progress record for this sentence
+      if (currentIntroSentence) {
+        try {
+          const { data } = await supabase
+            .from('user_sentence_progress')
+            .insert({
+              user_id: userId,
+              sentence_id: currentIntroSentence.id,
+              score: 0,
+              attempts: 0,
+              correct_streak: 0,
+              last_seen: new Date().toISOString(),
+            })
+            .select()
+            .single()
 
-        // Add to words map
-        const wordWithProgress: WordWithProgress = {
-          ...currentIntroWord,
-          progress: data,
-          status: 'learning',
+          // Add to sentences map
+          const sentenceWithProgress: SentenceWithProgress = {
+            ...currentIntroSentence,
+            progress: data,
+            status: 'learning',
+          }
+          setSentencesMap(prev => new Map(prev).set(currentIntroSentence.id, sentenceWithProgress))
+
+          // Add to queue
+          setQueue(prev => [...prev, currentIntroSentence.id])
+        } catch (error) {
+          console.error('Error creating progress:', error)
         }
-        setWordsMap(prev => new Map(prev).set(currentIntroWord.id, wordWithProgress))
+      }
 
-        // Add to queue
-        setQueue(prev => [...prev, currentIntroWord.id])
-      } catch (error) {
-        console.error('Error creating progress:', error)
+      // Move to next sentence or finish
+      if (currentIntroIndex < introducingSentences.length - 1) {
+        setCurrentIntroIndex(prev => prev + 1)
+      } else {
+        // Finished all introductions
+        setIntroducingSentences([])
+        setCurrentIntroIndex(0)
+      }
+    } else {
+      const currentIntroWord = introducingWords[currentIntroIndex]
+
+      // Create progress record for this word
+      if (currentIntroWord) {
+        try {
+          const { data } = await supabase
+            .from('user_word_progress')
+            .insert({
+              user_id: userId,
+              word_id: currentIntroWord.id,
+              score: 0,
+              attempts: 0,
+              correct_streak: 0,
+              last_seen: new Date().toISOString(),
+            })
+            .select()
+            .single()
+
+          // Add to words map
+          const wordWithProgress: WordWithProgress = {
+            ...currentIntroWord,
+            progress: data,
+            status: 'learning',
+          }
+          setWordsMap(prev => new Map(prev).set(currentIntroWord.id, wordWithProgress))
+
+          // Add to queue
+          setQueue(prev => [...prev, currentIntroWord.id])
+        } catch (error) {
+          console.error('Error creating progress:', error)
+        }
+      }
+
+      // Move to next word or finish
+      if (currentIntroIndex < introducingWords.length - 1) {
+        setCurrentIntroIndex(prev => prev + 1)
+      } else {
+        // Finished all introductions
+        setIntroducingWords([])
+        setCurrentIntroIndex(0)
       }
     }
+  }, [supabase, userId, introducingWords, introducingSentences, currentIntroIndex, isSentenceMode])
 
-    // Move to next word or finish
-    if (currentIntroIndex < introducingWords.length - 1) {
-      setCurrentIntroIndex(prev => prev + 1)
-    } else {
-      // Finished all introductions
-      setIntroducingWords([])
-      setCurrentIntroIndex(0)
-    }
-  }, [supabase, userId, introducingWords, currentIntroIndex])
-
-  // Empty state (no words to practice, but may have new words to introduce)
-  if (!hasWords && !isIntroducing) {
+  // Empty state (no items to practice, but may have new items to introduce)
+  if (!hasItems && !isIntroducing) {
     return (
       <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -200,18 +342,18 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-neutral-50 mb-2">
-            No Words Need Practice
+            No {isSentenceMode ? 'Sentences' : 'Words'} Need Practice
           </h2>
           <p className="text-neutral-400 mb-6">
-            All your words are familiar or mastered.
+            All your {isSentenceMode ? 'sentences' : 'words'} are familiar or mastered.
           </p>
           <div className="flex flex-col gap-3">
-            {availableNewWords.length > 0 && (
+            {availableNewItems.length > 0 && (
               <button
-                onClick={handleIntroduceNewWords}
+                onClick={handleIntroduceNewItems}
                 className="px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-500 transition-colors"
               >
-                Learn {Math.min(3, availableNewWords.length)} New Words
+                Learn {Math.min(3, availableNewItems.length)} New {isSentenceMode ? 'Sentences' : 'Words'}
               </button>
             )}
             <Link
@@ -221,9 +363,9 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
               Back to Link Mode
             </Link>
           </div>
-          {availableNewWords.length > 0 && (
+          {availableNewItems.length > 0 && (
             <p className="mt-4 text-xs text-neutral-600">
-              {availableNewWords.length} new words available
+              {availableNewItems.length} new {isSentenceMode ? 'sentences' : 'words'} available
             </p>
           )}
         </div>
@@ -233,9 +375,10 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
 
   // Complete state
   if (isComplete) {
-    // Check if there are still words needing work
-    const wordsStillNeedingWork = Array.from(wordsMap.values())
-      .filter(w => (w.progress?.score ?? 0) < 3).length
+    // Check if there are still items needing work
+    const itemsStillNeedingWork = isSentenceMode
+      ? Array.from(sentencesMap.values()).filter(s => (s.progress?.score ?? 0) < 3).length
+      : Array.from(wordsMap.values()).filter(w => (w.progress?.score ?? 0) < 3).length
 
     return (
       <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
@@ -259,7 +402,7 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
             Session Complete!
           </h2>
           <div className="text-neutral-400 mb-2 space-y-1">
-            <p>{completedCount} words graduated this session</p>
+            <p>{completedCount} {isSentenceMode ? 'sentences' : 'words'} graduated this session</p>
             <p className="text-neutral-500">{totalAttempts} total attempts</p>
           </div>
           <p className={cn(
@@ -269,21 +412,21 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
             Session: {sessionScore > 0 ? '+' : ''}{sessionScore}
           </p>
           <div className="flex flex-col gap-3">
-            {availableNewWords.length > 0 && (
+            {availableNewItems.length > 0 && (
               <button
-                onClick={handleIntroduceNewWords}
+                onClick={handleIntroduceNewItems}
                 className="px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-500 transition-colors"
               >
-                Learn {Math.min(3, availableNewWords.length)} New Words
+                Learn {Math.min(3, availableNewItems.length)} New {isSentenceMode ? 'Sentences' : 'Words'}
               </button>
             )}
             <div className="flex gap-3">
-              {wordsStillNeedingWork > 0 && (
+              {itemsStillNeedingWork > 0 && (
                 <button
                   onClick={handleRestart}
                   className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-50 hover:bg-neutral-700 transition-colors"
                 >
-                  Practice More ({wordsStillNeedingWork})
+                  Practice More ({itemsStillNeedingWork})
                 </button>
               )}
               <Link
@@ -294,9 +437,9 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
               </Link>
             </div>
           </div>
-          {availableNewWords.length > 0 && (
+          {availableNewItems.length > 0 && (
             <p className="mt-4 text-xs text-neutral-600">
-              {availableNewWords.length} new words available
+              {availableNewItems.length} new {isSentenceMode ? 'sentences' : 'words'} available
             </p>
           )}
         </div>
@@ -311,6 +454,10 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
     return 'familiar'
   }
 
+  const currentScore = isSentenceMode
+    ? (currentSentence?.progress?.score ?? 0)
+    : (currentWord?.progress?.score ?? 0)
+
   return (
     <div className="px-4 pb-safe sm:px-6 sm:max-w-2xl sm:mx-auto">
       {/* Progress header */}
@@ -321,11 +468,11 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
           </span>
           <span className={cn(
             'text-xs px-1.5 py-0.5 rounded',
-            (currentWord?.progress?.score ?? 0) < 0
+            currentScore < 0
               ? 'bg-red-900/50 text-red-400'
               : 'bg-yellow-900/50 text-yellow-400'
           )}>
-            {getStatusLabel(currentWord?.progress?.score ?? 0)}
+            {getStatusLabel(currentScore)}
           </span>
         </div>
         <span className={cn(
@@ -337,7 +484,7 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
       </div>
 
       {/* Card */}
-      {currentWord ? (
+      {(isSentenceMode ? currentSentence : currentWord) ? (
         <>
           <div
             className={cn(
@@ -346,26 +493,42 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
             )}
             onClick={() => !showAnswer && setShowAnswer(true)}
           >
-            {/* Front: Hanzi only */}
-            <div className="text-center">
-              <span className="text-7xl sm:text-8xl font-normal">
-                {currentWord.hanzi}
-              </span>
+            {isSentenceMode && currentSentence ? (
+              // Sentence card
+              <div className="text-center w-full">
+                <span className="text-3xl sm:text-4xl font-normal leading-relaxed">
+                  {currentSentence.chinese}
+                </span>
 
-              {showAnswer && (
-                <div className="mt-8 space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <div className="text-2xl text-neutral-300">{currentWord.pinyin}</div>
-                  <div className="text-lg text-neutral-400">{currentWord.english}</div>
+                {showAnswer && (
+                  <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="text-xl text-neutral-300">{currentSentence.pinyin}</div>
+                    <div className="text-lg text-neutral-400">{currentSentence.english}</div>
+                  </div>
+                )}
+              </div>
+            ) : currentWord ? (
+              // Word card
+              <div className="text-center">
+                <span className="text-7xl sm:text-8xl font-normal">
+                  {currentWord.hanzi}
+                </span>
 
-                  {currentWord.mnemonic && (
-                    <div className="mt-6 p-4 rounded-lg bg-neutral-800/50 text-sm text-neutral-400">
-                      <span className="text-neutral-500">Hint: </span>
-                      {currentWord.mnemonic}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                {showAnswer && (
+                  <div className="mt-8 space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="text-2xl text-neutral-300">{currentWord.pinyin}</div>
+                    <div className="text-lg text-neutral-400">{currentWord.english}</div>
+
+                    {currentWord.mnemonic && (
+                      <div className="mt-6 p-4 rounded-lg bg-neutral-800/50 text-sm text-neutral-400">
+                        <span className="text-neutral-500">Hint: </span>
+                        {currentWord.mnemonic}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {!showAnswer && (
               <p className="absolute bottom-4 text-sm text-neutral-600">
@@ -409,45 +572,76 @@ export function LessonClient({ initialWords, unseenWords, userId }: LessonClient
         </div>
       )}
 
-      {/* Unit info */}
-      {currentWord && (
+      {/* Info */}
+      {isSentenceMode && currentSentence ? (
+        <div className="mt-4 text-center text-xs text-neutral-600">
+          Difficulty: {currentSentence.difficulty} {currentSentence.category && `· ${currentSentence.category}`}
+        </div>
+      ) : currentWord ? (
         <div className="mt-4 text-center text-xs text-neutral-600">
           Unit {currentWord.unit}: {currentWord.unit_name}
         </div>
-      )}
+      ) : null}
 
       {/* Introduction overlay */}
-      {isIntroducing && introducingWords[currentIntroIndex] && (
-        <button
-          onClick={handleNextIntro}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/95 cursor-pointer animate-overlay-in"
-        >
-          <div className="text-center px-8">
-            <div className="text-xs uppercase tracking-wider text-emerald-400 mb-2">
-              New Word {currentIntroIndex + 1} of {introducingWords.length}
-            </div>
-            <div className="text-8xl sm:text-9xl animate-hanzi-reveal">
-              {introducingWords[currentIntroIndex].hanzi}
-            </div>
-            <div className="mt-6 space-y-2 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
-              <div className="text-2xl text-neutral-300">
-                {introducingWords[currentIntroIndex].pinyin}
+      {isIntroducing && (
+        isSentenceMode && introducingSentences[currentIntroIndex] ? (
+          <button
+            onClick={handleNextIntro}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/95 cursor-pointer animate-overlay-in"
+          >
+            <div className="text-center px-8 max-w-lg">
+              <div className="text-xs uppercase tracking-wider text-emerald-400 mb-4">
+                New Sentence {currentIntroIndex + 1} of {introducingSentences.length}
               </div>
-              <div className="text-lg text-neutral-500">
-                {introducingWords[currentIntroIndex].english}
+              <div className="text-3xl sm:text-4xl animate-hanzi-reveal leading-relaxed">
+                {introducingSentences[currentIntroIndex].chinese}
               </div>
-              {introducingWords[currentIntroIndex].mnemonic && (
-                <div className="mt-4 p-4 rounded-lg bg-neutral-800/50 text-sm text-neutral-400 max-w-sm mx-auto">
-                  <span className="text-neutral-500">Hint: </span>
-                  {introducingWords[currentIntroIndex].mnemonic}
+              <div className="mt-6 space-y-3 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
+                <div className="text-xl text-neutral-300">
+                  {introducingSentences[currentIntroIndex].pinyin}
                 </div>
-              )}
+                <div className="text-lg text-neutral-500">
+                  {introducingSentences[currentIntroIndex].english}
+                </div>
+              </div>
+              <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
+                Tap to continue
+              </div>
             </div>
-            <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
-              Tap to continue
+          </button>
+        ) : introducingWords[currentIntroIndex] ? (
+          <button
+            onClick={handleNextIntro}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/95 cursor-pointer animate-overlay-in"
+          >
+            <div className="text-center px-8">
+              <div className="text-xs uppercase tracking-wider text-emerald-400 mb-2">
+                New Word {currentIntroIndex + 1} of {introducingWords.length}
+              </div>
+              <div className="text-8xl sm:text-9xl animate-hanzi-reveal">
+                {introducingWords[currentIntroIndex].hanzi}
+              </div>
+              <div className="mt-6 space-y-2 animate-hanzi-reveal" style={{ animationDelay: '200ms' }}>
+                <div className="text-2xl text-neutral-300">
+                  {introducingWords[currentIntroIndex].pinyin}
+                </div>
+                <div className="text-lg text-neutral-500">
+                  {introducingWords[currentIntroIndex].english}
+                </div>
+                {introducingWords[currentIntroIndex].mnemonic && (
+                  <div className="mt-4 p-4 rounded-lg bg-neutral-800/50 text-sm text-neutral-400 max-w-sm mx-auto">
+                    <span className="text-neutral-500">Hint: </span>
+                    {introducingWords[currentIntroIndex].mnemonic}
+                  </div>
+                )}
+              </div>
+              <div className="mt-8 text-sm text-neutral-600 animate-hanzi-reveal" style={{ animationDelay: '400ms' }}>
+                Tap to continue
+              </div>
             </div>
-          </div>
-        </button>
+          </button>
+        ) : null
       )}
     </div>
   )

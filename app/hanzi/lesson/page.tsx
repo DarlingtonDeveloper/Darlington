@@ -1,20 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LessonClient } from './lesson-client'
-import type { Word, UserWordProgress, WordWithProgress, HanziProfile } from '@/lib/hanzi/types'
+import type { Word, UserWordProgress, WordWithProgress, HanziProfile, Sentence, UserSentenceProgress, SentenceWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
 interface LessonData {
+  contentMode: 'words' | 'sentences'
+  // Word mode
   learningWords: WordWithProgress[]
   unseenWords: Word[]
+  // Sentence mode
+  learningSentences: SentenceWithProgress[]
+  unseenSentences: Sentence[]
 }
 
 async function loadLessonData(userId: string): Promise<LessonData> {
   const supabase = await createClient()
 
-  // First fetch profile to get content_filter setting
+  // First fetch profile to get content_filter and content_mode settings
   const { data: profileData } = await supabase
     .from('hanzi_profiles')
     .select('*')
@@ -23,8 +28,63 @@ async function loadLessonData(userId: string): Promise<LessonData> {
 
   const profile = profileData as HanziProfile | null
   const contentFilter = profile?.content_filter ?? 'hsk1'
+  const contentMode = (profile?.content_mode as 'words' | 'sentences') ?? 'words'
 
-  // Build words query with HSK1 filter if enabled
+  if (contentMode === 'sentences') {
+    // Load sentences for sentence mode
+    let sentencesQuery = supabase.from('sentences').select('*')
+
+    if (contentFilter === 'hsk1') {
+      sentencesQuery = sentencesQuery.eq('hsk_level', 1)
+    }
+
+    sentencesQuery = sentencesQuery.order('difficulty').order('id')
+
+    const [sentencesResult, progressResult] = await Promise.all([
+      sentencesQuery,
+      supabase.from('user_sentence_progress').select('*').eq('user_id', userId),
+    ])
+
+    if (sentencesResult.error) {
+      console.error('Error fetching sentences:', sentencesResult.error)
+    }
+
+    const sentences = (sentencesResult.data || []) as Sentence[]
+    const progress = (progressResult.data || []) as UserSentenceProgress[]
+
+    // Create a map for quick progress lookup
+    const progressMap = new Map<string, UserSentenceProgress>()
+    progress.forEach(p => progressMap.set(p.sentence_id, p))
+
+    // Merge sentences with progress
+    const allSentencesWithProgress: SentenceWithProgress[] = sentences.map(sentence => {
+      const sentenceProgress = progressMap.get(sentence.id) || null
+      const score = sentenceProgress?.score ?? 0
+      return {
+        ...sentence,
+        progress: sentenceProgress,
+        status: getWordStatus(score),
+      }
+    })
+
+    // Filter to struggling + learning (score < 3)
+    const learningSentences = allSentencesWithProgress
+      .filter(s => s.progress && s.progress.score < 3)
+      .sort((a, b) => (a.progress?.score ?? 0) - (b.progress?.score ?? 0))
+
+    // Get unseen sentences (no progress record)
+    const unseenSentences = sentences.filter(s => !progressMap.has(s.id))
+
+    return {
+      contentMode: 'sentences',
+      learningWords: [],
+      unseenWords: [],
+      learningSentences,
+      unseenSentences,
+    }
+  }
+
+  // Default: Load words for word mode
   let wordsQuery = supabase.from('words').select('*').eq('section', 1)
 
   if (contentFilter === 'hsk1') {
@@ -69,7 +129,13 @@ async function loadLessonData(userId: string): Promise<LessonData> {
   // Get unseen words (no progress record)
   const unseenWords = words.filter(w => !progressMap.has(w.id))
 
-  return { learningWords, unseenWords }
+  return {
+    contentMode: 'words',
+    learningWords,
+    unseenWords,
+    learningSentences: [],
+    unseenSentences: [],
+  }
 }
 
 export default async function LessonPage() {
@@ -82,7 +148,16 @@ export default async function LessonPage() {
     redirect('/login')
   }
 
-  const { learningWords, unseenWords } = await loadLessonData(user.id)
+  const data = await loadLessonData(user.id)
 
-  return <LessonClient initialWords={learningWords} unseenWords={unseenWords} userId={user.id} />
+  return (
+    <LessonClient
+      contentMode={data.contentMode}
+      initialWords={data.learningWords}
+      unseenWords={data.unseenWords}
+      initialSentences={data.learningSentences}
+      unseenSentences={data.unseenSentences}
+      userId={user.id}
+    />
+  )
 }
