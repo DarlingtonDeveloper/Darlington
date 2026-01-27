@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import type { DifficultySettings } from '@/lib/hanzi/types'
+import type { HanziSettings } from '@/lib/hanzi/types'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
-  settings: DifficultySettings
-  onSave: (settings: DifficultySettings) => void
+  settings: HanziSettings
+  onSave: (settings: HanziSettings) => void
   isSaving?: boolean
 }
 
@@ -32,7 +32,7 @@ export function SettingsModal({
   onSave,
   isSaving = false,
 }: SettingsModalProps) {
-  const [localSettings, setLocalSettings] = useState<DifficultySettings>(settings)
+  const [localSettings, setLocalSettings] = useState<HanziSettings>(settings)
 
   // Sync local state when settings prop changes
   useEffect(() => {
@@ -59,7 +59,10 @@ export function SettingsModal({
   const hasChanges =
     localSettings.baseDifficulty !== settings.baseDifficulty ||
     localSettings.wordCount !== settings.wordCount ||
-    localSettings.showDifficultyScore !== settings.showDifficultyScore
+    localSettings.showDifficultyScore !== settings.showDifficultyScore ||
+    localSettings.contentMode !== settings.contentMode ||
+    localSettings.inputMethod !== settings.inputMethod ||
+    localSettings.contentFilter !== settings.contentFilter
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -201,6 +204,113 @@ export function SettingsModal({
             </div>
             <p className="mt-2.5 text-xs text-neutral-500 leading-relaxed">
               Fewer words are easier to track. More words add variety.
+            </p>
+          </div>
+
+          {/* Content Mode */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-neutral-300 mb-3 block">
+              Practice Content
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, contentMode: 'words' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  localSettings.contentMode === 'words'
+                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                )}
+              >
+                Words
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, contentMode: 'sentences' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  localSettings.contentMode === 'sentences'
+                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                )}
+              >
+                Sentences
+              </button>
+            </div>
+          </div>
+
+          {/* Input Method (only for words) */}
+          {localSettings.contentMode === 'words' && (
+            <div className="mb-6">
+              <label className="text-sm font-medium text-neutral-300 mb-3 block">
+                Review Input Method
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLocalSettings(s => ({ ...s, inputMethod: 'tap' }))}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                    localSettings.inputMethod === 'tap'
+                      ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                  )}
+                >
+                  Tap
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocalSettings(s => ({ ...s, inputMethod: 'type' }))}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                    localSettings.inputMethod === 'type'
+                      ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                  )}
+                >
+                  Type Pinyin
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-neutral-500">
+                Type mode lets you practice typing pinyin with tone numbers
+              </p>
+            </div>
+          )}
+
+          {/* Content Filter */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-neutral-300 mb-3 block">
+              Vocabulary Filter
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, contentFilter: 'hsk1' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  localSettings.contentFilter === 'hsk1'
+                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                )}
+              >
+                HSK 1
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalSettings(s => ({ ...s, contentFilter: 'all' }))}
+                className={cn(
+                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  localSettings.contentFilter === 'all'
+                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                )}
+              >
+                All Content
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-neutral-500">
+              All Content includes Duolingo vocabulary not in HSK 1
             </p>
           </div>
 

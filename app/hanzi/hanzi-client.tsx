@@ -8,7 +8,7 @@ import type {
   Word,
   Connection,
   LinkItem,
-  DifficultySettings,
+  HanziSettings,
   ResetPhase,
   ResetReason,
 } from '@/lib/hanzi/types'
@@ -18,7 +18,7 @@ import {
   calculateBoardDifficulty,
   calculateExpectedDifficulty,
   calculateDivergence,
-  getSettingsFromProfile,
+  getHanziSettingsFromProfile,
 } from '@/lib/hanzi/difficulty'
 import { LinkGame } from './components/link-game'
 import { UnitSelector } from './components/unit-selector'
@@ -78,8 +78,8 @@ export function HanziClient({
   const [showUnitSelector, setShowUnitSelector] = useState(false)
 
   // Difficulty system state
-  const [settings, setSettings] = useState<DifficultySettings>(() =>
-    getSettingsFromProfile(initialProfile)
+  const [settings, setSettings] = useState<HanziSettings>(() =>
+    getHanziSettingsFromProfile(initialProfile)
   )
   const [showSettings, setShowSettings] = useState(false)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
@@ -310,7 +310,7 @@ export function HanziClient({
   }, [supabase, userId, words])
 
   // Save settings to database
-  const handleSaveSettings = useCallback(async (newSettings: DifficultySettings) => {
+  const handleSaveSettings = useCallback(async (newSettings: HanziSettings) => {
     setIsSavingSettings(true)
     try {
       await supabase
@@ -319,6 +319,10 @@ export function HanziClient({
           base_difficulty: newSettings.baseDifficulty,
           word_count: newSettings.wordCount,
           show_difficulty_score: newSettings.showDifficultyScore,
+          content_mode: newSettings.contentMode,
+          input_method: newSettings.inputMethod,
+          view_by: newSettings.viewBy,
+          content_filter: newSettings.contentFilter,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)

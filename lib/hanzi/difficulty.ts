@@ -9,10 +9,12 @@
 import {
   WordWithProgress,
   DifficultySettings,
+  HanziSettings,
   BoardDifficultyResult,
   DivergenceResult,
   DIVERGENCE_THRESHOLDS,
   DEFAULT_DIFFICULTY_SETTINGS,
+  DEFAULT_HANZI_SETTINGS,
 } from './types'
 
 // ============================================================================
@@ -346,6 +348,7 @@ export function weightedDifficultySelect(
 
 /**
  * Extract difficulty settings from a HanziProfile, using defaults for null values.
+ * Returns DifficultySettings for backward compatibility with existing code.
  */
 export function getSettingsFromProfile(profile: {
   base_difficulty: number | null
@@ -360,6 +363,33 @@ export function getSettingsFromProfile(profile: {
     baseDifficulty: profile.base_difficulty ?? DEFAULT_DIFFICULTY_SETTINGS.baseDifficulty,
     wordCount: profile.word_count ?? DEFAULT_DIFFICULTY_SETTINGS.wordCount,
     showDifficultyScore: profile.show_difficulty_score ?? DEFAULT_DIFFICULTY_SETTINGS.showDifficultyScore,
+  }
+}
+
+/**
+ * Extract all hanzi settings from a HanziProfile, using defaults for null values.
+ */
+export function getHanziSettingsFromProfile(profile: {
+  base_difficulty: number | null
+  word_count: number | null
+  show_difficulty_score: boolean | null
+  content_mode: string | null
+  input_method: string | null
+  view_by: string | null
+  content_filter: string | null
+} | null): HanziSettings {
+  if (!profile) {
+    return DEFAULT_HANZI_SETTINGS
+  }
+
+  return {
+    baseDifficulty: profile.base_difficulty ?? DEFAULT_HANZI_SETTINGS.baseDifficulty,
+    wordCount: profile.word_count ?? DEFAULT_HANZI_SETTINGS.wordCount,
+    showDifficultyScore: profile.show_difficulty_score ?? DEFAULT_HANZI_SETTINGS.showDifficultyScore,
+    contentMode: (profile.content_mode as 'words' | 'sentences') ?? DEFAULT_HANZI_SETTINGS.contentMode,
+    inputMethod: (profile.input_method as 'tap' | 'type') ?? DEFAULT_HANZI_SETTINGS.inputMethod,
+    viewBy: (profile.view_by as 'units' | 'word_type') ?? DEFAULT_HANZI_SETTINGS.viewBy,
+    contentFilter: (profile.content_filter as 'hsk1' | 'all') ?? DEFAULT_HANZI_SETTINGS.contentFilter,
   }
 }
 

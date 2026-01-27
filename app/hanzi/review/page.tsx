@@ -1,15 +1,91 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ReviewClient } from './review-client'
-import type { Word, UserWordProgress, WordWithProgress } from '@/lib/hanzi/types'
+import type { Word, UserWordProgress, WordWithProgress, HanziProfile, Sentence, UserSentenceProgress, SentenceWithProgress } from '@/lib/hanzi/types'
 import { getWordStatus, SCORE_THRESHOLDS } from '@/lib/hanzi/types'
 
 export const dynamic = 'force-dynamic'
 
-async function loadReviewData(userId: string): Promise<{ masteredWords: WordWithProgress[]; allHanzi: string[] }> {
+interface ReviewData {
+  contentMode: 'words' | 'sentences'
+  // Word mode data
+  masteredWords: WordWithProgress[]
+  allHanzi: string[]
+  // Sentence mode data
+  masteredSentences: SentenceWithProgress[]
+  allEnglish: string[]
+  // Common
+  lifetimeHighScore: number
+  inputMethod: 'tap' | 'type'
+}
+
+async function loadReviewData(userId: string): Promise<ReviewData> {
   const supabase = await createClient()
 
-  // Fetch words and user progress in parallel
+  // First get the profile to determine content mode
+  const { data: profileData } = await supabase
+    .from('hanzi_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  const profile = profileData as HanziProfile | null
+  const contentMode = (profile?.content_mode as 'words' | 'sentences') ?? 'words'
+
+  if (contentMode === 'sentences') {
+    // Load sentences for sentence mode
+    const [sentencesResult, sentenceProgressResult] = await Promise.all([
+      supabase.from('sentences').select('*').order('difficulty').order('id'),
+      supabase.from('user_sentence_progress').select('*').eq('user_id', userId),
+    ])
+
+    const sentences = (sentencesResult.data || []) as Sentence[]
+    const sentenceProgress = (sentenceProgressResult.data || []) as UserSentenceProgress[]
+
+    // Get all English for multiple choice options
+    const allEnglish = sentences.map(s => s.english)
+
+    // Create progress map
+    const progressMap = new Map<string, UserSentenceProgress>()
+    sentenceProgress.forEach(p => progressMap.set(p.sentence_id, p))
+
+    // Merge and filter to mastered (for now, show all sentences since most won't be mastered yet)
+    // In production, you might want to filter to mastered only like words
+    const masteredSentences: SentenceWithProgress[] = sentences
+      .map(sentence => {
+        const progress = progressMap.get(sentence.id) || null
+        const score = progress?.score ?? 0
+        return {
+          ...sentence,
+          progress,
+          status: getWordStatus(score),
+        }
+      })
+      // For sentences, show all (not just mastered) since user is learning
+      // Filter by seen or mastered: .filter(s => s.progress && s.progress.score >= SCORE_THRESHOLDS.MASTERED_MIN)
+
+    // Sort by difficulty, then by last_seen
+    masteredSentences.sort((a, b) => {
+      // First by difficulty
+      if (a.difficulty !== b.difficulty) return a.difficulty - b.difficulty
+      // Then by last_seen (oldest first)
+      const seenA = a.progress?.last_seen ? new Date(a.progress.last_seen).getTime() : 0
+      const seenB = b.progress?.last_seen ? new Date(b.progress.last_seen).getTime() : 0
+      return seenA - seenB
+    })
+
+    return {
+      contentMode: 'sentences',
+      masteredWords: [],
+      allHanzi: [],
+      masteredSentences,
+      allEnglish,
+      lifetimeHighScore: profile?.review_lifetime_high_score ?? 0,
+      inputMethod: (profile?.input_method as 'tap' | 'type') ?? 'tap',
+    }
+  }
+
+  // Default: Load words for word mode
   const [wordsResult, progressResult] = await Promise.all([
     supabase.from('words').select('*').eq('section', 1).order('unit').order('id'),
     supabase.from('user_word_progress').select('*').eq('user_id', userId),
@@ -53,7 +129,15 @@ async function loadReviewData(userId: string): Promise<{ masteredWords: WordWith
     return seenA - seenB
   })
 
-  return { masteredWords, allHanzi }
+  return {
+    contentMode: 'words',
+    masteredWords,
+    allHanzi,
+    masteredSentences: [],
+    allEnglish: [],
+    lifetimeHighScore: profile?.review_lifetime_high_score ?? 0,
+    inputMethod: (profile?.input_method as 'tap' | 'type') ?? 'tap'
+  }
 }
 
 export default async function ReviewPage() {
@@ -66,7 +150,18 @@ export default async function ReviewPage() {
     redirect('/login')
   }
 
-  const { masteredWords, allHanzi } = await loadReviewData(user.id)
+  const data = await loadReviewData(user.id)
 
-  return <ReviewClient initialWords={masteredWords} allHanzi={allHanzi} userId={user.id} />
+  return (
+    <ReviewClient
+      contentMode={data.contentMode}
+      initialWords={data.masteredWords}
+      allHanzi={data.allHanzi}
+      initialSentences={data.masteredSentences}
+      allEnglish={data.allEnglish}
+      userId={user.id}
+      initialLifetimeHighScore={data.lifetimeHighScore}
+      inputMethod={data.inputMethod}
+    />
+  )
 }

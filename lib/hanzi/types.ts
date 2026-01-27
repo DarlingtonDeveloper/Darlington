@@ -4,6 +4,30 @@
 // Database Types
 // ============================================================================
 
+export type WordType =
+  | 'pronoun_personal'
+  | 'pronoun_demonstrative'
+  | 'pronoun_interrogative'
+  | 'number'
+  | 'quantifier'
+  | 'adverb'
+  | 'conjunction'
+  | 'preposition'
+  | 'auxiliary'
+  | 'interjection'
+  | 'noun'
+  | 'verb'
+  | 'adjective'
+
+export type SentenceCategory =
+  | 'greeting'
+  | 'question'
+  | 'statement'
+  | 'negative'
+  | 'time'
+  | 'location'
+  | 'request'
+
 export interface Word {
   id: string
   hanzi: string
@@ -18,6 +42,9 @@ export interface Word {
   category: 'introduced' | 'reused' | null
   difficulty: number | null
   mnemonic: string | null
+  char_count: number
+  word_type: WordType | null
+  hsk_level: number | null
   created_at: string
 }
 
@@ -31,6 +58,34 @@ export interface UserWordProgress {
   last_seen: string | null
   introduced_at: string
   updated_at: string
+}
+
+export interface Sentence {
+  id: string
+  chinese: string
+  pinyin: string
+  english: string
+  hsk_level: number
+  difficulty: number
+  category: SentenceCategory | null
+  created_at: string
+}
+
+export interface UserSentenceProgress {
+  id: string
+  user_id: string
+  sentence_id: string
+  score: number
+  attempts: number
+  correct_streak: number
+  last_seen: string | null
+  introduced_at: string
+  updated_at: string
+}
+
+export interface SentenceWithProgress extends Sentence {
+  progress: UserSentenceProgress | null
+  status: WordStatus
 }
 
 export interface HanziProfile {
@@ -48,6 +103,14 @@ export interface HanziProfile {
   base_difficulty: number | null
   word_count: number | null
   show_difficulty_score: boolean | null
+  // HSK 1 expansion settings
+  content_mode: 'words' | 'sentences' | null
+  input_method: 'tap' | 'type' | null
+  view_by: 'units' | 'word_type' | null
+  content_filter: 'hsk1' | 'all' | null
+  // High scores
+  review_session_high_score: number | null
+  review_lifetime_high_score: number | null
   created_at: string
   updated_at: string
 }
@@ -191,10 +254,58 @@ export interface DifficultySettings {
   showDifficultyScore: boolean  // Debug option
 }
 
+export interface HanziSettings {
+  baseDifficulty: number
+  wordCount: number
+  showDifficultyScore: boolean
+  contentMode: 'words' | 'sentences'
+  inputMethod: 'tap' | 'type'
+  viewBy: 'units' | 'word_type'
+  contentFilter: 'hsk1' | 'all'
+}
+
 export const DEFAULT_DIFFICULTY_SETTINGS: DifficultySettings = {
   baseDifficulty: 5,
   wordCount: 4,
   showDifficultyScore: false,
+}
+
+export const DEFAULT_HANZI_SETTINGS: HanziSettings = {
+  baseDifficulty: 5,
+  wordCount: 4,
+  showDifficultyScore: false,
+  contentMode: 'words',
+  inputMethod: 'tap',
+  viewBy: 'units',
+  contentFilter: 'hsk1',
+}
+
+// Word type labels for UI display
+export const WORD_TYPE_LABELS: Record<WordType, string> = {
+  pronoun_personal: 'Personal Pronouns',
+  pronoun_demonstrative: 'Demonstrative Pronouns',
+  pronoun_interrogative: 'Interrogative Pronouns',
+  number: 'Numbers',
+  quantifier: 'Quantifiers',
+  adverb: 'Adverbs',
+  conjunction: 'Conjunctions',
+  preposition: 'Prepositions',
+  auxiliary: 'Auxiliary Particles',
+  interjection: 'Interjections',
+  noun: 'Nouns',
+  verb: 'Verbs',
+  adjective: 'Adjectives',
+}
+
+// Sentence category labels for UI display
+export const SENTENCE_CATEGORY_LABELS: Record<SentenceCategory, string> = {
+  greeting: 'Greetings',
+  question: 'Questions',
+  statement: 'Statements',
+  negative: 'Negatives',
+  time: 'Time Expressions',
+  location: 'Location',
+  request: 'Requests & Offers',
 }
 
 export interface BoardDifficultyResult {
