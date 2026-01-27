@@ -79,19 +79,16 @@ export function PinyinInput({ onSubmit, disabled, autoFocus, placeholder = 'Type
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Auto focus on mount
+  // Auto focus on mount and when re-enabled
   useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus()
+    if (autoFocus && inputRef.current && !disabled) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+      return () => clearTimeout(timer)
     }
-  }, [autoFocus])
-
-  // Refocus when disabled changes from true to false
-  useEffect(() => {
-    if (!disabled && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [disabled])
+  }, [autoFocus, disabled])
 
   const handleSubmit = useCallback(() => {
     if (value.trim() && !disabled) {
@@ -131,7 +128,7 @@ export function PinyinInput({ onSubmit, disabled, autoFocus, placeholder = 'Type
           autoCorrect="off"
           spellCheck="false"
           className={cn(
-            'w-full px-4 py-3 rounded-xl border bg-neutral-900 text-neutral-100 text-lg font-mono',
+            'w-full px-4 py-3 rounded-xl border bg-neutral-900 text-neutral-100 text-lg font-mono text-center',
             'placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500',
             'transition-colors',
             disabled
@@ -147,23 +144,9 @@ export function PinyinInput({ onSubmit, disabled, autoFocus, placeholder = 'Type
         )}
       </div>
 
-      {/* Submit button */}
-      <button
-        onClick={handleSubmit}
-        disabled={disabled || !value.trim()}
-        className={cn(
-          'py-3 px-6 rounded-xl font-medium text-base transition-colors',
-          disabled || !value.trim()
-            ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-            : 'bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-700'
-        )}
-      >
-        Check
-      </button>
-
       {/* Hint */}
       <p className="text-center text-xs text-neutral-500">
-        Type pinyin with tone numbers (e.g., shui3, ma1)
+        Press Enter to submit
       </p>
     </div>
   )

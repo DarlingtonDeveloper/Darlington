@@ -306,8 +306,11 @@ export function ReviewClient({
         clearInterval(timerRef.current)
       }
 
-      // Check if input matches (compare lowercase pinyin_numbered)
-      const isCorrect = inputPinyin.toLowerCase() === currentWord.pinyin_numbered.toLowerCase()
+      // Check if input matches - accept either pinyin or hanzi
+      const normalizedInput = inputPinyin.toLowerCase().replace(/\s+/g, '')
+      const normalizedPinyin = currentWord.pinyin_numbered.toLowerCase().replace(/\s+/g, '')
+      const normalizedHanzi = currentWord.hanzi.replace(/\s+/g, '')
+      const isCorrect = normalizedInput === normalizedPinyin || normalizedInput === normalizedHanzi
 
       setSelectedAnswer(isCorrect ? 'correct' : 'incorrect')
 
@@ -547,7 +550,7 @@ export function ReviewClient({
             // Word mode
             <>
               <div className="text-sm text-neutral-500 mb-4">
-                {isTypingMode ? 'Type the pinyin:' : 'What character is this?'}
+                {isTypingMode ? 'Type the character or pinyin:' : 'What character is this?'}
               </div>
               {isTypingMode ? (
                 // Typing mode: show hanzi, user types pinyin
@@ -630,10 +633,11 @@ export function ReviewClient({
         ) : isTypingMode && currentWord ? (
           // Word typing mode: show text input
           <PinyinInput
+            key={`pinyin-input-${currentIndex}`}
             onSubmit={handleTypingSubmit}
             disabled={!!selectedAnswer || isLoading}
             autoFocus
-            placeholder="Type pinyin with tone number..."
+            placeholder="Type hanzi or pinyin (ni3)..."
           />
         ) : (
           // Word tap mode: show hanzi grid
