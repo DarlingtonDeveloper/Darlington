@@ -309,29 +309,34 @@ export function HanziClient({
     }
   }, [supabase, userId, words])
 
-  // Save settings to database
-  const handleSaveSettings = useCallback(async (newSettings: HanziSettings) => {
+  // Save Link-specific settings to database
+  const handleSaveSettings = useCallback(async (linkSettings: {
+    baseDifficulty: number
+    wordCount: number
+    showDifficultyScore: boolean
+  }) => {
     setIsSavingSettings(true)
     try {
       await supabase
         .from('hanzi_profiles')
         .update({
-          base_difficulty: newSettings.baseDifficulty,
-          word_count: newSettings.wordCount,
-          show_difficulty_score: newSettings.showDifficultyScore,
-          content_mode: newSettings.contentMode,
-          input_method: newSettings.inputMethod,
-          view_by: newSettings.viewBy,
-          content_filter: newSettings.contentFilter,
+          base_difficulty: linkSettings.baseDifficulty,
+          word_count: linkSettings.wordCount,
+          show_difficulty_score: linkSettings.showDifficultyScore,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
 
-      setSettings(newSettings)
+      setSettings(prev => ({
+        ...prev,
+        baseDifficulty: linkSettings.baseDifficulty,
+        wordCount: linkSettings.wordCount,
+        showDifficultyScore: linkSettings.showDifficultyScore,
+      }))
       setShowSettings(false)
 
       // If word count changed, reinitialize the game
-      if (newSettings.wordCount !== settings.wordCount) {
+      if (linkSettings.wordCount !== settings.wordCount) {
         setEnglishItems([])
         setPinyinItems([])
         setHanziItems([])
@@ -838,7 +843,11 @@ export function HanziClient({
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        settings={settings}
+        settings={{
+          baseDifficulty: settings.baseDifficulty,
+          wordCount: settings.wordCount,
+          showDifficultyScore: settings.showDifficultyScore,
+        }}
         onSave={handleSaveSettings}
         isSaving={isSavingSettings}
       />
