@@ -1,864 +1,471 @@
-# Habits OS - Feature Specification
+# Personal OS - Vision Document
 
-**Version:** 0.3
-**Date:** January 7, 2025
-**Author:** Darlington + Claude
-
----
-
-## Overview
-
-This document specifies the next set of features for Habits OS, prioritized for solo user impact. Features are grouped into tiers based on development order.
-
-### Current State
-- 30 habits with categories (morning, anytime, productivity, social, evening)
-- Daily completion tracking with timestamps
-- Progress bar and completion percentage
-- Energy level selector
-- Daily summary notes
-- Analytics views in Supabase (streaks, weekly stats, patterns)
-
-### Goals
-- Increase daily engagement through reflection ritual
-- Reduce friction in habit tracking
-- Enable partial progress tracking
-- Support complex habits (multi-step)
-- Build foundation for AI-powered suggestions
+**Last Updated:** January 13, 2026
+**Status:** Strategic planning (not yet implemented)
 
 ---
 
-## Tier 1: Core Experience Improvements
+## North Star
 
-### 1.1 Partial Completions
+> "Claude, what should I do next?"
 
-**Problem:** Habits are binary (done/not done), but real life has partial progress. Did 25 pushups instead of 50? Currently counts as failure.
+An AI Daily Planner with full context across all life domains - habits, finance, calendar, goals, health, relationships, learning. Value comes from cross-domain patterns, not individual app sophistication.
 
-**Solution:** Allow percentage-based completion tracking.
+---
 
-#### User Stories
-- As a user, I want to log partial completion (e.g., 50%) when I don't fully complete a habit
-- As a user, I want to see my partial completions reflected in analytics
-- As a user, I want partial completions to count toward my daily progress proportionally
+## Goals
 
-#### Data Model Changes
+1. **Deeper social networks** - Family, friends, and professional relationships
+2. **Conversational Mandarin proficiency** - Beyond character recognition to speaking
+3. **Improved sleep patterns** - Consistency and quality
+4. **Career transitions** - Active job search and skill development
+5. **Lose weight / improve metabolic fitness** - Diet, exercise, biomarkers
+6. **Learning AI** - Courses, papers, and hands-on projects
 
+---
+
+## System Architecture
+
+### Module Taxonomy
+
+```
+HABITS
+├── Morning routines
+├── Evening routines
+├── Productivity
+├── Social
+├── Anytime
+└── Reference links → Health (Diet, Workouts tracked elsewhere)
+
+HEALTH & FITNESS
+├── Weight (daily weigh-in)
+├── Sleep (Apple Watch via webhook)
+├── Diet Signals (daily checkboxes)
+├── Workouts (bodyweight sessions)
+└── Cardio (Strava sync)
+
+GROWTH & LEARNING
+├── Mandarin (Hanzi Linker)
+├── AI Learning
+│   ├── Courses / Tutorials
+│   ├── Papers
+│   └── Projects (learning by building)
+├── Books
+└── Media Queue (intentional podcasts/YouTube)
+
+FINANCE
+├── Spending (existing)
+├── Budgeting (targets vs actuals)
+└── Investing (portfolio tracking)
+
+CAREER
+├── Tasks (GTD-style inbox/next actions)
+├── Objectives (quarterly goals, OKRs)
+└── Interviews (pipeline tracker)
+
+RELATIONSHIPS (standalone, not under Career)
+├── Family
+├── Friends
+└── Professional
+
+CALENDAR
+├── Google Calendar integration (existing)
+├── Becomes OUTPUT of daily planning
+└── Notifications via native calendar reminders
+```
+
+---
+
+## AI Daily Planner
+
+The central hub that connects all modules. Replaces the static check-in form with a conversational Claude touchpoint.
+
+### Daily Rhythm
+
+**Morning Check-in (Intention)**
+- Duration: ~15 minutes
+- Style: Conversational back-and-forth
+- Purpose: Set intentions, not rigid schedule
+
+**Evening Check-in (Reflection)**
+- Duration: ~15 minutes
+- Style: Open questions from Claude
+- Purpose: Review day, capture learnings, prep tomorrow
+
+### Data Inputs Claude Considers
+
+| Source | Context |
+|--------|---------|
+| Calendar | What's already scheduled, free slots |
+| Habits | What's due, what's been missed, streaks at risk |
+| Health | Workout due? Weight trend? Sleep last night? |
+| Relationships | Who's overdue for contact? Birthdays coming? |
+| Learning | What's in queue? Papers, courses, books |
+| Career | Tasks due? Interview prep needed? |
+| Finance | Weekly review due? Budget alerts? |
+| Energy | Yesterday's level, pattern recognition |
+
+### Morning Conversation Flow
+
+```
+Claude: "Good morning Mike. Here's what I'm seeing...
+        
+        Yesterday: 24/30 habits (80%)
+        Missed: Yoga, 10k steps, Bed by 11
+        Sleep: 6.5 hours (below your 7.5 target)
+        
+        You've had 3 busy days with back-to-back meetings.
+        Today looks lighter - good day to catch up on yoga
+        and that AI paper in your queue.
+        
+        Also noticed you haven't spoken to [sister] in 3 weeks.
+        
+        How are you feeling today?"
+
+You:    "Pretty good actually, slept better than the watch
+        says. I have a call at 2pm I forgot to add."
+
+Claude: "Got it - I'll block 2pm for that call. Given your
+        energy is good, want to tackle the AI paper this
+        morning while you're fresh? I could suggest:
+        
+        Morning: Deep work (paper + project time)
+        Midday: Yoga + lunch
+        Afternoon: 2pm call, then lighter tasks
+        Evening: Maybe reach out to [sister]?
+        
+        Does that shape work?"
+```
+
+### Flexibility Model
+
+Not "10:00 - Yoga (mandatory)" but intentions with rough placement:
+
+```
+TODAY'S INTENTIONS
+
+Must happen:
+• Call at 14:00 (1 hr)
+
+Should happen:
+• Yoga session (~30 min)
+• Read AI paper (~45 min)  
+• Reach out to [sister]
+
+If time:
+• Review budget
+• Clear task inbox
+
+Suggested shape:
+┌──────────────────────────────────┐
+│ Morning    Deep work / learning  │
+│ Midday     Yoga + lunch          │
+│ Afternoon  Call, then flexible   │
+│ Evening    Wind down by 22:00    │
+└──────────────────────────────────┘
+```
+
+### Output
+
+Once approved, Claude writes to Google Calendar:
+- Habits as time-blocked events
+- Learning sessions scheduled
+- Relationship touchpoints as reminders
+- Workouts with duration
+
+Calendar notifications handle reminders throughout the day - no custom notification system needed.
+
+### Evening Conversation Flow
+
+```
+Claude: "Evening, Mike. Let's close out the day.
+        
+        From this morning's plan:
+        ✓ AI paper (done)
+        ✓ 2pm call (done)
+        ✗ Yoga (skipped)
+        ✗ Reach out to [sister] (not yet)
+        
+        What got in the way of yoga today?"
+
+You:    "The call ran long, then I got pulled into emails"
+
+Claude: "That's the third day this week calls have run over.
+        Might be worth adding buffer time after meetings?
+        
+        For [sister] - want me to carry that forward to
+        tomorrow, or is there a better day this week?"
+```
+
+---
+
+## Health & Fitness Details
+
+### Diet Signals (not calorie counting)
+
+Binary checkboxes that roll up to a daily score - same pattern as habits:
+
+| Signal | Good = ✓ |
+|--------|----------|
+| No alcohol | ✓ |
+| No snacking | ✓ |
+| No sugar/sweets | ✓ |
+| No takeaway/junk | ✓ |
+| Ate protein with each meal | ✓ |
+| Stayed in eating window | ✓ |
+| Drank enough water | ✓ |
+
+Daily diet score = X/7
+
+Could live inside Habits OS as a "diet" category, or be its own section in Health. Data model is identical to habit completions.
+
+### Reference Habits Pattern
+
+In Habits OS, health items appear for visibility but completion is tracked in dedicated modules:
+
+```
+HEALTH (reference)
+├── ○ Workout today → tap opens Health/Workouts
+├── ○ Diet on track → tap opens Health/Diet  
+└── ○ Weighed in → tap opens Health/Weight
+```
+
+Keeps "did I do the healthy things" visible without duplicating data.
+
+### Data Sources
+
+| Component | Current State | Integration Path |
+|-----------|--------------|------------------|
+| Runs/Cardio | Strava | Strava API |
+| Weight | iOS app | Apple Health webhook |
+| Gym/Strength | None | Build (bodyweight focus) |
+| Diet | None | Build (daily signals) |
+| Sleep | Apple Watch | Apple Health webhook |
+| Steps | Apple Watch | Apple Health webhook |
+
+---
+
+## Growth & Learning Details
+
+### AI Learning Tracking
+
+Both structured and project-based:
+
+**Courses/Tutorials**
+- What you're taking
+- Progress percentage
+- Notes/takeaways
+
+**Papers**
+- Reading queue
+- Completed with notes
+- Key insights extracted
+
+**Projects**
+- Learning by building
+- Links to repos
+- Skills developed
+
+### Intentional Media Queue
+
+Combat "algorithm slop" by tracking:
+- What you intended to watch/listen to
+- What you actually consumed
+- Time spent intentional vs mindless
+
+---
+
+## Relationships Details
+
+Standalone module (not under Career) - relationships matter beyond professional networking.
+
+### Tracking Per Contact
+
+| Field | Purpose |
+|-------|---------|
+| Name | Who |
+| Type | Family / Friend / Professional |
+| Last contact | When did you last connect? |
+| Preferred channel | Call, text, in-person? |
+| Notes | Context, life events, conversation topics |
+| Reminder frequency | Weekly, monthly, quarterly? |
+
+### AI Daily Planner Integration
+
+Claude surfaces:
+- "You haven't spoken to [sister] in 3 weeks"
+- "It's [friend]'s birthday next week"
+- "[Professional contact] - you said you'd follow up after their launch"
+
+### WhatsApp Integration (MCP)
+
+Consolidate all messaging into WhatsApp (move from Instagram DMs, SMS) and integrate via [whatsapp-mcp](https://github.com/lharries/whatsapp-mcp).
+
+**Architecture:**
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│     Claude      │ ──►│ Python MCP Server│ ──►│   Go Bridge     │
+│                 │    │    (FastMCP)     │    │   (whatsmeow)   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                       │
+                              ▼                        ▼
+                       ┌──────────────┐         ┌──────────────┐
+                       │    SQLite    │◄────────│  WhatsApp    │
+                       │  messages.db │         │   Web API    │
+                       └──────────────┘         └──────────────┘
+```
+
+**MCP Tools Available:**
+| Tool | Purpose |
+|------|---------|
+| `search_contacts` | Find contacts by name/phone |
+| `list_messages` | Retrieve messages with filters |
+| `send_message` | Send to individuals/groups |
+| `send_audio_message` | Voice messages |
+| `download_media` | Get media files |
+
+**Use Cases for Personal OS:**
+
+| Use Case | How It Works |
+|----------|--------------|
+| Auto-populate last contact | Sync message timestamps → relationship tracker |
+| AI Daily Planner context | "You haven't messaged [sister] in 3 weeks" |
+| Send yourself reminders | Claude sends WhatsApp reminders during the day |
+| Message search | "Find that restaurant recommendation from Dave" |
+| Conversation summaries | "Summarize my chat with [contact] this week" |
+| Consolidate messaging | Move conversations from Instagram/SMS → WhatsApp |
+
+**Setup Requirements:**
+- Go + Python installed
+- QR code auth (like WhatsApp Web)
+- Messages stored locally in SQLite
+- Works with Claude Desktop / Claude Code
+
+---
+
+## Technical Architecture
+
+### AI Daily Planner Implementation
+
+**Route:** `/daily` or `/planner`
+
+```
+/daily
+├── page.tsx (server - loads all context)
+├── planner-client.tsx (client - chat UI)
+├── /api/daily/chat (Anthropic API endpoint)
+├── /api/daily/commit (writes plan to calendar)
+└── /api/daily/history (retrieves past sessions)
+```
+
+**Supabase tables:**
 ```sql
-ALTER TABLE habit_completions
-  ADD COLUMN completion_percentage INTEGER DEFAULT 100
-  CHECK (completion_percentage >= 0 AND completion_percentage <= 100);
+daily_sessions (id, user_id, date, type: morning/evening)
+daily_messages (session_id, role, content, timestamp)
+daily_plans (session_id, intentions, calendar_events_created)
 ```
 
-#### UI Changes
+**API Cost:** ~$5/month (Sonnet 4.5 at $3/$15 per MTok)
+- Morning: ~6k input, ~4k output
+- Evening: ~6k input, ~3k output
+- Daily total: ~$0.14
 
-**On habit tap (completion flow):**
-```
-┌─────────────────────────────────────┐
-│  Push-ups                           │
-│  ━━━━━━━━━━━━━━━━━━━━━━━            │
-│                                     │
-│  How much did you complete?         │
-│                                     │
-│  [25%] [50%] [75%] [100% ✓]         │
-│                                     │
-│  Or tap again to mark incomplete    │
-└─────────────────────────────────────┘
-```
+**Interface:** Custom chat UI in Next.js (mobile-first)
+- Not Cowork (desktop only, file-based, not conversational)
+- Not Claude.ai (can't pre-load custom context)
 
-**Quick complete:** Single tap = 100% (current behavior)
-**Partial complete:** Long press or second tap = show percentage options
-
-**Display changes:**
-- Partial completions show with reduced opacity or partial fill
-- "Completed at X" becomes "50% at X"
-- Progress bar counts partials proportionally (e.g., 50% completion = 0.5 toward total)
-
-#### Completion Calculation
-
-```typescript
-// Current
-const percentage = (completedCount / totalCount) * 100
-
-// New
-const completionSum = habits.reduce((sum, h) => {
-  if (!h.completed_today) return sum
-  return sum + (h.completion_percentage / 100)
-}, 0)
-const percentage = (completionSum / totalCount) * 100
-```
+**Notifications:** Google Calendar native reminders
+- No custom notification system needed
+- Morning planning outputs events with reminder times
 
 ---
 
-### 1.2 Habit Notes
+## Key Design Decisions
 
-**Problem:** When you miss or partially complete a habit, there's no way to capture why. Context is lost.
+1. **Calendar is output, not input** - You don't have an existing calendar to work around. Claude designs optimal days from scratch.
 
-**Solution:** Optional note field on completions.
+2. **Flexible intentions, not rigid schedules** - "Should happen" with rough time placement, not "10:32 start yoga"
 
-#### User Stories
-- As a user, I want to add a quick note when completing/skipping a habit
-- As a user, I want to see my notes in the daily check-in review
-- As a user, I want to search/filter notes to find patterns
+3. **Diet as signals, not calorie counting** - Binary checkboxes sustainable long-term, detailed tracking burns people out
 
-#### Data Model Changes
+4. **Relationships separate from Career** - Family and friends matter beyond professional networking
 
-```sql
-ALTER TABLE habit_completions
-  ADD COLUMN note TEXT;
-```
+5. **Reference habits link to dedicated modules** - Visibility in daily habit list without data duplication
 
-#### UI Changes
+6. **Conversational, not form-based** - 15-minute back-and-forth with Claude, not checkboxes
 
-**On completion (optional expansion):**
-```
-┌─────────────────────────────────────┐
-│  ✓ Push-ups completed               │
-│                                     │
-│  Add note (optional)                │
-│  ┌─────────────────────────────────┐│
-│  │ Only managed 30, shoulder sore  ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  [Done]                             │
-└─────────────────────────────────────┘
-```
-
-**In habit list:** Small note icon if note exists, expandable on tap.
+7. **Cross-domain patterns are the value** - Busy calendar days → lower habit completion? Poor sleep → higher spending? That's the insight layer.
 
 ---
 
-### 1.3 Daily Check-in
-
-**Problem:** No structured reflection or intention-setting ritual. Just a list of habits with no context about yesterday or focus for today.
-
-**Solution:** Daily check-in flow that reviews yesterday and sets today's focus.
-
-#### User Stories
-- As a user, I want to see a summary of yesterday's completions when I open the app
-- As a user, I want to reflect on why I missed certain habits
-- As a user, I want to set 1-3 focus habits for today
-- As a user, I want to write a brief intention for the day
-- As a user, I want to see my focus habits highlighted throughout the day
-
-#### Data Model
-
-```sql
-CREATE TABLE daily_checkins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) NOT NULL,
-  checkin_date DATE NOT NULL,
-
-  -- Yesterday reflection
-  yesterday_reflection TEXT,
-
-  -- Today planning
-  today_intention TEXT,
-  focus_habit_ids UUID[], -- Array of 1-3 habit IDs
-
-  -- Metadata
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(user_id, checkin_date)
-);
-
--- Index for quick lookups
-CREATE INDEX idx_checkins_user_date ON daily_checkins(user_id, checkin_date);
-```
-
-#### UI Flow
-
-**Route:** `/habits/checkin`
-
-**Step 1: Yesterday Review**
-```
-┌─────────────────────────────────────┐
-│  DAILY CHECK-IN                     │
-│  Wednesday, Jan 8                   │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  📊 YESTERDAY                       │
-│  Tuesday, Jan 7                     │
-│                                     │
-│  Completed: 24/30 (80%)             │
-│  ████████████████░░░░               │
-│                                     │
-│  ✅ Strong:                         │
-│     Morning routine      10/10      │
-│     Productivity         4/5        │
-│                                     │
-│  ❌ Missed:                         │
-│     • Bed by 11pm                   │
-│     • Yoga                          │
-│     • 10k steps                     │
-│                                     │
-│  Any notes from yesterday:          │
-│     • Push-ups: "shoulder sore"     │
-│                                     │
-│                        [Continue →] │
-└─────────────────────────────────────┘
-```
-
-**Step 2: Reflection**
-```
-┌─────────────────────────────────────┐
-│  REFLECT                            │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  What got in the way yesterday?     │
-│  (optional)                         │
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │ Late work call ran until 10pm, ││
-│  │ then scrolled Twitter instead  ││
-│  │ of winding down                 ││
-│  └─────────────────────────────────┘│
-│                                     │
-│                        [Continue →] │
-└─────────────────────────────────────┘
-```
-
-**Step 3: Today's Focus**
-```
-┌─────────────────────────────────────┐
-│  TODAY'S FOCUS                      │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  Pick 1-3 habits to prioritize:     │
-│                                     │
-│  SUGGESTED (missed yesterday):      │
-│  ┌─────────────────────────────────┐│
-│  │ ◉ Bed by 11pm                   ││
-│  │ ○ Yoga                          ││
-│  │ ○ 10k steps                     ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  OTHER HABITS:                      │
-│  ┌─────────────────────────────────┐│
-│  │ ○ Morning sunlight              ││
-│  │ ○ Duolingo                      ││
-│  │ ○ Project work 30 min           ││
-│  │   ...                           ││
-│  └─────────────────────────────────┘│
-│                                     │
-│                        [Continue →] │
-└─────────────────────────────────────┘
-```
-
-**Step 4: Intention**
-```
-┌─────────────────────────────────────┐
-│  SET INTENTION                      │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  One line for today:                │
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │ Protect my sleep tonight no     ││
-│  │ matter what                      ││
-│  └─────────────────────────────────┘│
-│                                     │
-│                    [Start Day →]    │
-└─────────────────────────────────────┘
-```
-
-**After check-in:** Redirect to `/habits` with focus habits highlighted (star icon, top of list, or subtle glow).
-
-#### Logic
-
-**When to show check-in:**
-- First visit of the day AND no check-in exists for today
-- Can also access via button/link anytime
-
-**Yesterday's data:**
-```typescript
-// Get yesterday's date
-const yesterday = new Date()
-yesterday.setDate(yesterday.getDate() - 1)
-const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-// Query completions
-const { data: completions } = await supabase
-  .from('habit_completions')
-  .select('*, habits(name, category)')
-  .eq('user_id', USER_ID)
-  .eq('completion_date', yesterdayStr)
-```
-
-**Suggested focus habits:**
-1. Habits missed yesterday
-2. Habits with declining streaks (if analytics available)
-3. Habits with lowest 7-day completion rate
-
----
-
-## Tier 2: Enhanced Experience
-
-### 2.1 What's Next Button
-
-**Problem:** Decision fatigue. Looking at 30 habits and deciding what to do next is overwhelming.
-
-**Solution:** Smart suggestion for the next habit to complete.
-
-#### User Stories
-- As a user, I want a "What's Next?" button that tells me what to do
-- As a user, I want suggestions to prioritize my focus habits
-- As a user, I want suggestions to respect time of day (morning habits in morning)
-
-#### UI
-
-**On main habits page:**
-```
-┌─────────────────────────────────────┐
-│  WHAT'S NEXT?                       │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  🎯 Yoga                            │
-│     Today's focus • Usually 10am   │
-│                                     │
-│  [Complete] [Skip for now]          │
-│                                     │
-│  Up after: Knee mobility            │
-└─────────────────────────────────────┘
-```
-
-**Collapsed state (floating button):**
-```
-┌──────────────────┐
-│  ▶ What's Next?  │
-└──────────────────┘
-```
-
-#### Logic
-
-```typescript
-function getNextHabit(
-  habits: Habit[],
-  completions: Completion[],
-  focusHabitIds: string[],
-  currentHour: number
-): Habit | null {
-
-  // Filter to incomplete habits
-  const incomplete = habits.filter(h =>
-    !completions.find(c => c.habit_id === h.id)
-  )
-
-  if (incomplete.length === 0) return null
-
-  // Determine current time bucket
-  const timeBucket =
-    currentHour < 12 ? 'morning' :
-    currentHour < 17 ? 'anytime' : 'evening'
-
-  // Score each habit
-  const scored = incomplete.map(habit => {
-    let score = 0
-
-    // Focus habits get highest priority
-    if (focusHabitIds.includes(habit.id)) score += 100
-
-    // Time-appropriate habits score higher
-    if (habit.category === timeBucket) score += 50
-    if (habit.category === 'anytime') score += 25
-
-    // Respect display order as tiebreaker
-    score -= habit.display_order * 0.1
-
-    return { habit, score }
-  })
-
-  // Return highest scored
-  scored.sort((a, b) => b.score - a.score)
-  return scored[0]?.habit || null
-}
-```
-
----
-
-### 2.2 Multi-Step Habits
-
-**Problem:** Some habits have sub-components (yoga poses, workout exercises, morning routine steps). Currently no way to track these.
-
-**Solution:** Allow habits to have ordered sub-steps.
-
-#### User Stories
-- As a user, I want to define steps within a habit (e.g., yoga poses)
-- As a user, I want to check off steps individually
-- As a user, I want the parent habit to auto-complete when all steps are done
-- As a user, I want to see my progress through steps
-
-#### Data Model
-
-```sql
-CREATE TABLE habit_steps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  habit_id UUID REFERENCES habits(id) ON DELETE CASCADE NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  display_order INTEGER NOT NULL DEFAULT 0,
-  duration_seconds INTEGER, -- Optional: expected duration
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(habit_id, display_order)
-);
-
-CREATE TABLE habit_step_completions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  habit_completion_id UUID REFERENCES habit_completions(id) ON DELETE CASCADE NOT NULL,
-  step_id UUID REFERENCES habit_steps(id) ON DELETE CASCADE NOT NULL,
-  completed_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(habit_completion_id, step_id)
-);
-
--- Index for quick lookups
-CREATE INDEX idx_steps_habit ON habit_steps(habit_id);
-CREATE INDEX idx_step_completions ON habit_step_completions(habit_completion_id);
-```
-
-#### UI
-
-**Habit with steps (collapsed):**
-```
-┌─────────────────────────────────────┐
-│  ◐ Yoga                    3/8 ▼   │
-│     └ Sun salutation ✓             │
-└─────────────────────────────────────┘
-```
-
-**Habit with steps (expanded):**
-```
-┌─────────────────────────────────────┐
-│  ◐ Yoga                    3/8 ▲   │
-├─────────────────────────────────────┤
-│  ✓ Sun salutation A (5x)           │
-│  ✓ Sun salutation B (5x)           │
-│  ✓ Standing poses                  │
-│  ○ Balance poses                   │
-│  ○ Seated poses                    │
-│  ○ Hip openers                     │
-│  ○ Backbends                       │
-│  ○ Savasana                        │
-├─────────────────────────────────────┤
-│  [Complete All]                    │
-└─────────────────────────────────────┘
-```
-
-#### Behavior
-- Tapping a step toggles its completion
-- Parent habit shows partial indicator (◐) when some steps done
-- Parent habit auto-completes (●) when all steps done
-- "Complete All" button marks remaining steps done
-- Steps are reusable templates (same steps every day)
-
-#### Example Data
-
-```sql
--- Yoga habit steps
-INSERT INTO habit_steps (habit_id, name, display_order, duration_seconds) VALUES
-('yoga-habit-uuid', 'Sun salutation A (5x)', 0, 300),
-('yoga-habit-uuid', 'Sun salutation B (5x)', 1, 300),
-('yoga-habit-uuid', 'Standing poses', 2, 600),
-('yoga-habit-uuid', 'Balance poses', 3, 300),
-('yoga-habit-uuid', 'Seated poses', 4, 600),
-('yoga-habit-uuid', 'Hip openers', 5, 600),
-('yoga-habit-uuid', 'Backbends', 6, 300),
-('yoga-habit-uuid', 'Savasana', 7, 300);
-```
-
----
-
-## Tier 3: Extended Features
-
-### 3.1 Goals Table
-
-**Problem:** Habits exist in isolation. No connection to bigger "why" or measurable outcomes.
-
-**Solution:** Goals that habits contribute toward.
-
-#### Data Model
-
-```sql
-CREATE TABLE goals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT,
-  target_date DATE,
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned')),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE goal_habits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  goal_id UUID REFERENCES goals(id) ON DELETE CASCADE NOT NULL,
-  habit_id UUID REFERENCES habits(id) ON DELETE CASCADE NOT NULL,
-  contribution_weight INTEGER DEFAULT 1, -- How much this habit contributes
-
-  UNIQUE(goal_id, habit_id)
-);
-
-CREATE INDEX idx_goals_user ON goals(user_id);
-CREATE INDEX idx_goal_habits_goal ON goal_habits(goal_id);
-```
-
-#### Example
-
-```
-Goal: "Run a marathon by October"
-├── Run 3x/week (weight: 3)
-├── Strength training (weight: 2)
-├── Stretch daily (weight: 1)
-└── Sleep 8 hours (weight: 2)
-
-Progress: Based on habit completion rates
-```
-
----
-
-### 3.2 Apple Watch Webhook
-
-**Problem:** Some habits could be tracked automatically (steps, exercise, sleep) but require manual entry.
-
-**Solution:** iOS Shortcuts that POST to a Supabase Edge Function.
-
-#### Architecture
-
-```
-Apple Watch → Health App → iOS Shortcut (automation)
-                                ↓
-                         POST to Edge Function
-                                ↓
-                         Supabase habit_completions
-```
-
-#### Edge Function
-
-```typescript
-// supabase/functions/webhook-health/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-serve(async (req) => {
-  const { habit_name, value, date, secret } = await req.json()
-
-  // Validate secret
-  if (secret !== Deno.env.get('WEBHOOK_SECRET')) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
-
-  // Find habit by name
-  const { data: habit } = await supabase
-    .from('habits')
-    .select('id')
-    .ilike('name', `%${habit_name}%`)
-    .single()
-
-  if (!habit) {
-    return new Response('Habit not found', { status: 404 })
-  }
-
-  // Upsert completion
-  const { error } = await supabase
-    .from('habit_completions')
-    .upsert({
-      habit_id: habit.id,
-      user_id: 'd4f6f192-41ff-4c66-a07a-f9ebef463281',
-      completion_date: date || new Date().toISOString().split('T')[0],
-      completion_percentage: value || 100,
-      completed_at: new Date().toISOString(),
-      note: 'Auto-logged from Apple Watch'
-    }, {
-      onConflict: 'habit_id,user_id,completion_date'
-    })
-
-  if (error) {
-    return new Response(JSON.stringify(error), { status: 500 })
-  }
-
-  return new Response('OK', { status: 200 })
-})
-```
-
-#### iOS Shortcut
-
-```
-Name: "Log Steps"
-Trigger: Daily at 10pm (automation)
-
-Actions:
-1. Get Health Sample (Steps, today)
-2. If steps >= 10000:
-   3. Get Contents of URL
-      - URL: https://your-project.supabase.co/functions/v1/webhook-health
-      - Method: POST
-      - Body: {
-          "habit_name": "10k steps",
-          "value": 100,
-          "secret": "your-secret"
-        }
-```
-
----
-
-### 3.3 AI What's Next (Enhanced)
-
-**Problem:** Basic "What's Next" uses simple rules. Could be smarter with context.
-
-**Solution:** LLM-powered suggestions considering energy, time, patterns.
-
-#### Enhanced Logic
-
-```typescript
-async function getAINextHabit(context: {
-  incomplete: Habit[],
-  focusHabits: string[],
-  energyLevel: 'low' | 'medium' | 'high',
-  currentTime: Date,
-  recentPatterns: {
-    habitId: string,
-    usualTime: string,
-    successRate: number
-  }[]
-}): Promise<{ habit: Habit, reason: string }> {
-
-  const prompt = `
-    Given these incomplete habits: ${context.incomplete.map(h => h.name).join(', ')}
-
-    User's focus habits today: ${context.focusHabits.join(', ')}
-    Current energy level: ${context.energyLevel}
-    Current time: ${context.currentTime.toLocaleTimeString()}
-
-    Historical patterns:
-    ${context.recentPatterns.map(p =>
-      `- ${p.habitId}: usually done at ${p.usualTime}, ${p.successRate}% success rate`
-    ).join('\n')}
-
-    Which ONE habit should they do next and why? Be brief.
-  `
-
-  // Call Claude API
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 100,
-    messages: [{ role: 'user', content: prompt }]
-  })
-
-  // Parse response
-  return parseAIResponse(response, context.incomplete)
-}
-```
-
----
-
-### 3.4 Habit Stacking
-
-**Problem:** Habits work better when chained together, but no explicit support for "after X, do Y".
-
-**Solution:** Define explicit habit sequences.
-
-#### Data Model
-
-```sql
-CREATE TABLE habit_stacks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) NOT NULL,
-  name TEXT NOT NULL, -- e.g., "Morning Routine"
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE habit_stack_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  stack_id UUID REFERENCES habit_stacks(id) ON DELETE CASCADE NOT NULL,
-  habit_id UUID REFERENCES habits(id) ON DELETE CASCADE NOT NULL,
-  position INTEGER NOT NULL,
-
-  UNIQUE(stack_id, position)
-);
-```
-
-#### UI
-
-```
-┌─────────────────────────────────────┐
-│  MORNING STACK                      │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                     │
-│  1. ✓ Wake 7am                      │
-│     ↓                               │
-│  2. ✓ Morning sunlight              │
-│     ↓                               │
-│  3. ○ No phone in bed    ← YOU ARE  │
-│     ↓                       HERE    │
-│  4. ○ Shower                        │
-│     ↓                               │
-│  5. ○ Teeth morning                 │
-│                                     │
-│  Progress: 2/5                      │
-└─────────────────────────────────────┘
-```
-
----
-
-## Implementation Notes
-
-### API Endpoints Needed
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/habits/complete` | POST | Complete a habit (with partial %, note) |
-| `/api/habits/checkin` | GET | Get yesterday's data for check-in |
-| `/api/habits/checkin` | POST | Save today's check-in |
-| `/api/habits/next` | GET | Get next suggested habit |
-| `/api/habits/[id]/steps` | GET | Get steps for a habit |
-| `/api/habits/[id]/steps/complete` | POST | Complete a step |
-| `/api/webhook/health` | POST | Apple Watch webhook |
-
-### Component Structure
-
-```
-app/
-├── habits/
-│   ├── page.tsx              # Main habits list
-│   ├── habits-client.tsx     # Client component
-│   ├── checkin/
-│   │   └── page.tsx          # Daily check-in flow
-│   └── analytics/
-│       └── page.tsx          # Analytics dashboard
-components/
-├── habits/
-│   ├── HabitCard.tsx         # Single habit display
-│   ├── HabitSteps.tsx        # Multi-step expansion
-│   ├── WhatsNext.tsx         # Next suggestion card
-│   ├── PartialComplete.tsx   # Percentage selector
-│   └── CheckinFlow.tsx       # Check-in wizard
-```
-
-### Migration Order
-
-1. **Schema migrations first** (partial completions, notes, checkins table, steps tables)
-2. **Tier 1 features** in order listed
-3. **Tier 2 features** after Tier 1 stable
-4. **Tier 3 features** as time permits
+## Implementation Priorities
+
+### Foundation (enables everything else)
+- [ ] Apple Health webhook (unlocks sleep, steps, weight)
+- [ ] Diet signals module
+- [ ] Bodyweight workout logging
+
+### AI Daily Planner MVP
+- [ ] `/daily` route with chat UI
+- [ ] System prompt with full context loading
+- [ ] Calendar event creation from plan
+- [ ] Session storage for continuity
+
+### Relationship Tracking
+- [ ] WhatsApp MCP setup (Go bridge + Python server)
+- [ ] Contacts table with last contact dates (auto-populated from WhatsApp)
+- [ ] Integration with Daily Planner prompts
+- [ ] Consolidate messaging (move Instagram DMs, SMS → WhatsApp)
+
+### Learning Expansion
+- [ ] AI learning tracker (courses, papers, projects)
+- [ ] Intentional media queue
+
+### Finance Expansion
+- [ ] Budgeting (category targets vs actuals)
+- [ ] Investing portfolio view
+
+### Career Module
+- [ ] Tasks/inbox system
+- [ ] Objectives/OKRs
+- [ ] Interview pipeline
 
 ---
 
 ## Success Metrics
 
-### Engagement
-- Daily check-in completion rate
-- Average habits completed per day
-- Streak lengths
+**Engagement**
+- Daily planner completion rate (morning + evening)
+- Cross-domain insight surfacing
 
-### Quality
-- Use of partial completions (indicates flexibility helps)
-- Use of habit notes (indicates reflection happening)
-- Focus habit completion rate vs non-focus
+**Health**
+- Weight trend over time
+- Diet signal consistency
+- Workout frequency
 
-### Technical
-- Page load time < 1s
-- Completion action < 200ms
-- Zero data loss
+**Relationships**
+- Contacts reached per week
+- No one "forgotten" beyond their reminder frequency
 
----
-
-## Open Questions
-
-1. **Check-in timing:** Should it block access to habits until completed, or just prompt?
-2. **Partial completion UI:** Long-press vs double-tap vs expand menu?
-3. **Multi-step habits:** Create through UI or seed via SQL initially?
-4. **Focus habits:** How many? Fixed at 3 or flexible 1-5?
+**Learning**
+- AI learning hours per week
+- Intentional vs algorithm media ratio
 
 ---
 
-## Appendix: Example SQL Migrations
+## Appendix: Cowork Evaluation
 
-### Migration 001: Partial Completions and Notes
+Evaluated Anthropic's Cowork (launched Jan 12, 2026) for Daily Planner use case.
 
-```sql
--- Add partial completion and notes to habit_completions
-ALTER TABLE habit_completions
-  ADD COLUMN completion_percentage INTEGER DEFAULT 100
-    CHECK (completion_percentage >= 0 AND completion_percentage <= 100),
-  ADD COLUMN note TEXT;
+**Why it doesn't fit:**
+- Desktop only (macOS) - need mobile-first
+- File-based, not database-aware - can't load Supabase context
+- Task-oriented, not conversational - want 15-min back-and-forth
+- No pre-loaded personal context - need habits, calendar, health, etc.
 
--- Update existing completions to have 100%
-UPDATE habit_completions SET completion_percentage = 100 WHERE completion_percentage IS NULL;
-```
+**Where Cowork could help (different use cases):**
+- File organization tasks
+- Report generation from local files
+- Slide deck creation from notes
 
-### Migration 002: Daily Check-ins
-
-```sql
--- Create daily check-ins table
-CREATE TABLE daily_checkins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) NOT NULL,
-  checkin_date DATE NOT NULL,
-  yesterday_reflection TEXT,
-  today_intention TEXT,
-  focus_habit_ids UUID[],
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(user_id, checkin_date)
-);
-
-CREATE INDEX idx_checkins_user_date ON daily_checkins(user_id, checkin_date);
-
--- RLS policy
-ALTER TABLE daily_checkins ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage own checkins" ON daily_checkins
-  FOR ALL USING (user_id = 'd4f6f192-41ff-4c66-a07a-f9ebef463281');
-```
-
-### Migration 003: Habit Steps
-
-```sql
--- Create habit steps table
-CREATE TABLE habit_steps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  habit_id UUID REFERENCES habits(id) ON DELETE CASCADE NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  display_order INTEGER NOT NULL DEFAULT 0,
-  duration_seconds INTEGER,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(habit_id, display_order)
-);
-
-CREATE TABLE habit_step_completions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  habit_completion_id UUID REFERENCES habit_completions(id) ON DELETE CASCADE NOT NULL,
-  step_id UUID REFERENCES habit_steps(id) ON DELETE CASCADE NOT NULL,
-  completed_at TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE(habit_completion_id, step_id)
-);
-
-CREATE INDEX idx_steps_habit ON habit_steps(habit_id);
-CREATE INDEX idx_step_completions ON habit_step_completions(habit_completion_id);
-
--- RLS policies
-ALTER TABLE habit_steps ENABLE ROW LEVEL SECURITY;
-ALTER TABLE habit_step_completions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view habit steps" ON habit_steps
-  FOR SELECT USING (
-    habit_id IN (SELECT id FROM habits WHERE user_id = 'd4f6f192-41ff-4c66-a07a-f9ebef463281')
-  );
-
-CREATE POLICY "Users can manage step completions" ON habit_step_completions
-  FOR ALL USING (
-    habit_completion_id IN (
-      SELECT id FROM habit_completions WHERE user_id = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-    )
-  );
-```
+Conclusion: Custom chat UI remains the right choice for AI Daily Planner.
