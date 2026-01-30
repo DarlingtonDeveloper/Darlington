@@ -24,7 +24,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  // Use same date format as habits page
+  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
 
   try {
     // Fetch habits and today's completions
@@ -98,6 +99,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       date: today,
+      _debug: {
+        completionsCount: completions.length,
+        completionsRaw: completions.slice(0, 5),
+        habitsCount: habits.length,
+      },
       habits: {
         total: totalHabits,
         completed: completedHabits,
