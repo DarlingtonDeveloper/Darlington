@@ -38,8 +38,7 @@ export async function GET(request: Request) {
         .from('habit_completions')
         .select('habit_id, completion_percentage, notes, completed_at, completion_date')
         .eq('user_id', USER_ID)
-        .order('completion_date', { ascending: false })
-        .limit(10),
+        .eq('completion_date', today),
       supabase
         .from('daily_checkins')
         .select('today_intention, focus_habit_ids, yesterday_reflection')
@@ -71,9 +70,7 @@ export async function GET(request: Request) {
     if (completionsRes.error) console.error('Completions error:', completionsRes.error)
     
     const habits = habitsRes.data || []
-    const allCompletions = completionsRes.data || []
-    // Filter to today's completions for stats
-    const completions = allCompletions.filter(c => c.completion_date === today)
+    const completions = completionsRes.data || []
 
     // Calculate habit stats
     const totalHabits = habits.length
@@ -108,9 +105,7 @@ export async function GET(request: Request) {
       _debug: {
         queryDate: today,
         serverTime: new Date().toISOString(),
-        allCompletionsCount: allCompletions.length,
-        todayCompletionsCount: completions.length,
-        recentCompletions: allCompletions.slice(0, 5),
+        completionsCount: completions.length,
         habitsCount: habits.length,
         errors: {
           habits: habitsRes.error,
