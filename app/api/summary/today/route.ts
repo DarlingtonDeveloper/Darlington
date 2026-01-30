@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         .eq('is_active', true),
       supabase
         .from('habit_completions')
-        .select('habit_id, completion_percentage, note, completed_at, completion_date')
+        .select('habit_id, completion_percentage, notes, completed_at, completion_date')
         .eq('user_id', USER_ID)
         .order('completion_date', { ascending: false })
         .limit(10),
