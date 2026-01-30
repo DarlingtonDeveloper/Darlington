@@ -37,9 +37,10 @@ export async function GET(request: Request) {
         .eq('is_active', true),
       supabase
         .from('habit_completions')
-        .select('habit_id, completion_percentage, note, completed_at')
+        .select('habit_id, completion_percentage, note, completed_at, completion_date')
         .eq('user_id', USER_ID)
-        .eq('completion_date', today),
+        .order('completion_date', { ascending: false })
+        .limit(10),
       supabase
         .from('daily_checkins')
         .select('today_intention, focus_habit_ids, yesterday_reflection')
@@ -67,7 +68,9 @@ export async function GET(request: Request) {
     ])
 
     const habits = habitsRes.data || []
-    const completions = completionsRes.data || []
+    const allCompletions = completionsRes.data || []
+    // Filter to today's completions for stats
+    const completions = allCompletions.filter(c => c.completion_date === today)
 
     // Calculate habit stats
     const totalHabits = habits.length
@@ -100,8 +103,11 @@ export async function GET(request: Request) {
     return NextResponse.json({
       date: today,
       _debug: {
-        completionsCount: completions.length,
-        completionsRaw: completions.slice(0, 5),
+        queryDate: today,
+        serverTime: new Date().toISOString(),
+        allCompletionsCount: allCompletions.length,
+        todayCompletionsCount: completions.length,
+        recentCompletions: allCompletions.slice(0, 5),
         habitsCount: habits.length,
       },
       habits: {
