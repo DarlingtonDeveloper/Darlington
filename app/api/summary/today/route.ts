@@ -4,12 +4,11 @@ import { createClient } from '@supabase/supabase-js'
 // Public summary endpoint - secured by secret header
 // Usage: GET /api/summary/today?user_id=xxx with X-Summary-Secret header
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function GET(request: Request) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
   // Check secret
   const secret = request.headers.get('X-Summary-Secret')
   if (secret !== process.env.HEALTH_WEBHOOK_SECRET) {
@@ -67,6 +66,10 @@ export async function GET(request: Request) {
         .single(),
     ])
 
+    // Check for errors
+    if (habitsRes.error) console.error('Habits error:', habitsRes.error)
+    if (completionsRes.error) console.error('Completions error:', completionsRes.error)
+    
     const habits = habitsRes.data || []
     const allCompletions = completionsRes.data || []
     // Filter to today's completions for stats
@@ -109,6 +112,10 @@ export async function GET(request: Request) {
         todayCompletionsCount: completions.length,
         recentCompletions: allCompletions.slice(0, 5),
         habitsCount: habits.length,
+        errors: {
+          habits: habitsRes.error,
+          completions: completionsRes.error,
+        },
       },
       habits: {
         total: totalHabits,
