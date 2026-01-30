@@ -2,21 +2,26 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // Public summary endpoint - secured by secret header
-// Usage: GET /api/summary/today with X-Summary-Secret header
+// Usage: GET /api/summary/today?user_id=xxx with X-Summary-Secret header
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Mike's user ID (single-user app)
-const USER_ID = 'd4f6f192-41ff-4c66-a07a-f9ebef463281'
-
 export async function GET(request: Request) {
   // Check secret
   const secret = request.headers.get('X-Summary-Secret')
   if (secret !== process.env.HEALTH_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Get user_id from query params
+  const { searchParams } = new URL(request.url)
+  const USER_ID = searchParams.get('user_id')
+  
+  if (!USER_ID) {
+    return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
   }
 
   const today = new Date().toISOString().split('T')[0]
