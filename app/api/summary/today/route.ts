@@ -1,14 +1,32 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Public summary endpoint - secured by secret header
+// Summary endpoint for Kai (OpenClaw agent)
 // Usage: GET /api/summary/today?user_id=xxx with X-Summary-Secret header
+// Rate limited: 1 request per minute per user
+
+// Simple in-memory rate limiting (resets on cold start, but good enough for single user)
+const rateLimitMap = new Map<string, number>()
+const RATE_LIMIT_MS = 60 * 1000 // 1 minute
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const lastRequest = rateLimitMap.get(userId)
+  
+  if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
+    return true
+  }
+  
+  rateLimitMap.set(userId, now)
+  return false
+}
 
 export async function GET(request: Request) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
   // Check secret
   const secret = request.headers.get('X-Summary-Secret')
   if (secret !== process.env.HEALTH_WEBHOOK_SECRET) {
@@ -23,20 +41,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
   }
 
+  // Rate limiting
+  if (isRateLimited(USER_ID)) {
+    return NextResponse.json(
+      { error: 'Rate limited. Max 1 request per minute.' },
+      { status: 429 }
+    )
+  }
+
   // Use same date format as habits page
   const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
 
   try {
-    // Fetch habits and today's completions
-    const [habitsRes, completionsRes, checkinRes, healthRes, stepsRes, sleepRes] = await Promise.all([
+    // Fetch habits, today's completions, and recent completions for streaks
+    const [habitsRes, completionsRes, checkinRes, healthRes, stepsRes, sleepRes, recentCompletionsRes] = await Promise.all([
       supabase
         .from('habits')
         .select('id, name, category, is_active')
         .eq('user_id', USER_ID)
-        .eq('is_active', true),
+        .eq('is_active', true)
+        .order('display_order'),
       supabase
         .from('habit_completions')
-        .select('habit_id, completion_percentage, notes, completed_at, completion_date')
+        .select('habit_id, completion_percentage, notes, completed_at')
         .eq('user_id', USER_ID)
         .eq('completion_date', today),
       supabase
@@ -63,29 +90,98 @@ export async function GET(request: Request) {
         .eq('user_id', USER_ID)
         .eq('sleep_date', today)
         .single(),
+      // Get last 30 days of completions for streak calculation
+      supabase
+        .from('habit_completions')
+        .select('habit_id, completion_date, completion_percentage')
+        .eq('user_id', USER_ID)
+        .gte('completion_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'))
+        .order('completion_date', { ascending: false }),
     ])
 
-    // Check for errors
-    if (habitsRes.error) console.error('Habits error:', habitsRes.error)
-    if (completionsRes.error) console.error('Completions error:', completionsRes.error)
-    
     const habits = habitsRes.data || []
     const completions = completionsRes.data || []
+    const recentCompletions = recentCompletionsRes.data || []
+
+    // Calculate streaks for each habit
+    function calculateStreak(habitId: string): { current: number; atRisk: boolean } {
+      const habitCompletions = recentCompletions
+        .filter(c => c.habit_id === habitId && c.completion_percentage === 100)
+        .map(c => c.completion_date)
+      
+      if (habitCompletions.length === 0) return { current: 0, atRisk: false }
+      
+      // Check consecutive days backwards from yesterday
+      let streak = 0
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('en-CA')
+      let checkDate = yesterday
+      
+      // Include today if completed
+      const completedToday = completions.some(c => c.habit_id === habitId && c.completion_percentage === 100)
+      if (completedToday) {
+        streak = 1
+        checkDate = yesterday
+      }
+      
+      // Count consecutive days
+      for (let i = 0; i < 30; i++) {
+        if (habitCompletions.includes(checkDate)) {
+          streak++
+          // Go back one day
+          const d = new Date(checkDate)
+          d.setDate(d.getDate() - 1)
+          checkDate = d.toLocaleDateString('en-CA')
+        } else {
+          break
+        }
+      }
+      
+      // At risk = had a streak yesterday but not completed today
+      const hadStreakYesterday = habitCompletions.includes(yesterday)
+      const atRisk = hadStreakYesterday && !completedToday
+      
+      return { current: streak, atRisk }
+    }
 
     // Calculate habit stats
     const totalHabits = habits.length
-    const completedHabits = completions.filter(c => c.completion_percentage === 100).length
-    const partialHabits = completions.filter(c => c.completion_percentage > 0 && c.completion_percentage < 100).length
+    const completedCount = completions.filter(c => c.completion_percentage === 100).length
+    const partialCount = completions.filter(c => c.completion_percentage > 0 && c.completion_percentage < 100).length
     
     // Weighted completion (partials count proportionally)
     const completionSum = completions.reduce((sum, c) => sum + (c.completion_percentage / 100), 0)
     const completionPercentage = totalHabits > 0 ? Math.round((completionSum / totalHabits) * 100) : 0
 
-    // Find incomplete habits
-    const completedIds = new Set(completions.map(c => c.habit_id))
+    // Build completed and incomplete habit lists with streaks
+    const completedIds = new Set(completions.filter(c => c.completion_percentage === 100).map(c => c.habit_id))
+    
+    const completedHabits = habits
+      .filter(h => completedIds.has(h.id))
+      .map(h => {
+        const completion = completions.find(c => c.habit_id === h.id)
+        const streak = calculateStreak(h.id)
+        return {
+          name: h.name,
+          category: h.category,
+          completedAt: completion?.completed_at,
+          streak: streak.current,
+        }
+      })
+
     const incompleteHabits = habits
       .filter(h => !completedIds.has(h.id))
-      .map(h => ({ name: h.name, category: h.category }))
+      .map(h => {
+        const streak = calculateStreak(h.id)
+        return {
+          name: h.name,
+          category: h.category,
+          streak: streak.current,
+          atRisk: streak.atRisk,
+        }
+      })
+
+    // Habits with streaks at risk (had streak yesterday, not done today)
+    const atRiskHabits = incompleteHabits.filter(h => h.atRisk)
 
     // Focus habits from check-in
     const focusHabitIds = checkinRes.data?.focus_habit_ids || []
@@ -93,31 +189,26 @@ export async function GET(request: Request) {
       .filter(h => focusHabitIds.includes(h.id))
       .map(h => {
         const completion = completions.find(c => c.habit_id === h.id)
+        const streak = calculateStreak(h.id)
         return {
           name: h.name,
           completed: completion?.completion_percentage === 100,
-          percentage: completion?.completion_percentage || 0
+          percentage: completion?.completion_percentage || 0,
+          streak: streak.current,
         }
       })
 
     return NextResponse.json({
       date: today,
-      _debug: {
-        queryDate: today,
-        serverTime: new Date().toISOString(),
-        completionsCount: completions.length,
-        habitsCount: habits.length,
-        errors: {
-          habits: habitsRes.error,
-          completions: completionsRes.error,
-        },
-      },
+      generatedAt: new Date().toISOString(),
       habits: {
         total: totalHabits,
-        completed: completedHabits,
-        partial: partialHabits,
+        completed: completedCount,
+        partial: partialCount,
         percentage: completionPercentage,
-        incomplete: incompleteHabits.slice(0, 10), // Top 10
+        completedList: completedHabits,
+        incompleteList: incompleteHabits.slice(0, 15),
+        atRisk: atRiskHabits,
         focus: focusHabits,
       },
       checkin: checkinRes.data ? {
