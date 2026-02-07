@@ -89,7 +89,6 @@ export function PanelWrapper({ direction, children, className = '', noScroll = f
         exit={variants.exit}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`absolute inset-0 z-50 outline-none flex items-center justify-center ${className}`}
-        style={{ paddingBottom: '48px' }}
         onClick={closePanel}
       >
         {/* Close button */}
@@ -125,10 +124,9 @@ export function PanelWrapper({ direction, children, className = '', noScroll = f
       className={`absolute z-50 outline-none
         top-0 ${direction === 'left' ? 'left-0' : 'right-0'} h-full w-full md:w-[60vw] max-w-[900px]
         ${className}`}
-      style={{ paddingBottom: '48px' }}
     >
       <div
-        className={`h-full bg-[#07070e]/90 backdrop-blur-xl border-r border-white/5 p-6 md:p-8
+        className={`h-full bg-[#07070e]/90 backdrop-blur-xl border-r border-white/5 p-6 pb-14 md:p-8 md:pb-16
           ${noScroll ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}`}
       >
         {children}

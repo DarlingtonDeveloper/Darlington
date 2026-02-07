@@ -7,11 +7,11 @@ import { PanelWrapper } from './panel-wrapper'
 import { ExternalLink } from 'lucide-react'
 
 const TRAJECTORY = [
-  { year: '2025', role: 'Lead Backend Engineer', company: 'Cox Automotive', desc: 'Serverless remittance. EventBridge, Lambda, Open Banking, SEPA. Introduced Claude AI agents with MCP tools across microservices.', current: true },
-  { year: '2022', role: 'Senior Backend Engineer', company: 'Finova', desc: '.NET 9, GraphQL, CosmosDB. Led 8 developers across four contract-driven microservices. Reduced production incidents 85%.', current: false },
-  { year: '2021', role: 'Cloud Platform Engineer', company: 'BNY Mellon', desc: 'Cross-cloud Kubernetes on Azure & AWS. Python LLM chatbot. Go observability tooling. Terraform IaC — onboarding from 2 weeks to 2 days.', current: false },
-  { year: '2020', role: 'Cloud Software Engineer', company: 'Cloud Design Box', desc: 'GPT-3 tutor chatbot serving 1M+ students. Real-time collaborative whiteboard. <100ms sync nationwide.', current: false },
-  { year: '2018', role: 'Full-Stack Developer', company: 'LabLogic Systems', desc: 'ISO 9001-compliant nuclear medicine backend. C#, SQL Server. Systems can be life-critical.', current: false },
+  { year: '2025', role: 'Lead Backend Engineer', company: 'Cox Automotive', href: 'https://www.coxautoinc.eu', desc: 'Serverless remittance. EventBridge, Lambda, Open Banking, SEPA. Introduced Claude AI agents with MCP tools across microservices.', current: true },
+  { year: '2022', role: 'Senior Backend Engineer', company: 'Finova', href: 'https://www.finova.tech', desc: '.NET 9, GraphQL, CosmosDB. Led 8 developers across four contract-driven microservices. Reduced production incidents 85%.', current: false },
+  { year: '2021', role: 'Cloud Platform Engineer', company: 'BNY Mellon', href: 'https://www.bny.com', desc: 'Cross-cloud Kubernetes on Azure & AWS. Python LLM chatbot. Go observability tooling. Terraform IaC — onboarding from 2 weeks to 2 days.', current: false },
+  { year: '2020', role: 'Cloud Software Engineer', company: 'Cloud Design Box', href: 'https://clouddesignbox.co.uk', desc: 'GPT-3 tutor chatbot serving 1M+ students. Real-time collaborative whiteboard. <100ms sync nationwide.', current: false },
+  { year: '2018', role: 'Full-Stack Developer', company: 'LabLogic Systems', href: 'https://lablogic.com', desc: 'ISO 9001-compliant nuclear medicine backend. C#, SQL Server. Systems can be life-critical.', current: false },
   { year: '2015', role: 'BSc Computer Science (First Class)', company: 'Hull University', desc: 'Machine vision weather prediction. Natural language to C compiler.', current: false },
 ]
 
@@ -113,7 +113,9 @@ export function WhoPanel() {
                 </span>
                 <p className="text-[14px] font-medium text-[var(--fg)]">
                   {entry.role}{' '}
-                  <span className="text-[var(--fg2)]">@ {entry.company}</span>
+                  <span className="text-[var(--fg2)]">@ {entry.href ? (
+                    <a href={entry.href} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--accent)] transition-colors">{entry.company}</a>
+                  ) : entry.company}</span>
                 </p>
                 <p className="text-[12px] text-[var(--fg2)]">{entry.desc}</p>
               </motion.div>

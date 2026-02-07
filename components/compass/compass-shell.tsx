@@ -42,7 +42,7 @@ export function CompassShell() {
   const variant = activePanel ?? 'idle'
 
   return (
-    <div className="fixed inset-0 bg-[var(--bg)] overflow-hidden pt-safe pb-safe pl-safe pr-safe">
+    <div className="fixed inset-0 bg-[var(--bg)] overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 pointer-events-none">
         <div
