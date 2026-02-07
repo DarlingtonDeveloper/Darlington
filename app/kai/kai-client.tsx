@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { MessageList } from '@/components/kai/message-list'
 import { ChatInput } from '@/components/kai/chat-input'
+import { getDeviceIdentity, buildSignaturePayload, signMessage } from '@/lib/kai/gateway-identity'
 
 export interface Message {
     id: string
@@ -23,9 +24,7 @@ function uuid(): string {
  * Protocol: typed req/res/event frames over WebSocket.
  * Handshake: server sends connect.challenge → client sends connect req → server res hello-ok.
  * Chat: chat.send → streaming chat events (delta/final).
- *
- * For remote connections, we need device identity (WebCrypto keypair).
- * The API route proxies auth config so the token stays server-side.
+ * Device identity: Ed25519 keypair for secure remote connections.
  */
 export function KaiClient() {
     const [messages, setMessages] = useState<Message[]>([])
@@ -56,7 +55,7 @@ export function KaiClient() {
         })
     }, [])
 
-    // Extract text content from a message object
+    // Extract text content from a gateway message object
     const extractText = useCallback((msg: Record<string, unknown>): string | null => {
         const content = msg.content
         if (typeof content === 'string') return content
@@ -114,35 +113,63 @@ export function KaiClient() {
                 const eventName = frame.event as string
                 const payload = frame.payload as Record<string, unknown> | undefined
 
-                // Challenge → send connect
+                // Challenge → build device identity and connect
                 if (eventName === 'connect.challenge') {
-                    request('connect', {
-                        minProtocol: 3,
-                        maxProtocol: 3,
-                        client: {
-                            id: 'webchat',
-                            version: '1.0.0',
-                            platform: 'web',
-                            mode: 'webchat',
-                        },
-                        role: 'operator',
-                        scopes: ['operator.read', 'operator.write'],
-                        caps: [],
-                        auth: { token: config.token },
-                        userAgent: navigator.userAgent,
-                        locale: navigator.language,
-                    }).then(() => {
+                    const nonce = (payload?.nonce as string) || null
+
+                    try {
+                        const device = await getDeviceIdentity()
+                        const signedAt = Date.now()
+                        const scopes = ['operator.read', 'operator.write']
+
+                        const sigPayload = buildSignaturePayload({
+                            deviceId: device.deviceId,
+                            clientId: 'webchat',
+                            clientMode: 'webchat',
+                            role: 'operator',
+                            scopes,
+                            signedAtMs: signedAt,
+                            token: config.token || null,
+                            nonce,
+                        })
+                        const signature = await signMessage(device.privateKey, sigPayload)
+
+                        await request('connect', {
+                            minProtocol: 3,
+                            maxProtocol: 3,
+                            client: {
+                                id: 'webchat',
+                                version: '1.0.0',
+                                platform: 'web',
+                                mode: 'webchat',
+                            },
+                            role: 'operator',
+                            scopes,
+                            caps: [],
+                            auth: { token: config.token },
+                            device: {
+                                id: device.deviceId,
+                                publicKey: device.publicKey,
+                                signature,
+                                signedAt,
+                                nonce,
+                            },
+                            userAgent: navigator.userAgent,
+                            locale: navigator.language,
+                        })
+
                         setConnState('connected')
 
                         // Load chat history
-                        request('chat.history', {
-                            sessionKey: config.sessionKey || 'webchat',
-                            limit: 100,
-                        }).then((result) => {
-                            const res = result as { messages?: Array<Record<string, unknown>> }
-                            if (res.messages && Array.isArray(res.messages)) {
+                        try {
+                            const result = await request('chat.history', {
+                                sessionKey: config.sessionKey || 'webchat',
+                                limit: 100,
+                            }) as { messages?: Array<Record<string, unknown>> }
+
+                            if (result.messages && Array.isArray(result.messages)) {
                                 setMessages(
-                                    res.messages
+                                    result.messages
                                         .filter(m => m.role === 'user' || m.role === 'assistant')
                                         .map(m => ({
                                             id: uuid(),
@@ -153,11 +180,13 @@ export function KaiClient() {
                                         .filter(m => m.content)
                                 )
                             }
-                        }).catch(() => { /* history load failure is non-fatal */ })
-                    }).catch(() => {
+                        } catch {
+                            // History load failure is non-fatal
+                        }
+                    } catch {
                         setError('Authentication failed')
                         ws.close()
-                    })
+                    }
                     return
                 }
 
@@ -169,7 +198,6 @@ export function KaiClient() {
                     if (state === 'delta' && message) {
                         const text = extractText(message)
                         if (typeof text === 'string') {
-                            // Only update if new content is longer (cumulative)
                             if (text.length >= streamContentRef.current.length) {
                                 streamContentRef.current = text
                             }
@@ -194,29 +222,6 @@ export function KaiClient() {
                     }
 
                     if (state === 'final' || state === 'aborted' || state === 'error') {
-                        // On final, refresh from history for clean state
-                        if (state === 'final') {
-                            request('chat.history', {
-                                sessionKey: config.sessionKey || 'webchat',
-                                limit: 100,
-                            }).then((result) => {
-                                const res = result as { messages?: Array<Record<string, unknown>> }
-                                if (res.messages && Array.isArray(res.messages)) {
-                                    setMessages(
-                                        res.messages
-                                            .filter(m => m.role === 'user' || m.role === 'assistant')
-                                            .map(m => ({
-                                                id: uuid(),
-                                                role: m.role as 'user' | 'assistant',
-                                                content: extractText(m) || '',
-                                                timestamp: (m.timestamp as number) || Date.now(),
-                                            }))
-                                            .filter(m => m.content)
-                                    )
-                                }
-                            }).catch(() => {})
-                        }
-
                         if (state === 'error') {
                             setError((payload?.errorMessage as string) || 'Response error')
                         }
