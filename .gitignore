@@ -69,4 +69,4 @@ logs
 .env.production.local
 
 # Next.js telemetry
-.next-telemetry
+.next-telemetry.mission/
