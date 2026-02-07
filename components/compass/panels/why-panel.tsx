@@ -88,12 +88,31 @@ export function WhyPanel() {
     })
   }
 
-  const handleContact = (e: React.FormEvent) => {
+  const handleContact = async (e: React.FormEvent) => {
     e.preventDefault()
-    const subject = encodeURIComponent(`Hello from ${contactName || email}`)
-    const body = encodeURIComponent(`From: ${contactName}\nEmail: ${email}\n\n${contactMessage}`)
-    window.location.href = `mailto:hello@darlington.dev?subject=${subject}&body=${body}`
-    setContactSent(true)
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: contactName, email, message: contactMessage }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to send message')
+        setIsLoading(false)
+        return
+      }
+
+      setContactSent(true)
+      setIsLoading(false)
+    } catch {
+      setError('Failed to send message')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -261,38 +280,58 @@ export function WhyPanel() {
             </motion.p>
 
             {!contactSent && (
-              <motion.form onSubmit={handleContact} className="space-y-3" variants={fadeUp}>
-                <input
-                  type="text"
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  placeholder="Your name"
-                  required
-                  autoFocus
-                  className="w-full h-11 px-4 bg-white/[0.03] border border-white/10 rounded-lg
-                             text-[14px] text-[var(--fg)] placeholder:text-[var(--fg2)]
-                             focus:outline-none focus:border-[var(--accent)] transition-colors duration-200
-                             font-sans"
-                />
-                <textarea
-                  value={contactMessage}
-                  onChange={(e) => setContactMessage(e.target.value)}
-                  placeholder="Message"
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-lg
-                             text-[14px] text-[var(--fg)] placeholder:text-[var(--fg2)]
-                             focus:outline-none focus:border-[var(--accent)] transition-colors duration-200
-                             font-sans resize-none"
-                />
-                <button
-                  type="submit"
-                  className="w-full h-11 bg-[var(--accent)] hover:bg-[var(--accent2)] text-[var(--bg)]
-                             rounded-lg text-[13px] font-medium transition-all duration-150"
-                >
-                  Send →
-                </button>
-              </motion.form>
+              <>
+                {error && (
+                  <motion.div
+                    className="mb-3 p-3 rounded-lg bg-red-950/30 border border-red-900/50 text-[12px] text-red-300"
+                    variants={fadeUp}
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <motion.form onSubmit={handleContact} className="space-y-3" variants={fadeUp}>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="Your name"
+                    required
+                    autoFocus
+                    className="w-full h-11 px-4 bg-white/[0.03] border border-white/10 rounded-lg
+                               text-[14px] text-[var(--fg)] placeholder:text-[var(--fg2)]
+                               focus:outline-none focus:border-[var(--accent)] transition-colors duration-200
+                               font-sans"
+                  />
+                  <textarea
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    placeholder="Message"
+                    required
+                    rows={4}
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-lg
+                               text-[14px] text-[var(--fg)] placeholder:text-[var(--fg2)]
+                               focus:outline-none focus:border-[var(--accent)] transition-colors duration-200
+                               font-sans resize-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-11 bg-[var(--accent)] hover:bg-[var(--accent2)] text-[var(--bg)]
+                               rounded-lg text-[13px] font-medium transition-all duration-150
+                               disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="size-3.5 border-[1.5px] border-[var(--bg)]/30 border-t-[var(--bg)] rounded-full animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send →'
+                    )}
+                  </button>
+                </motion.form>
+              </>
             )}
 
             <motion.button
