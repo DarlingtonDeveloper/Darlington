@@ -1,26 +1,33 @@
 import type { Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { defaultMetadata } from "@/lib/metadata-config";
 import { PersonSchema, WebsiteSchema } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { MobileNavBar } from "@/components/MobileNavBar";
 import { AuthProvider } from "@/contexts/auth-context";
+import { CompassProvider } from "@/contexts/compass-context";
 import { createClient } from "@/lib/supabase/server";
 
-// Optimize font loading with display swap
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
   display: "swap",
 });
 
@@ -29,7 +36,7 @@ export const metadata = defaultMetadata;
 
 // Define viewport settings
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#07070e",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -51,8 +58,6 @@ const portfolioOwner = {
   ],
   description: "Full-stack developer and system architect specializing in TypeScript, Python, Go and cloud infrastructure.",
 };
-
-// Mobile navbar will be handled by a client component
 
 export default async function RootLayout({
   children,
@@ -84,7 +89,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://instagram.com" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${cormorant.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}
         style={{ isolation: "isolate" }}
         suppressHydrationWarning
       >
@@ -99,32 +104,11 @@ export default async function RootLayout({
         <SpeedInsights />
 
         <AuthProvider initialSession={session}>
-          {/*
-            Responsive Layout Structure:
-            - Desktop: Logo+Navbar -> Content -> Footer
-            - Mobile: Logo -> Content -> Navbar -> Footer
-          */}
-          <div className="bg-black text-white flex flex-col h-screen overflow-hidden">
-            {/* Header - fixed height */}
-            <div className="flex-none h-[100px]">
-              <Header />
-            </div>
-
-            {/* Main content - calculated height to fit remaining space */}
-            <div className="flex-1 h-[calc(100vh-230px)] md:h-[calc(100vh-230px)] overflow-hidden">
+          <CompassProvider>
+            <div className="bg-[var(--bg)] text-[var(--fg)] h-screen overflow-hidden">
               {children}
             </div>
-
-            {/* Mobile Navbar - only visible on mobile */}
-            <div className="md:hidden flex-none">
-              <MobileNavBar />
-            </div>
-
-            {/* Footer - fixed height */}
-            <div className="flex-none h-[130px]">
-              <Footer />
-            </div>
-          </div>
+          </CompassProvider>
         </AuthProvider>
       </body>
     </html>

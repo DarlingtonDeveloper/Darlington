@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useCompassOptional } from '@/contexts/compass-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
@@ -12,6 +13,7 @@ interface UserMenuProps {
 
 export function UserMenu({ compact = false }: UserMenuProps) {
   const { user, signOut, isLoading } = useAuth()
+  const compass = useCompassOptional()
   const [isOpen, setIsOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -69,10 +71,18 @@ export function UserMenu({ compact = false }: UserMenuProps) {
 
   // Signed out state
   if (!user) {
+    const handleSignIn = () => {
+      if (compass) {
+        compass.openPanel('why')
+      } else {
+        router.push('/login')
+      }
+    }
+
     if (compact) {
       return (
-        <Link
-          href="/login"
+        <button
+          onClick={handleSignIn}
           className="size-8 rounded-full bg-neutral-800/80 border border-neutral-700/50
                      flex items-center justify-center transition-all duration-150
                      hover:bg-neutral-700/80 hover:border-neutral-600/50 active:scale-95"
@@ -91,13 +101,13 @@ export function UserMenu({ compact = false }: UserMenuProps) {
               d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
             />
           </svg>
-        </Link>
+        </button>
       )
     }
 
     return (
-      <Link
-        href="/login"
+      <button
+        onClick={handleSignIn}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium
                    text-neutral-400 hover:text-neutral-200 transition-colors duration-150
                    rounded-md hover:bg-neutral-800/50"
@@ -116,7 +126,7 @@ export function UserMenu({ compact = false }: UserMenuProps) {
           />
         </svg>
         Sign in
-      </Link>
+      </button>
     )
   }
 

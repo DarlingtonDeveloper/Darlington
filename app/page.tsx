@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { SplineSceneBasic } from "@/components/SplineSceneBasic";
+import { CompassShell } from "@/components/compass/compass-shell";
 import { BreadcrumbSchema } from "@/components/json-ld";
 
-// Page-specific metadata
 export const metadata: Metadata = {
   title: "Home",
   description: "Portfolio of Darlington, a full-stack developer and system architect specializing in TypeScript, Python, Go and cloud infrastructure.",
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Breadcrumb data
 const breadcrumbs = [
   { name: "Home", url: "https://darlington.dev" },
 ];
@@ -25,19 +23,14 @@ const breadcrumbs = [
 export default function Home() {
   return (
     <>
-      {/* Structured data for breadcrumbs */}
       <BreadcrumbSchema items={breadcrumbs} />
-
-      {/* Full-height section that fits within the calculated space in layout */}
-      <div className="w-full h-full">
-        <Suspense fallback={
-          <div className="w-full h-full flex items-center justify-center bg-black">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true"></div>
-          </div>
-        }>
-          <SplineSceneBasic />
-        </Suspense>
-      </div>
+      <Suspense fallback={
+        <div className="fixed inset-0 bg-[var(--bg)] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }>
+        <CompassShell />
+      </Suspense>
     </>
   );
 }
