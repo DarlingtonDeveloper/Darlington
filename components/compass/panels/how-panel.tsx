@@ -6,19 +6,24 @@ import { ExternalLink } from 'lucide-react'
 
 const BLOG_POSTS = [
   {
-    title: 'Building Autonomous Agents with Go',
-    tag: 'Engineering',
-    href: 'https://frtr.hashnode.dev/',
+    title: 'The Markdown Attack Nobody\'s Talking About.',
+    tag: 'Security',
+    href: 'https://blog.darlington.dev/the-markdown-attack-nobodys-talking-about',
   },
   {
-    title: 'Why I Built My Own Personal OS',
-    tag: 'Systems',
-    href: 'https://frtr.hashnode.dev/',
+    title: 'The Architect\'s Illusion',
+    tag: 'Architecture',
+    href: 'https://blog.darlington.dev/the-architects-illusion',
   },
   {
-    title: 'From Payments to Pipelines',
-    tag: 'Career',
-    href: 'https://frtr.hashnode.dev/',
+    title: 'AI Won\'t Teach You to Think Like a Developer (Unless you ask it).',
+    tag: 'AI',
+    href: 'https://blog.darlington.dev/ai-wont-teach-you-to-think-like-a-developer-unless-you-ask-it',
+  },
+  {
+    title: 'The Best Architecture Is the One You Can Maintain',
+    tag: 'Architecture',
+    href: 'https://blog.darlington.dev/the-best-architecture-is-the-one-you-can-maintain',
   },
 ]
 

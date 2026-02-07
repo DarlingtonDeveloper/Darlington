@@ -75,7 +75,7 @@ export function CompassPrompts() {
               min-w-[44px] min-h-[44px] flex items-center justify-center
               cursor-pointer select-none
               ${prompt.isAccent
-                ? 'text-[#c4b5a0] text-[1.5rem] md:text-[1.7rem] transition-[text-shadow] duration-300'
+                ? 'text-[#c4b5a0] text-[1.5rem] md:text-[1.7rem] underline underline-offset-[6px] decoration-[#c4b5a0]/40 transition-[text-shadow] duration-300'
                 : 'text-[#8a8690] hover:text-[var(--fg)] text-[1.35rem] md:text-[1.55rem] transition-colors duration-200'
               }`}
             style={prompt.isAccent
