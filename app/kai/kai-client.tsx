@@ -203,7 +203,7 @@ export function KaiClient() {
                     const sigPayload = [
                         'v2',
                         keys.deviceId,
-                        'kai-webchat',
+                        'webchat',
                         'webchat',
                         'operator',
                         scopes.join(','),
@@ -217,7 +217,7 @@ export function KaiClient() {
                         minProtocol: 3,
                         maxProtocol: 3,
                         client: {
-                            id: 'kai-webchat',
+                            id: 'webchat',
                             version: '1.0.0',
                             platform: 'web',
                             mode: 'webchat',
