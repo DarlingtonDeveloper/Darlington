@@ -41,81 +41,6 @@ export function KaiClient() {
     const assistantMsgIdRef = useRef<string | null>(null)
     const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const configRef = useRef<{ wsUrl: string; token: string; sessionKey: string } | null>(null)
-    const deviceKeysRef = useRef<{ publicKey: string; privateKey: CryptoKey; deviceId: string } | null>(null)
-
-    // Generate or retrieve device keypair for identity
-    const getDeviceKeys = useCallback(async () => {
-        if (deviceKeysRef.current) return deviceKeysRef.current
-
-        // Check localStorage for existing keys
-        const stored = localStorage.getItem('kai-device-keys')
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored)
-                const privateKey = await crypto.subtle.importKey(
-                    'jwk', parsed.privateKeyJwk,
-                    { name: 'ECDSA', namedCurve: 'P-256' },
-                    false, ['sign']
-                )
-                deviceKeysRef.current = {
-                    publicKey: parsed.publicKey,
-                    privateKey,
-                    deviceId: parsed.deviceId,
-                }
-                return deviceKeysRef.current
-            } catch {
-                localStorage.removeItem('kai-device-keys')
-            }
-        }
-
-        // Generate new keypair
-        const keyPair = await crypto.subtle.generateKey(
-            { name: 'ECDSA', namedCurve: 'P-256' },
-            true, ['sign', 'verify']
-        )
-
-        const pubJwk = await crypto.subtle.exportKey('jwk', keyPair.publicKey)
-        const privJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey)
-
-        // Create a fingerprint as device ID
-        const pubBytes = new TextEncoder().encode(JSON.stringify(pubJwk))
-        const hashBuf = await crypto.subtle.digest('SHA-256', pubBytes)
-        const hashArr = Array.from(new Uint8Array(hashBuf))
-        const deviceId = hashArr.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32)
-        const publicKey = btoa(JSON.stringify(pubJwk))
-
-        // Re-import private key as non-extractable for signing
-        const privateKey = await crypto.subtle.importKey(
-            'jwk', privJwk,
-            { name: 'ECDSA', namedCurve: 'P-256' },
-            false, ['sign']
-        )
-
-        localStorage.setItem('kai-device-keys', JSON.stringify({
-            publicKey,
-            privateKeyJwk: privJwk,
-            deviceId,
-        }))
-
-        deviceKeysRef.current = { publicKey, privateKey, deviceId }
-        return deviceKeysRef.current
-    }, [])
-
-    // Sign a message with device private key
-    const sign = useCallback(async (message: string) => {
-        const keys = await getDeviceKeys()
-        const encoder = new TextEncoder()
-        const data = encoder.encode(message)
-        const sig = await crypto.subtle.sign(
-            { name: 'ECDSA', hash: 'SHA-256' },
-            keys.privateKey,
-            data,
-        )
-        const sigBytes = new Uint8Array(sig)
-        let binary = ''
-        for (let i = 0; i < sigBytes.length; i++) binary += String.fromCharCode(sigBytes[i])
-        return btoa(binary)
-    }, [getDeviceKeys])
 
     // Send a typed request over WS
     const request = useCallback((method: string, params: Record<string, unknown>): Promise<unknown> => {
@@ -178,8 +103,6 @@ export function KaiClient() {
         const ws = new WebSocket(config.wsUrl)
         wsRef.current = ws
 
-        let connectNonce: string | null = null
-
         ws.onmessage = async (event) => {
             let frame: Record<string, unknown>
             try {
@@ -193,26 +116,6 @@ export function KaiClient() {
 
                 // Challenge → send connect
                 if (eventName === 'connect.challenge') {
-                    connectNonce = (payload?.nonce as string) || null
-
-                    const keys = await getDeviceKeys()
-                    const signedAt = Date.now()
-                    const scopes = ['operator.read', 'operator.write']
-
-                    // Build signature payload matching Control UI format
-                    const sigPayload = [
-                        'v2',
-                        keys.deviceId,
-                        'webchat',
-                        'webchat',
-                        'operator',
-                        scopes.join(','),
-                        String(signedAt),
-                        config.token || '',
-                        connectNonce || '',
-                    ].join('|')
-                    const signature = await sign(sigPayload)
-
                     request('connect', {
                         minProtocol: 3,
                         maxProtocol: 3,
@@ -223,16 +126,9 @@ export function KaiClient() {
                             mode: 'webchat',
                         },
                         role: 'operator',
-                        scopes,
+                        scopes: ['operator.read', 'operator.write'],
                         caps: [],
                         auth: { token: config.token },
-                        device: {
-                            id: keys.deviceId,
-                            publicKey: keys.publicKey,
-                            signature,
-                            signedAt,
-                            nonce: connectNonce,
-                        },
                         userAgent: navigator.userAgent,
                         locale: navigator.language,
                     }).then(() => {
@@ -373,7 +269,7 @@ export function KaiClient() {
         ws.onerror = () => {
             setError('Connection error')
         }
-    }, [fetchConfig, getDeviceKeys, sign, request, extractText])
+    }, [fetchConfig, request, extractText])
 
     // Connect on mount
     useEffect(() => {
