@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789'
 const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN || ''
@@ -26,6 +27,14 @@ function validateMessages(messages: unknown): messages is ChatMessage[] {
 }
 
 export async function POST(req: NextRequest) {
+    // Auth check — require authenticated Supabase session
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     let body: unknown
     try {
         body = await req.json()
@@ -54,7 +63,7 @@ export async function POST(req: NextRequest) {
                 model: 'openclaw:main',
                 messages,
                 stream: true,
-                user: 'darlington-web',
+                user: user.id,
             }),
             signal: AbortSignal.timeout(60_000),
         })
