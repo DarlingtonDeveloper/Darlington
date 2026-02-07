@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "audience": "personal",
+  "zones": [
+    "frontend",
+    "backend",
+    "database",
+    "infra",
+    "shared"
+  ],
+  "openclaw": true
+}
