@@ -1,33 +1,11 @@
-import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789'
-const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN || ''
-
-const MAX_MESSAGE_LENGTH = 10000
-const MAX_MESSAGES = 50
-
-interface ChatMessage {
-    role: string
-    content: string
-}
-
-function validateMessages(messages: unknown): messages is ChatMessage[] {
-    if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) {
-        return false
-    }
-    return messages.every(
-        (m) =>
-            typeof m === 'object' &&
-            m !== null &&
-            typeof m.content === 'string' &&
-            m.content.length <= MAX_MESSAGE_LENGTH &&
-            (m.role === 'user' || m.role === 'assistant')
-    )
-}
-
-export async function POST(req: NextRequest) {
-    // Auth check — require authenticated Supabase session
+/**
+ * GET /api/kai/chat — Auth gate for WebSocket config.
+ * Returns the Gateway WS URL + token only to authenticated users.
+ * The token never reaches the client HTML — only fetched after auth.
+ */
+export async function GET() {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -35,55 +13,17 @@ export async function POST(req: NextRequest) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let body: unknown
-    try {
-        body = await req.json()
-    } catch {
-        return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
-    }
+    const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'ws://127.0.0.1:18789'
+    const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN || ''
 
-    const { messages } = body as { messages?: unknown }
+    // Convert http(s) to ws(s) if needed
+    const wsUrl = gatewayUrl
+        .replace(/^https:\/\//, 'wss://')
+        .replace(/^http:\/\//, 'ws://')
 
-    if (!validateMessages(messages)) {
-        return Response.json(
-            { error: 'Invalid messages: must be a non-empty array of {role: "user"|"assistant", content: string}' },
-            { status: 400 }
-        )
-    }
-
-    let response: Response
-    try {
-        response = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GATEWAY_TOKEN}`,
-            },
-            body: JSON.stringify({
-                model: 'openclaw:main',
-                messages,
-                stream: true,
-                user: user.id,
-            }),
-            signal: AbortSignal.timeout(60_000),
-        })
-    } catch {
-        return Response.json({ error: 'Gateway unavailable' }, { status: 502 })
-    }
-
-    if (!response.ok) {
-        return Response.json({ error: 'Gateway error' }, { status: 502 })
-    }
-
-    if (!response.body) {
-        return Response.json({ error: 'No response body from gateway' }, { status: 502 })
-    }
-
-    return new Response(response.body, {
-        headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-        },
+    return Response.json({
+        wsUrl,
+        token: gatewayToken,
+        sessionKey: 'webchat',
     })
 }
