@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { X } from 'lucide-react'
 import { useCompass } from '@/contexts/compass-context'
 
 type Direction = 'left' | 'right' | 'zoom-out' | 'zoom-in'
@@ -35,11 +36,13 @@ interface PanelWrapperProps {
   direction: Direction
   children: React.ReactNode
   className?: string
+  noScroll?: boolean
 }
 
-export function PanelWrapper({ direction, children, className = '' }: PanelWrapperProps) {
+export function PanelWrapper({ direction, children, className = '', noScroll = false }: PanelWrapperProps) {
   const { closePanel } = useCompass()
   const panelRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -48,13 +51,16 @@ export function PanelWrapper({ direction, children, className = '' }: PanelWrapp
     [closePanel]
   )
 
+  const isSlide = direction === 'left' || direction === 'right'
+
+  // For slide panels: click outside the panel closes it
   const handleClickOutside = useCallback(
     (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      if (isSlide && panelRef.current && !panelRef.current.contains(e.target as Node)) {
         closePanel()
       }
     },
-    [closePanel]
+    [closePanel, isSlide]
   )
 
   useEffect(() => {
@@ -66,13 +72,47 @@ export function PanelWrapper({ direction, children, className = '' }: PanelWrapp
     }
   }, [handleEscape, handleClickOutside])
 
-  // Focus trap: focus panel on mount
   useEffect(() => {
     panelRef.current?.focus()
   }, [])
 
   const variants = MOTION_VARIANTS[direction]
-  const isSlide = direction === 'left' || direction === 'right'
+
+  // For zoom panels: backdrop click closes, content click doesn't
+  if (!isSlide) {
+    return (
+      <motion.div
+        ref={panelRef}
+        tabIndex={-1}
+        initial={variants.initial}
+        animate={variants.animate}
+        exit={variants.exit}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className={`absolute inset-0 z-50 outline-none flex items-center justify-center ${className}`}
+        style={{ paddingBottom: '48px' }}
+        onClick={closePanel}
+      >
+        {/* Close button */}
+        <button
+          onClick={closePanel}
+          className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-2 min-w-[44px] min-h-[44px]
+                     flex items-center justify-center rounded-full
+                     text-[var(--fg2)] hover:text-[var(--fg)] transition-colors duration-200"
+          aria-label="Close panel"
+        >
+          <X size={20} />
+        </button>
+
+        <div
+          ref={contentRef}
+          className="h-full overflow-y-auto no-scrollbar"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
@@ -83,19 +123,13 @@ export function PanelWrapper({ direction, children, className = '' }: PanelWrapp
       exit={variants.exit}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={`absolute z-50 outline-none
-        ${isSlide
-          ? `top-0 ${direction === 'left' ? 'left-0' : 'right-0'} h-full w-full md:w-[60vw] max-w-[900px]`
-          : 'inset-0 flex items-center justify-center'
-        }
+        top-0 ${direction === 'left' ? 'left-0' : 'right-0'} h-full w-full md:w-[60vw] max-w-[900px]
         ${className}`}
       style={{ paddingBottom: '48px' }}
     >
       <div
-        className={`h-full overflow-y-auto md:overflow-y-auto
-          ${isSlide
-            ? 'bg-[#07070e]/90 backdrop-blur-xl border-r border-white/5 p-6 md:p-8'
-            : ''
-          } no-scrollbar`}
+        className={`h-full bg-[#07070e]/90 backdrop-blur-xl border-r border-white/5 p-6 md:p-8
+          ${noScroll ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}`}
       >
         {children}
       </div>

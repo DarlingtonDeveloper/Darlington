@@ -110,13 +110,13 @@ export function WhyPanel() {
               className="font-display text-3xl md:text-4xl font-light text-[var(--fg)] text-center mb-2"
               variants={fadeUp}
             >
-              Log in.
+              Reach out.
             </motion.h2>
             <motion.p
               className="text-[13px] text-[var(--fg2)] text-center mb-6"
               variants={fadeUp}
             >
-              Or just say hello.
+              Or log in.
             </motion.p>
 
             <motion.form onSubmit={handleEmailSubmit} className="space-y-3" variants={fadeUp}>

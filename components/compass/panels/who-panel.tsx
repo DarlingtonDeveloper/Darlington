@@ -67,15 +67,15 @@ export function WhoPanel() {
     : REPOS.filter(r => r.lang === langFilter)
 
   return (
-    <PanelWrapper direction="left">
+    <PanelWrapper direction="left" noScroll>
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pt-16 md:pt-12"
+        className="h-full flex flex-col pt-16 md:pt-12"
         variants={stagger}
         initial="initial"
         animate="animate"
       >
-        {/* Bio — full width */}
-        <motion.div className="md:col-span-2 space-y-3" variants={fadeUp}>
+        {/* Bio — full width, fixed */}
+        <motion.div className="space-y-3 shrink-0" variants={fadeUp}>
           <h2 className="font-display text-2xl md:text-3xl font-light text-[var(--fg)]">
             29. London. Backend engineer turned{' '}
             <em className="text-[var(--accent)]">agent architect</em>.
@@ -92,133 +92,136 @@ export function WhoPanel() {
           </p>
         </motion.div>
 
-        {/* Left column — Trajectory */}
-        <motion.div className="space-y-0" variants={stagger}>
-          <motion.h3
-            className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-4"
-            variants={fadeUp}
-          >
-            Trajectory
-          </motion.h3>
-          {TRAJECTORY.map((entry) => (
-            <motion.div
-              key={entry.year}
-              className={`relative pl-4 pb-4 border-l-[1.5px] ${entry.current ? 'border-[var(--accent)]' : 'border-white/10'}`}
-              variants={fadeUp}
-            >
-              <span className="font-mono text-[12px] text-[var(--accent)] tabular-nums">
-                {entry.year}
-              </span>
-              <p className="text-[14px] font-medium text-[var(--fg)]">
-                {entry.role}{' '}
-                <span className="text-[var(--fg2)]">@ {entry.company}</span>
-              </p>
-              <p className="text-[12px] text-[var(--fg2)]">{entry.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Right column — Projects */}
-        <motion.div className="space-y-6" variants={stagger}>
-          {/* Live Sites */}
-          <div>
+        {/* Two-column content area — fills remaining height */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-6 min-h-0 flex-1">
+          {/* Left column — Trajectory (fixed, not scrollable) */}
+          <motion.div className="space-y-0 overflow-hidden" variants={stagger}>
             <motion.h3
-              className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-3"
+              className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-4"
               variants={fadeUp}
             >
-              Live Sites
+              Trajectory
             </motion.h3>
-            <div className="space-y-2">
-              {LIVE_SITES.map((site) => (
-                <motion.a
-                  key={site.name}
-                  href={site.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative block p-3 rounded-lg border border-white/5 hover:border-white/10
-                             bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200 overflow-hidden"
-                  variants={fadeUp}
-                >
-                  {/* Hover preview image */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none">
-                    <Image
-                      src={site.image}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="400px"
-                    />
-                  </div>
-                  <div className="relative flex items-center justify-between">
-                    <div>
-                      <p className="text-[14px] font-medium text-[var(--fg)]">{site.name}</p>
-                      <div className="flex gap-1.5 mt-1">
-                        {site.tech.map(t => (
-                          <span key={t} className="font-mono text-[10px] text-[var(--fg2)] bg-white/5 px-1.5 py-0.5 rounded">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
+            {TRAJECTORY.map((entry) => (
+              <motion.div
+                key={entry.year}
+                className={`relative pl-4 pb-4 border-l-[1.5px] ${entry.current ? 'border-[var(--accent)]' : 'border-white/10'}`}
+                variants={fadeUp}
+              >
+                <span className="font-mono text-[12px] text-[var(--accent)] tabular-nums">
+                  {entry.year}
+                </span>
+                <p className="text-[14px] font-medium text-[var(--fg)]">
+                  {entry.role}{' '}
+                  <span className="text-[var(--fg2)]">@ {entry.company}</span>
+                </p>
+                <p className="text-[12px] text-[var(--fg2)]">{entry.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Right column — Projects (source list scrollable) */}
+          <motion.div className="flex flex-col min-h-0" variants={stagger}>
+            {/* Live Sites — fixed */}
+            <div className="shrink-0">
+              <motion.h3
+                className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-3"
+                variants={fadeUp}
+              >
+                Live Sites
+              </motion.h3>
+              <div className="space-y-2">
+                {LIVE_SITES.map((site) => (
+                  <motion.a
+                    key={site.name}
+                    href={site.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block p-3 rounded-lg border border-white/5 hover:border-white/10
+                               bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200 overflow-hidden"
+                    variants={fadeUp}
+                  >
+                    {/* Hover preview image */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none">
+                      <Image
+                        src={site.image}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="400px"
+                      />
                     </div>
-                    <span className="text-[12px] font-mono text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      Visit <ExternalLink size={12} />
-                    </span>
-                  </div>
-                </motion.a>
-              ))}
+                    <div className="relative flex items-center justify-between">
+                      <div>
+                        <p className="text-[14px] font-medium text-[var(--fg)]">{site.name}</p>
+                        <div className="flex gap-1.5 mt-1">
+                          {site.tech.map(t => (
+                            <span key={t} className="font-mono text-[10px] text-[var(--fg2)] bg-white/5 px-1.5 py-0.5 rounded">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-[12px] font-mono text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        Visit <ExternalLink size={12} />
+                      </span>
+                    </div>
+                  </motion.a>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Source / GitHub repos */}
-          <div>
-            <motion.h3
-              className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-3"
-              variants={fadeUp}
-            >
-              Source
-            </motion.h3>
-            {/* Language filters */}
-            <motion.div className="flex gap-1.5 mb-3" variants={fadeUp}>
-              {FILTERS.map(f => (
-                <button
-                  key={f}
-                  onClick={() => setLangFilter(f)}
-                  className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border transition-all duration-150
-                    ${langFilter === f
-                      ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10'
-                      : 'border-white/10 text-[var(--fg2)] hover:border-white/20'
-                    }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </motion.div>
-            <div className="space-y-0.5">
-              {filteredRepos.map((repo) => (
-                <motion.a
-                  key={repo.name}
-                  href={repo.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between py-2 px-2 -mx-2 rounded hover:bg-white/[0.03] transition-colors"
-                  variants={fadeUp}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: LANG_COLORS[repo.lang] }}
-                    />
-                    <span className="text-[13px] text-[var(--fg)]">{repo.name}</span>
-                    <span className="font-mono text-[10px] text-[var(--fg2)]">{repo.lang}</span>
-                  </div>
-                  <span className="text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity text-[12px]">
-                    →
-                  </span>
-                </motion.a>
-              ))}
+            {/* Source / GitHub repos — scrollable */}
+            <div className="flex flex-col min-h-0 flex-1 mt-6">
+              <motion.h3
+                className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-3 shrink-0"
+                variants={fadeUp}
+              >
+                Source
+              </motion.h3>
+              {/* Language filters */}
+              <motion.div className="flex gap-1.5 mb-3 shrink-0" variants={fadeUp}>
+                {FILTERS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setLangFilter(f)}
+                    className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border transition-all duration-150
+                      ${langFilter === f
+                        ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10'
+                        : 'border-white/10 text-[var(--fg2)] hover:border-white/20'
+                      }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </motion.div>
+              <div className="overflow-y-auto no-scrollbar flex-1 min-h-0 space-y-0.5">
+                {filteredRepos.map((repo) => (
+                  <motion.a
+                    key={repo.name}
+                    href={repo.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between py-2 px-2 -mx-2 rounded hover:bg-white/[0.03] transition-colors"
+                    variants={fadeUp}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: LANG_COLORS[repo.lang] }}
+                      />
+                      <span className="text-[13px] text-[var(--fg)]">{repo.name}</span>
+                      <span className="font-mono text-[10px] text-[var(--fg2)]">{repo.lang}</span>
+                    </div>
+                    <span className="text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity text-[12px]">
+                      →
+                    </span>
+                  </motion.a>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </PanelWrapper>
   )

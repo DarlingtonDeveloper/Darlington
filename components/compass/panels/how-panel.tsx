@@ -47,57 +47,57 @@ const fadeUp = {
 
 export function HowPanel() {
   return (
-    <PanelWrapper direction="right">
+    <PanelWrapper direction="right" noScroll>
       <motion.div
-        className="max-w-[560px] ml-auto space-y-8 pt-16 md:pt-12"
+        className="max-w-[560px] ml-auto h-full flex flex-col pt-16 md:pt-12"
         variants={stagger}
         initial="initial"
         animate="animate"
       >
-        {/* Writing section */}
-        <div>
-          <motion.h3
-            className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-4"
-            variants={fadeUp}
-          >
-            Writing
-          </motion.h3>
-          <div className="space-y-3">
-            {BLOG_POSTS.map((post) => (
-              <motion.a
-                key={post.title}
-                href={post.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block p-4 rounded-lg border border-white/5 hover:border-white/10
-                           bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200"
-                variants={fadeUp}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h4 className="font-display text-lg md:text-xl font-light text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors">
-                      {post.title}
-                    </h4>
-                    <span className="inline-block mt-2 font-mono text-[10px] uppercase tracking-wider text-[var(--fg2)] bg-white/5 px-2 py-0.5 rounded">
-                      {post.tag}
-                    </span>
-                  </div>
-                  <span className="text-[12px] font-mono text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 mt-1">
-                    Read <ExternalLink size={12} />
+        {/* Writing section header — fixed */}
+        <motion.h3
+          className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg2)] mb-4 shrink-0"
+          variants={fadeUp}
+        >
+          Writing
+        </motion.h3>
+
+        {/* Articles — scrollable, shows ~3 at a time */}
+        <div className="overflow-y-auto no-scrollbar min-h-0 flex-1 space-y-3">
+          {BLOG_POSTS.map((post) => (
+            <motion.a
+              key={post.title}
+              href={post.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block p-4 rounded-lg border border-white/5 hover:border-white/10
+                         bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200"
+              variants={fadeUp}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h4 className="font-display text-lg md:text-xl font-light text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors">
+                    {post.title}
+                  </h4>
+                  <span className="inline-block mt-2 font-mono text-[10px] uppercase tracking-wider text-[var(--fg2)] bg-white/5 px-2 py-0.5 rounded">
+                    {post.tag}
                   </span>
                 </div>
-              </motion.a>
-            ))}
-          </div>
+                <span className="text-[12px] font-mono text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 mt-1">
+                  Read <ExternalLink size={12} />
+                </span>
+              </div>
+            </motion.a>
+          ))}
         </div>
 
         {/* Divider */}
-        <motion.div className="border-t border-white/5" variants={fadeUp} />
+        <motion.div className="border-t border-white/5 my-6 shrink-0" variants={fadeUp} />
 
-        {/* Ship Log */}
-        <div>
+        {/* Ship Log — fixed at bottom */}
+        <div className="flex flex-col shrink-0">
           <motion.div
-            className="font-mono text-[12px] text-[var(--fg2)] mb-3 flex items-center gap-1"
+            className="font-mono text-[12px] text-[var(--fg2)] mb-3 flex items-center gap-1 shrink-0"
             variants={fadeUp}
           >
             <span className="text-[var(--status-green)]">$</span>{' '}
