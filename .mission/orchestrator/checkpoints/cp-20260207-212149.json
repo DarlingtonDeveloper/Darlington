@@ -1,0 +1,105 @@
+{
+  "id": "cp-20260207-212149",
+  "stage": "requirements",
+  "created_at": "2026-02-07T21:21:49Z",
+  "session_id": "bd7a34b7",
+  "tasks": [
+    {
+      "id": "db6bccaf",
+      "name": "Discovery research — explore codebase patterns and OpenClaw web integration",
+      "stage": "discovery",
+      "zone": "",
+      "persona": "",
+      "status": "complete",
+      "created_at": "2026-02-07T21:20:21Z",
+      "updated_at": "2026-02-07T21:21:27Z"
+    }
+  ],
+  "gates": {
+    "design": {
+      "stage": "design",
+      "status": "pending",
+      "criteria": [
+        "Spec document complete",
+        "Technical approach approved"
+      ]
+    },
+    "discovery": {
+      "stage": "discovery",
+      "status": "approved",
+      "criteria": [
+        "Problem space explored",
+        "Stakeholders identified"
+      ],
+      "approved_at": "2026-02-07T21:21:27Z"
+    },
+    "document": {
+      "stage": "document",
+      "status": "pending",
+      "criteria": [
+        "README updated",
+        "API documented"
+      ]
+    },
+    "goal": {
+      "stage": "goal",
+      "status": "approved",
+      "criteria": [
+        "Goal statement defined",
+        "Success metrics established"
+      ],
+      "approved_at": "2026-02-07T21:21:37Z"
+    },
+    "implement": {
+      "stage": "implement",
+      "status": "pending",
+      "criteria": [
+        "All tasks complete",
+        "Code compiles"
+      ]
+    },
+    "planning": {
+      "stage": "planning",
+      "status": "pending",
+      "criteria": [
+        "Tasks broken down",
+        "Dependencies mapped"
+      ]
+    },
+    "release": {
+      "stage": "release",
+      "status": "pending",
+      "criteria": [
+        "Deployed successfully",
+        "Smoke tests pass"
+      ]
+    },
+    "requirements": {
+      "stage": "requirements",
+      "status": "approved",
+      "criteria": [
+        "Requirements documented",
+        "Acceptance criteria defined"
+      ],
+      "approved_at": "2026-02-07T21:21:49Z"
+    },
+    "validate": {
+      "stage": "validate",
+      "status": "pending",
+      "criteria": [
+        "Acceptance criteria met",
+        "Stakeholder sign-off"
+      ]
+    },
+    "verify": {
+      "stage": "verify",
+      "status": "pending",
+      "criteria": [
+        "Tests passing",
+        "Review complete"
+      ]
+    }
+  },
+  "decisions": null,
+  "blockers": null
+}
