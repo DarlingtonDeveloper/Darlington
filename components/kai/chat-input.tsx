@@ -1,16 +1,18 @@
 'use client'
 
 import { useRef, useCallback, type KeyboardEvent } from 'react'
-import { SendHorizontal } from 'lucide-react'
+import { SendHorizontal, Square } from 'lucide-react'
 
 interface ChatInputProps {
     value: string
     onChange: (value: string) => void
     onSend: () => void
+    onStop?: () => void
     disabled: boolean
+    isStreaming?: boolean
 }
 
-export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSend, onStop, disabled, isStreaming }: ChatInputProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     const handleInput = useCallback(() => {
@@ -45,20 +47,35 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
                         fontFamily: 'var(--font-sans)',
                     }}
                 />
-                <button
-                    onClick={onSend}
-                    disabled={disabled || !value.trim()}
-                    aria-label="Send message"
-                    className="p-2.5 rounded-xl transition-opacity
-                        disabled:opacity-30 active:opacity-80
-                        min-w-[44px] min-h-[44px] flex items-center justify-center"
-                    style={{
-                        background: 'var(--accent, #c4b5a0)',
-                        color: 'var(--bg, #07070e)',
-                    }}
-                >
-                    <SendHorizontal className="w-5 h-5" />
-                </button>
+                {isStreaming ? (
+                    <button
+                        onClick={onStop}
+                        aria-label="Stop response"
+                        className="p-2.5 rounded-xl transition-opacity active:opacity-80
+                            min-w-[44px] min-h-[44px] flex items-center justify-center"
+                        style={{
+                            background: 'var(--accent2, #a89880)',
+                            color: 'var(--bg, #07070e)',
+                        }}
+                    >
+                        <Square className="w-4 h-4" fill="currentColor" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={onSend}
+                        disabled={disabled || !value.trim()}
+                        aria-label="Send message"
+                        className="p-2.5 rounded-xl transition-opacity
+                            disabled:opacity-30 active:opacity-80
+                            min-w-[44px] min-h-[44px] flex items-center justify-center"
+                        style={{
+                            background: 'var(--accent, #c4b5a0)',
+                            color: 'var(--bg, #07070e)',
+                        }}
+                    >
+                        <SendHorizontal className="w-5 h-5" />
+                    </button>
+                )}
             </div>
         </div>
     )
