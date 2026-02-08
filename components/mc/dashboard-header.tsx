@@ -22,8 +22,10 @@ export function DashboardHeader({
   view,
   setView,
 }: DashboardHeaderProps) {
-  const { tasks, tokens, connected } = state;
-  const currentStage = state.stage.current;
+  const tasks = state.tasks ?? [];
+  const tokens = state.tokens;
+  const connected = state.connected;
+  const currentStage = state.stage?.current ?? "discovery";
 
   const counts = {
     active: tasks.filter((t) => t.status === "in_progress").length,
