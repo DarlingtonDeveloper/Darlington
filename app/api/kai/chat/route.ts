@@ -21,9 +21,13 @@ export async function GET() {
         .replace(/^https:\/\//, 'wss://')
         .replace(/^http:\/\//, 'ws://')
 
+    // Each authenticated user gets their own webchat session, isolated from
+    // WhatsApp (which uses 'main') and from other webchat users.
+    const sessionKey = `webchat:${user.id}`
+
     return Response.json({
         wsUrl,
         token: gatewayToken,
-        sessionKey: 'webchat',
+        sessionKey,
     })
 }

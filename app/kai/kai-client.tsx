@@ -190,8 +190,11 @@ export function KaiClient() {
                     return
                 }
 
-                // Chat streaming events
+                // Chat streaming events — only process events for our session
                 if (eventName === 'chat') {
+                    const eventSessionKey = payload?.sessionKey as string | undefined
+                    if (eventSessionKey && eventSessionKey !== config.sessionKey) return
+
                     const state = payload?.state as string | undefined
                     const message = payload?.message as Record<string, unknown> | undefined
 
