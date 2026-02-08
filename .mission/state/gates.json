@@ -39,8 +39,9 @@
     },
     "requirements": {
       "stage": "requirements",
-      "status": "pending",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"]
+      "status": "approved",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"],
+      "approved_at": "2026-02-08T23:13:59Z"
     },
     "validate": {
       "stage": "validate",
