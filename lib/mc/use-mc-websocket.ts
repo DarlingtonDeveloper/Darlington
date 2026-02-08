@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { MCState, Task, Worker } from "./types";
+import type { MCState, Task, Worker, Stage, GateCriteria } from "./types";
 import { MC_API_URL, MC_WS_URL, MC_TOKEN } from "./constants";
 
 interface MCEvent {
@@ -25,7 +25,7 @@ const initialState: MCState = {
 };
 
 function handleTaskEvent(prev: MCState, event: MCEvent): MCState {
-  const task = event.data as Task;
+  const task = event.data as unknown as Task;
   switch (event.type) {
     case "created":
       return { ...prev, tasks: [...prev.tasks, task] };
@@ -45,7 +45,7 @@ function handleTaskEvent(prev: MCState, event: MCEvent): MCState {
 }
 
 function handleWorkerEvent(prev: MCState, event: MCEvent): MCState {
-  const worker = event.data as Worker;
+  const worker = event.data as unknown as Worker;
   switch (event.type) {
     case "spawned":
       return { ...prev, workers: [...prev.workers, worker] };
@@ -111,7 +111,7 @@ export function useMCWebSocket() {
       setState((prev) => {
         switch (event.topic) {
           case "stage":
-            return { ...prev, stage: { current: event.data.current } };
+            return { ...prev, stage: { current: event.data.current as Stage } };
           case "task":
             return handleTaskEvent(prev, event);
           case "worker":
@@ -119,7 +119,11 @@ export function useMCWebSocket() {
           case "gate":
             return {
               ...prev,
-              gates: { ...prev.gates, [event.data.stage]: event.data },
+              gates: {
+                ...prev.gates,
+                [event.data.stage as string]:
+                  event.data as unknown as GateCriteria,
+              },
             };
           case "token":
             return { ...prev, tokens: { ...prev.tokens, ...event.data } };

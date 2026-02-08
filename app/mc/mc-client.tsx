@@ -1,53 +1,112 @@
 "use client";
 
-import { useOcWebSocket } from "@/lib/mc/use-oc-websocket";
-import { WorkersPanel } from "@/components/mc/workers-panel";
-import { ChannelBadges } from "@/components/mc/channel-badges";
-import { ConnectionStatus } from "@/components/mc/connection-status";
+import { useState } from "react";
+import { useMCWebSocket } from "@/lib/mc/use-mc-websocket";
+import { DashboardHeader } from "@/components/mc/dashboard-header";
+import { MissionView } from "@/components/mc/mission-view";
+import { TraceView } from "@/components/mc/trace-view";
+import { ActivityView } from "@/components/mc/activity-view";
+import type { ChatMessage } from "@/lib/mc/types";
+import { MC_API_URL } from "@/lib/mc/constants";
 
-export function McClient() {
-  const { connectionState, workers, channels } = useOcWebSocket();
+type View = "mission" | "trace" | "activity";
+
+export function MCClient() {
+  const [view, setView] = useState<View>("mission");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const mcState = useMCWebSocket();
+
+  const handleSendChat = async (content: string) => {
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    try {
+      const res = await fetch(`${MC_API_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: content }),
+      });
+      const data = await res.json();
+      if (data.response) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: data.response,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch {
+      // Chat unavailable
+    }
+  };
+
+  const handleKillWorker = async (id: string) => {
+    await fetch(`${MC_API_URL}/api/workers/${id}/kill`, { method: "POST" });
+  };
+
+  const handleApproveGate = async (stage: string) => {
+    await fetch(`${MC_API_URL}/api/gates/${stage}/approve`, { method: "POST" });
+  };
+
+  const handleRejectGate = async (stage: string) => {
+    await fetch(`${MC_API_URL}/api/gates/${stage}/reject`, { method: "POST" });
+  };
+
+  const handleCreateCheckpoint = async () => {
+    await fetch(`${MC_API_URL}/api/checkpoints`, { method: "POST" });
+  };
+
+  const handleRestoreCheckpoint = async (id: string) => {
+    await fetch(`${MC_API_URL}/api/checkpoints/${id}/restart`, {
+      method: "POST",
+    });
+  };
 
   return (
-    <div className="mx-auto min-h-screen max-w-4xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            MissionControl
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            OpenClaw orchestrator dashboard
-          </p>
-        </div>
-        <ConnectionStatus state={connectionState} />
-      </div>
+    <div className="min-h-screen bg-[#07070e] text-[#e8e4df]">
+      <DashboardHeader
+        state={mcState}
+        view={view}
+        setView={(v: string) => setView(v as View)}
+      />
 
-      {connectionState === "disconnected" ? (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-8 text-center">
-          <p className="text-neutral-400 text-sm">
-            MC orchestrator is offline or not yet configured.
-          </p>
-          <p className="text-neutral-500 text-xs mt-2">
-            The orchestrator needs to be running at{" "}
-            {process.env.NEXT_PUBLIC_MC_WS_URL || "mc.darlington.dev"} with the
-            WebSocket bridge enabled.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Channel badges */}
-          <div className="mb-6 rounded-lg border border-border bg-card p-4">
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Channels
-            </h2>
-            <ChannelBadges channels={channels} />
-          </div>
+      <main className="px-6 pb-6">
+        {view === "mission" && (
+          <MissionView
+            workers={mcState.workers}
+            messages={messages}
+            onSendChat={handleSendChat}
+            onKillWorker={handleKillWorker}
+            connected={mcState.connected}
+          />
+        )}
 
-          {/* Workers */}
-          <WorkersPanel workers={workers} />
-        </>
-      )}
+        {view === "trace" && <TraceView graph={null} tasks={mcState.tasks} />}
+
+        {view === "activity" && (
+          <ActivityView
+            gates={mcState.gates}
+            currentStage={mcState.stage.current}
+            audit={[]}
+            workers={mcState.workers}
+            tasks={mcState.tasks}
+            checkpoints={[]}
+            tokens={mcState.tokens}
+            onApproveGate={handleApproveGate}
+            onRejectGate={handleRejectGate}
+            onCreateCheckpoint={handleCreateCheckpoint}
+            onRestoreCheckpoint={handleRestoreCheckpoint}
+          />
+        )}
+      </main>
     </div>
   );
 }

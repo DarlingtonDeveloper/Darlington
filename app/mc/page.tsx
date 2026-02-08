@@ -1,7 +1,5 @@
-import { McClient } from './mc-client'
+import { MCClient } from "./mc-client";
 
-export const dynamic = 'force-dynamic'
-
-export default function McPage() {
-  return <McClient />
+export default function MCPage() {
+  return <MCClient />;
 }
