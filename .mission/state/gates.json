@@ -2,8 +2,9 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "pending",
-      "criteria": ["Spec document complete", "Technical approach approved"]
+      "status": "approved",
+      "criteria": ["Spec document complete", "Technical approach approved"],
+      "approved_at": "2026-02-08T23:14:02Z"
     },
     "discovery": {
       "stage": "discovery",
