@@ -1,0 +1,2 @@
+{"timestamp":"2026-02-08T23:13:30Z","action":"project_initialized","actor":"cli","details":{"openclaw":true,"path":"/home/mike/Darlington"}}
+{"timestamp":"2026-02-08T23:13:57Z","action":"gate_approved","actor":"cli","details":{"stage":"discovery"}}

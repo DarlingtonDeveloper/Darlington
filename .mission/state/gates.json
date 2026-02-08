@@ -2,92 +2,54 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "approved",
-      "criteria": [
-        "Spec document complete",
-        "Technical approach approved"
-      ],
-      "approved_at": "2026-02-07T21:23:27Z"
+      "status": "pending",
+      "criteria": ["Spec document complete", "Technical approach approved"]
     },
     "discovery": {
       "stage": "discovery",
       "status": "approved",
-      "criteria": [
-        "Problem space explored",
-        "Stakeholders identified"
-      ],
-      "approved_at": "2026-02-07T21:21:27Z"
+      "criteria": ["Problem space explored", "Stakeholders identified"],
+      "approved_at": "2026-02-08T23:13:57Z"
     },
     "document": {
       "stage": "document",
-      "status": "approved",
-      "criteria": [
-        "README updated",
-        "API documented"
-      ],
-      "approved_at": "2026-02-07T21:31:12Z"
+      "status": "pending",
+      "criteria": ["README updated", "API documented"]
     },
     "goal": {
       "stage": "goal",
-      "status": "approved",
-      "criteria": [
-        "Goal statement defined",
-        "Success metrics established"
-      ],
-      "approved_at": "2026-02-07T21:21:37Z"
+      "status": "pending",
+      "criteria": ["Goal statement defined", "Success metrics established"]
     },
     "implement": {
       "stage": "implement",
-      "status": "approved",
-      "criteria": [
-        "All tasks complete",
-        "Code compiles"
-      ],
-      "approved_at": "2026-02-07T21:25:41Z"
+      "status": "pending",
+      "criteria": ["All tasks complete", "Code compiles"]
     },
     "planning": {
       "stage": "planning",
-      "status": "approved",
-      "criteria": [
-        "Tasks broken down",
-        "Dependencies mapped"
-      ],
-      "approved_at": "2026-02-07T21:21:58Z"
+      "status": "pending",
+      "criteria": ["Tasks broken down", "Dependencies mapped"]
     },
     "release": {
       "stage": "release",
       "status": "pending",
-      "criteria": [
-        "Deployed successfully",
-        "Smoke tests pass"
-      ]
+      "criteria": ["Deployed successfully", "Smoke tests pass"]
     },
     "requirements": {
       "stage": "requirements",
-      "status": "approved",
-      "criteria": [
-        "Requirements documented",
-        "Acceptance criteria defined"
-      ],
-      "approved_at": "2026-02-07T21:21:49Z"
+      "status": "pending",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"]
     },
     "validate": {
       "stage": "validate",
-      "status": "approved",
-      "criteria": [
-        "Acceptance criteria met",
-        "Stakeholder sign-off"
-      ],
-      "approved_at": "2026-02-07T21:30:24Z"
+      "status": "pending",
+      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"]
     },
     "verify": {
       "stage": "verify",
-      "status": "approved",
-      "criteria": [
-        "Tests passing",
-        "Review complete"
-      ],
-      "approved_at": "2026-02-07T21:29:16Z"
+      "status": "pending",
+      "criteria": ["Tests passing", "Review complete"]
     }
   }
 }
