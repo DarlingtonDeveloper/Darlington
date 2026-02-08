@@ -69,6 +69,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:18Z",
       "updated_at": "2026-02-08T23:14:18Z"
+    },
+    {
+      "id": "1ee6fbd30c",
+      "name": "Tests + lint cleanup",
+      "stage": "verify",
+      "zone": "frontend",
+      "persona": "tester",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:18Z",
+      "updated_at": "2026-02-08T23:14:18Z"
     }
   ]
 }
