@@ -103,7 +103,18 @@ export function useMCWebSocket() {
 
       // Handle initial state sync
       if (event.topic === "sync" && event.type === "initial_state") {
-        setState((prev) => ({ ...prev, ...event.data, connected: true }));
+        const d = event.data as Record<string, unknown>;
+        setState((prev) => ({
+          ...prev,
+          stage: (d?.stage as MCState["stage"]) ?? prev.stage,
+          tasks: (Array.isArray(d?.tasks) ? d.tasks : prev.tasks) as Task[],
+          workers: (Array.isArray(d?.workers)
+            ? d.workers
+            : prev.workers) as Worker[],
+          gates: (d?.gates as MCState["gates"]) ?? prev.gates,
+          tokens: (d?.tokens as MCState["tokens"]) ?? prev.tokens,
+          connected: true,
+        }));
         return;
       }
 
