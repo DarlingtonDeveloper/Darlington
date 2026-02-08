@@ -1,2 +1,3 @@
 {"timestamp":"2026-02-08T23:13:30Z","action":"project_initialized","actor":"cli","details":{"openclaw":true,"path":"/home/mike/Darlington"}}
 {"timestamp":"2026-02-08T23:13:57Z","action":"gate_approved","actor":"cli","details":{"stage":"discovery"}}
+{"timestamp":"2026-02-08T23:13:58Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260208-231358","session_id":"7c544511","stage":"discovery"}}
