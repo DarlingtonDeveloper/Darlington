@@ -13,3 +13,4 @@
 {"timestamp":"2026-02-08T23:14:01Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
 {"timestamp":"2026-02-08T23:14:02Z","action":"gate_approved","actor":"cli","details":{"stage":"design"}}
 {"timestamp":"2026-02-08T23:14:02Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260208-231402","session_id":"7c544511","stage":"design"}}
+{"timestamp":"2026-02-08T23:14:02Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"design","to_stage":"implement"}}
