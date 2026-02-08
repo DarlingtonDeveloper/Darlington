@@ -18,3 +18,4 @@
 {"timestamp":"2026-02-08T23:14:16Z","action":"task_created","actor":"cli","details":{"name":"Build shared components (StatusDot, Badge, Card, ActionButton)","persona":"developer","stage":"implement","task_id":"25b44f543d","zone":"frontend"}}
 {"timestamp":"2026-02-08T23:14:16Z","action":"task_created","actor":"cli","details":{"name":"Build PipelineBar + DashboardHeader","persona":"developer","stage":"implement","task_id":"764ef3aca1","zone":"frontend"}}
 {"timestamp":"2026-02-08T23:14:17Z","action":"task_created","actor":"cli","details":{"name":"Build Mission View (ZoneGroups + WorkerCards + Chat)","persona":"developer","stage":"implement","task_id":"09012c04c1","zone":"frontend"}}
+{"timestamp":"2026-02-08T23:14:17Z","action":"task_created","actor":"cli","details":{"name":"Build Trace View (SVG dependency graph)","persona":"developer","stage":"implement","task_id":"2b4a04cbea","zone":"frontend"}}

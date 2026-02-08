@@ -39,6 +39,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:17Z",
       "updated_at": "2026-02-08T23:14:17Z"
+    },
+    {
+      "id": "2b4a04cbea",
+      "name": "Build Trace View (SVG dependency graph)",
+      "stage": "implement",
+      "zone": "frontend",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:17Z",
+      "updated_at": "2026-02-08T23:14:17Z"
     }
   ]
 }
