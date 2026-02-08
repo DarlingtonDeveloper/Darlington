@@ -18,8 +18,9 @@
     },
     "goal": {
       "stage": "goal",
-      "status": "pending",
-      "criteria": ["Goal statement defined", "Success metrics established"]
+      "status": "approved",
+      "criteria": ["Goal statement defined", "Success metrics established"],
+      "approved_at": "2026-02-08T23:13:58Z"
     },
     "implement": {
       "stage": "implement",
