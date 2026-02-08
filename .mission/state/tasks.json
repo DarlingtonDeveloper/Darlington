@@ -49,6 +49,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:17Z",
       "updated_at": "2026-02-08T23:14:17Z"
+    },
+    {
+      "id": "fa013d0f95",
+      "name": "Build Activity View (gates + audit + checkpoints + charts)",
+      "stage": "implement",
+      "zone": "frontend",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:17Z",
+      "updated_at": "2026-02-08T23:14:17Z"
     }
   ]
 }
