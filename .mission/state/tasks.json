@@ -9,6 +9,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:16Z",
       "updated_at": "2026-02-08T23:14:16Z"
+    },
+    {
+      "id": "25b44f543d",
+      "name": "Build shared components (StatusDot, Badge, Card, ActionButton)",
+      "stage": "implement",
+      "zone": "frontend",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:16Z",
+      "updated_at": "2026-02-08T23:14:16Z"
     }
   ]
 }
