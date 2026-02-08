@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { useOcWebSocket } from '@/lib/mc/use-oc-websocket'
-import { WorkersPanel } from '@/components/mc/workers-panel'
-import { ChannelBadges } from '@/components/mc/channel-badges'
-import { ConnectionStatus } from '@/components/mc/connection-status'
+import { useOcWebSocket } from "@/lib/mc/use-oc-websocket";
+import { WorkersPanel } from "@/components/mc/workers-panel";
+import { ChannelBadges } from "@/components/mc/channel-badges";
+import { ConnectionStatus } from "@/components/mc/connection-status";
 
 export function McClient() {
-  const { connectionState, workers, channels } = useOcWebSocket()
+  const { connectionState, workers, channels } = useOcWebSocket();
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-8">
@@ -23,16 +23,31 @@ export function McClient() {
         <ConnectionStatus state={connectionState} />
       </div>
 
-      {/* Channel badges */}
-      <div className="mb-6 rounded-lg border border-border bg-card p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Channels
-        </h2>
-        <ChannelBadges channels={channels} />
-      </div>
+      {connectionState === "disconnected" ? (
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-8 text-center">
+          <p className="text-neutral-400 text-sm">
+            MC orchestrator is offline or not yet configured.
+          </p>
+          <p className="text-neutral-500 text-xs mt-2">
+            The orchestrator needs to be running at{" "}
+            {process.env.NEXT_PUBLIC_MC_WS_URL || "mc.darlington.dev"} with the
+            WebSocket bridge enabled.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Channel badges */}
+          <div className="mb-6 rounded-lg border border-border bg-card p-4">
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Channels
+            </h2>
+            <ChannelBadges channels={channels} />
+          </div>
 
-      {/* Workers */}
-      <WorkersPanel workers={workers} />
+          {/* Workers */}
+          <WorkersPanel workers={workers} />
+        </>
+      )}
     </div>
-  )
+  );
 }
