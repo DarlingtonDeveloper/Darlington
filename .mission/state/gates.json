@@ -29,8 +29,9 @@
     },
     "planning": {
       "stage": "planning",
-      "status": "pending",
-      "criteria": ["Tasks broken down", "Dependencies mapped"]
+      "status": "approved",
+      "criteria": ["Tasks broken down", "Dependencies mapped"],
+      "approved_at": "2026-02-08T23:14:00Z"
     },
     "release": {
       "stage": "release",
