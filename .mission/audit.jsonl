@@ -20,3 +20,4 @@
 {"timestamp":"2026-02-08T23:14:17Z","action":"task_created","actor":"cli","details":{"name":"Build Mission View (ZoneGroups + WorkerCards + Chat)","persona":"developer","stage":"implement","task_id":"09012c04c1","zone":"frontend"}}
 {"timestamp":"2026-02-08T23:14:17Z","action":"task_created","actor":"cli","details":{"name":"Build Trace View (SVG dependency graph)","persona":"developer","stage":"implement","task_id":"2b4a04cbea","zone":"frontend"}}
 {"timestamp":"2026-02-08T23:14:17Z","action":"task_created","actor":"cli","details":{"name":"Build Activity View (gates + audit + checkpoints + charts)","persona":"developer","stage":"implement","task_id":"fa013d0f95","zone":"frontend"}}
+{"timestamp":"2026-02-08T23:14:18Z","action":"task_created","actor":"cli","details":{"name":"Wire page.tsx + mc-client.tsx with view switching","persona":"developer","stage":"implement","task_id":"e76ef5dfdf","zone":"frontend"}}

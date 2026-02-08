@@ -59,6 +59,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:17Z",
       "updated_at": "2026-02-08T23:14:17Z"
+    },
+    {
+      "id": "e76ef5dfdf",
+      "name": "Wire page.tsx + mc-client.tsx with view switching",
+      "stage": "implement",
+      "zone": "frontend",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:18Z",
+      "updated_at": "2026-02-08T23:14:18Z"
     }
   ]
 }
