@@ -1,0 +1,14 @@
+{
+  "tasks": [
+    {
+      "id": "0801ff78ee",
+      "name": "Rewrite types + WebSocket hook for new protocol",
+      "stage": "implement",
+      "zone": "shared",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:16Z",
+      "updated_at": "2026-02-08T23:14:16Z"
+    }
+  ]
+}
