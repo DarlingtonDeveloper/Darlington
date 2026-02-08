@@ -29,6 +29,16 @@
       "status": "pending",
       "created_at": "2026-02-08T23:14:16Z",
       "updated_at": "2026-02-08T23:14:16Z"
+    },
+    {
+      "id": "09012c04c1",
+      "name": "Build Mission View (ZoneGroups + WorkerCards + Chat)",
+      "stage": "implement",
+      "zone": "frontend",
+      "persona": "developer",
+      "status": "pending",
+      "created_at": "2026-02-08T23:14:17Z",
+      "updated_at": "2026-02-08T23:14:17Z"
     }
   ]
 }
