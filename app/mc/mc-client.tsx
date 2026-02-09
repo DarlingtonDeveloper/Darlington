@@ -14,19 +14,6 @@ export function MCClient() {
   const [view, setView] = useState<View>("mission");
   const mcState = useMCWebSocket();
 
-  const handleSendChat = async (content: string) => {
-    try {
-      await fetch(`${MC_API_URL}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
-      });
-      // Messages arrive via WebSocket hub broadcast — no local state needed
-    } catch {
-      // Chat unavailable
-    }
-  };
-
   const handleKillWorker = async (id: string) => {
     await fetch(`${MC_API_URL}/api/workers/${id}/kill`, { method: "POST" });
   };
@@ -61,10 +48,7 @@ export function MCClient() {
         {view === "mission" && (
           <MissionView
             workers={mcState.workers}
-            messages={mcState.messages}
-            onSendChat={handleSendChat}
             onKillWorker={handleKillWorker}
-            connected={mcState.connected}
           />
         )}
 
