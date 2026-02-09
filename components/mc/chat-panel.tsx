@@ -132,7 +132,7 @@ export function ChatPanel() {
             const scopes = ["operator.read", "operator.write"];
             const sigPayload = buildSignaturePayload({
               deviceId: device.deviceId,
-              clientId: "mc-dashboard",
+              clientId: "webchat",
               clientMode: "webchat",
               role: "operator",
               scopes,
@@ -145,7 +145,7 @@ export function ChatPanel() {
               minProtocol: 3,
               maxProtocol: 3,
               client: {
-                id: "mc-dashboard",
+                id: "webchat",
                 version: "1.0.0",
                 platform: "web",
                 mode: "webchat",
