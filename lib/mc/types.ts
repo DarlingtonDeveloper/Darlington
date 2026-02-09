@@ -144,5 +144,6 @@ export interface MCState {
   workers: Worker[];
   gates: Record<string, GateCriteria>;
   tokens: TokenSummary;
+  messages: ChatMessage[];
   connected: boolean;
 }
