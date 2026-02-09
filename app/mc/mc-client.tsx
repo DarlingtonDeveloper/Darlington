@@ -6,43 +6,22 @@ import { DashboardHeader } from "@/components/mc/dashboard-header";
 import { MissionView } from "@/components/mc/mission-view";
 import { TraceView } from "@/components/mc/trace-view";
 import { ActivityView } from "@/components/mc/activity-view";
-import type { ChatMessage } from "@/lib/mc/types";
 import { MC_API_URL } from "@/lib/mc/constants";
 
 type View = "mission" | "trace" | "activity";
 
 export function MCClient() {
   const [view, setView] = useState<View>("mission");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const mcState = useMCWebSocket();
 
   const handleSendChat = async (content: string) => {
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
     try {
-      const res = await fetch(`${MC_API_URL}/api/chat`, {
+      await fetch(`${MC_API_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: content }),
       });
-      const data = await res.json();
-      if (data.response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: data.response,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-      }
+      // Messages arrive via WebSocket hub broadcast — no local state needed
     } catch {
       // Chat unavailable
     }
@@ -82,7 +61,7 @@ export function MCClient() {
         {view === "mission" && (
           <MissionView
             workers={mcState.workers}
-            messages={messages}
+            messages={mcState.messages}
             onSendChat={handleSendChat}
             onKillWorker={handleKillWorker}
             connected={mcState.connected}
