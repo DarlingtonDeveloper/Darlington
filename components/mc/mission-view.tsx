@@ -1,4 +1,4 @@
-import { Worker, ChatMessage } from "@/lib/mc/types";
+import { Worker } from "@/lib/mc/types";
 import { ZoneGroup } from "./zone-group";
 import { ChatPanel } from "./chat-panel";
 import { SectionLabel } from "./section-label";
@@ -8,19 +8,10 @@ const ZONES = ["frontend", "backend", "database", "infra", "shared"];
 
 interface MissionViewProps {
   workers: Worker[];
-  messages: ChatMessage[];
-  onSendChat: (msg: string) => void;
   onKillWorker: (id: string) => void;
-  connected: boolean;
 }
 
-export function MissionView({
-  workers,
-  messages,
-  onSendChat,
-  onKillWorker,
-  connected,
-}: MissionViewProps) {
+export function MissionView({ workers, onKillWorker }: MissionViewProps) {
   const activeWorkers = workers.filter((w) => w.status !== "offline");
   const busyCount = workers.filter((w) => w.status === "busy").length;
   const idleCount = workers.filter((w) => w.status === "idle").length;
@@ -61,12 +52,8 @@ export function MissionView({
         </div>
       </div>
 
-      {/* Right: Kai Chat */}
-      <ChatPanel
-        messages={messages}
-        onSend={onSendChat}
-        connected={connected}
-      />
+      {/* Right: Kai Chat — connects directly to OpenClaw gateway */}
+      <ChatPanel />
     </div>
   );
 }

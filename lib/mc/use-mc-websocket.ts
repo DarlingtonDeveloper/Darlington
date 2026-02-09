@@ -1,13 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import type {
-  MCState,
-  Task,
-  Worker,
-  Stage,
-  GateCriteria,
-  ChatMessage,
-} from "./types";
+import type { MCState, Task, Worker, Stage, GateCriteria } from "./types";
 import { MC_API_URL, MC_WS_URL, MC_TOKEN } from "./constants";
 
 interface MCEvent {
@@ -28,7 +21,6 @@ const initialState: MCState = {
     budget_used: 0,
     sessions: [],
   },
-  messages: [],
   connected: false,
 };
 
@@ -146,12 +138,6 @@ export function useMCWebSocket() {
             };
           case "token":
             return { ...prev, tokens: { ...prev.tokens, ...event.data } };
-          case "chat": {
-            const msg = event.data as unknown as ChatMessage;
-            // Deduplicate by id
-            if (prev.messages.some((m) => m.id === msg.id)) return prev;
-            return { ...prev, messages: [...prev.messages, msg] };
-          }
           default:
             return prev;
         }
