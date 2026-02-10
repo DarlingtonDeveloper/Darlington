@@ -1,3 +1,4 @@
 {"timestamp":"2026-02-10T18:16:09Z","action":"project_initialized","actor":"cli","details":{"openclaw":true,"path":"/home/mike/Darlington"}}
 {"timestamp":"2026-02-10T18:16:29Z","action":"task_created","actor":"cli","details":{"name":"Research audit API, findings/briefings serving, and requirements coverage","persona":"researcher","stage":"discovery","task_id":"ac16ee9dca","zone":""}}
 {"timestamp":"2026-02-10T18:18:16Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"complete","task_id":"ac16ee9dca"}}
+{"timestamp":"2026-02-10T18:18:32Z","action":"gate_approved","actor":"cli","details":{"note":"Critical finding: api.Server.Routes() never mounted in serve.go — audit/tasks/gates all 404. Need backend fix in MC repo + new findings/briefing endpoints. Frontend activity view already has audit rendering ready.","stage":"discovery"}}
