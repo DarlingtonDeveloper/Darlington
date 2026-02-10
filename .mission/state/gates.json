@@ -7,8 +7,10 @@
     },
     "discovery": {
       "stage": "discovery",
-      "status": "pending",
-      "criteria": ["Problem space explored", "Stakeholders identified"]
+      "status": "approved",
+      "criteria": ["Problem space explored", "Stakeholders identified"],
+      "approved_at": "2026-02-10T23:20:52Z",
+      "approval_note": "All 4 endpoints real. Found checkpoint path bug and dual project registry. Zones are implicit from task metadata. Frontend has partial wiring already."
     },
     "document": {
       "stage": "document",
