@@ -2,15 +2,13 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "approved",
-      "criteria": ["Spec document complete", "Technical approach approved"],
-      "approved_at": "2026-02-08T23:14:02Z"
+      "status": "pending",
+      "criteria": ["Spec document complete", "Technical approach approved"]
     },
     "discovery": {
       "stage": "discovery",
-      "status": "approved",
-      "criteria": ["Problem space explored", "Stakeholders identified"],
-      "approved_at": "2026-02-08T23:13:57Z"
+      "status": "pending",
+      "criteria": ["Problem space explored", "Stakeholders identified"]
     },
     "document": {
       "stage": "document",
@@ -19,9 +17,8 @@
     },
     "goal": {
       "stage": "goal",
-      "status": "approved",
-      "criteria": ["Goal statement defined", "Success metrics established"],
-      "approved_at": "2026-02-08T23:13:58Z"
+      "status": "pending",
+      "criteria": ["Goal statement defined", "Success metrics established"]
     },
     "implement": {
       "stage": "implement",
@@ -30,9 +27,8 @@
     },
     "planning": {
       "stage": "planning",
-      "status": "approved",
-      "criteria": ["Tasks broken down", "Dependencies mapped"],
-      "approved_at": "2026-02-08T23:14:00Z"
+      "status": "pending",
+      "criteria": ["Tasks broken down", "Dependencies mapped"]
     },
     "release": {
       "stage": "release",
@@ -41,9 +37,8 @@
     },
     "requirements": {
       "stage": "requirements",
-      "status": "approved",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"],
-      "approved_at": "2026-02-08T23:13:59Z"
+      "status": "pending",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"]
     },
     "validate": {
       "stage": "validate",
