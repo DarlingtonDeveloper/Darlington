@@ -55,3 +55,4 @@
 {"timestamp":"2026-02-10T18:50:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-185054","session_id":"1313717c","stage":"document"}}
 {"timestamp":"2026-02-10T18:50:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"document","to_stage":"release"}}
 {"timestamp":"2026-02-10T18:51:00Z","action":"task_created","actor":"cli","details":{"name":"Release — PRs ready for review","persona":"developer","stage":"release","task_id":"acf3a3a002","zone":""}}
+{"timestamp":"2026-02-10T18:51:04Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"acf3a3a002"}}
