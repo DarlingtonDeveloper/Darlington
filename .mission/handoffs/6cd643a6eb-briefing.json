@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/6cd643a6eb.md",
+  "persona": "researcher",
+  "scope_paths": null,
+  "stage": "discovery",
+  "task_id": "6cd643a6eb",
+  "task_name": "Research current dashboard state and API endpoints for Mission 1 features",
+  "zone": ""
+}
