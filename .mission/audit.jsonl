@@ -28,3 +28,4 @@
 {"timestamp":"2026-02-10T18:37:58Z","action":"task_created","actor":"cli","details":{"name":"Add findings and briefings endpoints","persona":"developer","stage":"implement","task_id":"0ec5d00dfa","zone":""}}
 {"timestamp":"2026-02-10T18:38:02Z","action":"task_created","actor":"cli","details":{"name":"Build FindingsView component + install react-markdown","persona":"developer","stage":"implement","task_id":"9858de5381","zone":""}}
 {"timestamp":"2026-02-10T18:39:18Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"0ec5d00dfa"}}
+{"timestamp":"2026-02-10T18:40:05Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"9c2b8daadf"}}
