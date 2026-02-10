@@ -1,2 +1,2 @@
 {"id":"16a52a5594","name":"Discover checkpoints/zones/projects/stage-override APIs and frontend state","stage":"discovery","zone":"","persona":"researcher","status":"done","created_at":"2026-02-10T23:19:11Z","updated_at":"2026-02-10T23:20:38Z"}
-{"id":"092b3c2636","name":"Define goal for 3B","stage":"goal","zone":"","persona":"researcher","status":"done","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:20:56Z","updated_at":"2026-02-10T23:21:04Z"}
+{"id":"092b3c2636","name":"Define goal for 3B","stage":"goal","zone":"","persona":"researcher","status":"complete","created_at":"2026-02-10T23:20:56Z","updated_at":"2026-02-10T23:21:04Z"}
