@@ -31,8 +31,10 @@
     },
     "planning": {
       "stage": "planning",
-      "status": "pending",
-      "criteria": ["Tasks broken down", "Dependencies mapped"]
+      "status": "approved",
+      "criteria": ["Tasks broken down", "Dependencies mapped"],
+      "approved_at": "2026-02-10T18:35:25Z",
+      "approval_note": "Clean 4-task plan across 2 waves. Good insight that audit view already works — just needs route mounting. Combined findings+briefings into one task since they share files. Moving to design."
     },
     "release": {
       "stage": "release",
