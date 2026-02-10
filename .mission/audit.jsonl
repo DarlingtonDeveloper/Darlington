@@ -32,3 +32,4 @@
 {"timestamp":"2026-02-10T18:42:22Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"9858de5381"}}
 {"timestamp":"2026-02-10T18:44:38Z","action":"gate_approved","actor":"cli","details":{"note":"All 3 tasks done. Go builds clean, TypeScript clean. Build failure is pre-existing (evening webhook needs Supabase env at build time, not our change). Moving to verify with 3 personas.","stage":"implement"}}
 {"timestamp":"2026-02-10T18:44:39Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-184439","session_id":"1313717c","stage":"implement"}}
+{"timestamp":"2026-02-10T18:44:39Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
