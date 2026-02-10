@@ -12,3 +12,4 @@
 {"timestamp":"2026-02-10T17:53:46Z","action":"task_created","actor":"cli","details":{"name":"Define requirements for 5 dashboard features","persona":"researcher","stage":"requirements","task_id":"ea424d08e8","zone":""}}
 {"timestamp":"2026-02-10T17:55:12Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"ea424d08e8"}}
 {"timestamp":"2026-02-10T17:55:26Z","action":"gate_approved","actor":"cli","details":{"note":"5 REQs with file lists, acceptance criteria, implementation order. REQ-5 (infra) first, then REQ-1 (workers), REQ-3 (tokens), REQ-2 (gates), REQ-4 (bridge).","stage":"requirements"}}
+{"timestamp":"2026-02-10T17:55:26Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-175526","session_id":"16e13a30","stage":"requirements"}}
