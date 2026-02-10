@@ -4,3 +4,4 @@
 {"id":"d2d685ccd4","name":"Plan implementation tasks for dashboard visibility","stage":"planning","zone":"","persona":"researcher","status":"done","created_at":"2026-02-10T17:55:27Z","updated_at":"2026-02-10T17:56:13Z"}
 {"id":"9ddd832715","name":"Design all 5 dashboard components","stage":"design","zone":"","persona":"researcher","status":"complete","created_at":"2026-02-10T17:56:24Z","updated_at":"2026-02-10T17:58:52Z"}
 {"id":"dd2cf0271a","name":"Infrastructure fixes — types, adapters, WS handlers","stage":"implement","zone":"","persona":"developer","status":"pending","scope_paths":["lib/mc/types.ts","lib/mc/use-mc-websocket.ts","lib/mc/adapters.ts"],"created_at":"2026-02-10T17:59:14Z","updated_at":"2026-02-10T17:59:14Z"}
+{"id":"b66c71ee7d","name":"Worker lifecycle panel","stage":"implement","zone":"","persona":"developer","status":"pending","scope_paths":["components/mc/worker-panel.tsx"],"created_at":"2026-02-10T17:59:14Z","updated_at":"2026-02-10T17:59:14Z"}

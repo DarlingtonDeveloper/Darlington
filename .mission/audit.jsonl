@@ -25,3 +25,4 @@
 {"timestamp":"2026-02-10T17:59:13Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-175913","session_id":"16e13a30","stage":"design"}}
 {"timestamp":"2026-02-10T17:59:13Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"design","to_stage":"implement"}}
 {"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Infrastructure fixes — types, adapters, WS handlers","persona":"developer","stage":"implement","task_id":"dd2cf0271a","zone":""}}
+{"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Worker lifecycle panel","persona":"developer","stage":"implement","task_id":"b66c71ee7d","zone":""}}
