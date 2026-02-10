@@ -164,4 +164,5 @@ export interface MCState {
   connected: boolean;
   audit: AuditEntry[];
   checkpoints: CheckpointInfo[];
+  graph?: GraphData;
 }

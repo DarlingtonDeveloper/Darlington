@@ -3,6 +3,9 @@ import type {
   GateCriteria,
   GateCriterion,
   TokenSummary,
+  GraphData,
+  GraphNode,
+  GraphEdge,
 } from "./types";
 
 export interface RawWorker {
@@ -70,6 +73,67 @@ export function adaptGate(raw: RawGate): GateCriteria {
     criteria,
     approved_at: raw.approved_at,
     approval_note: raw.approval_note,
+  };
+}
+
+// --- Graph adapter ---
+
+interface RawGraphNode {
+  id: string;
+  name?: string;
+  title?: string;
+  type?: string;
+  stage: string;
+  zone: string;
+  status: string;
+  persona?: string;
+  worker_id?: string;
+}
+
+interface RawGraphEdge {
+  from?: string;
+  to?: string;
+  source?: string;
+  target?: string;
+  type?: string;
+}
+
+interface RawGraphResponse {
+  nodes?: RawGraphNode[];
+  edges?: RawGraphEdge[];
+  critical_path?: string[];
+  blocked_count?: number;
+  ready_count?: number;
+}
+
+export function adaptGraphResponse(raw: unknown): GraphData | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as RawGraphResponse;
+  if (!Array.isArray(r.nodes)) return null;
+
+  const nodes: GraphNode[] = r.nodes.map((n) => ({
+    id: n.id,
+    type: (n.type as GraphNode["type"]) ?? "task",
+    title: n.title ?? n.name ?? n.id,
+    stage: n.stage as GraphNode["stage"],
+    zone: n.zone ?? "",
+    status: (n.status as GraphNode["status"]) ?? "pending",
+    persona: n.persona ?? "",
+    worker_id: n.worker_id,
+  }));
+
+  const edges: GraphEdge[] = (r.edges ?? []).map((e) => ({
+    source: e.source ?? e.from ?? "",
+    target: e.target ?? e.to ?? "",
+    type: (e.type as GraphEdge["type"]) ?? "blocks",
+  }));
+
+  return {
+    nodes,
+    edges,
+    critical_path: r.critical_path ?? [],
+    blocked_count: r.blocked_count ?? 0,
+    ready_count: r.ready_count ?? 0,
   };
 }
 

@@ -50,6 +50,7 @@ export function DashboardHeader({
     { key: "mission", label: "◈ Mission" },
     { key: "trace", label: "◇ Trace" },
     { key: "activity", label: "◷ Activity" },
+    { key: "specs", label: "◆ Specs" },
   ];
 
   return (
