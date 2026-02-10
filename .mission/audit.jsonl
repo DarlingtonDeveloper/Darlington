@@ -57,3 +57,4 @@
 {"timestamp":"2026-02-10T18:06:47Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"890d15c230"}}
 {"timestamp":"2026-02-10T18:06:56Z","action":"gate_approved","actor":"cli","details":{"note":"All 3 fixes applied: inline style→Tailwind, audit/checkpoints wired from state, use client added. tsc clean.","stage":"validate"}}
 {"timestamp":"2026-02-10T18:06:57Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-180657","session_id":"16e13a30","stage":"validate"}}
+{"timestamp":"2026-02-10T18:06:57Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"validate","to_stage":"document"}}
