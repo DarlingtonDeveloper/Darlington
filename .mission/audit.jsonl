@@ -35,3 +35,4 @@
 {"timestamp":"2026-02-10T23:28:20Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
 {"timestamp":"2026-02-10T23:28:25Z","action":"task_created","actor":"cli","details":{"name":"Code review","persona":"reviewer","stage":"verify","task_id":"e31320348d","zone":""}}
 {"timestamp":"2026-02-10T23:28:25Z","action":"task_created","actor":"cli","details":{"name":"Security review","persona":"security","stage":"verify","task_id":"479692c8fd","zone":""}}
+{"timestamp":"2026-02-10T23:28:26Z","action":"task_created","actor":"cli","details":{"name":"Test coverage","persona":"tester","stage":"verify","task_id":"76820e1a02","zone":""}}
