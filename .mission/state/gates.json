@@ -2,8 +2,10 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "pending",
-      "criteria": ["Spec document complete", "Technical approach approved"]
+      "status": "approved",
+      "criteria": ["Spec document complete", "Technical approach approved"],
+      "approved_at": "2026-02-10T23:25:04Z",
+      "approval_note": "Concrete designs for all 4 REQs. Checkpoint path fix with JSON parsing, dynamic zones from tasks, project registry switch to ~/.mc/projects.json, stage override dialog with reason support."
     },
     "discovery": {
       "stage": "discovery",

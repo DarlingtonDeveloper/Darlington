@@ -21,3 +21,4 @@
 {"timestamp":"2026-02-10T23:23:08Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
 {"timestamp":"2026-02-10T23:23:12Z","action":"task_created","actor":"cli","details":{"name":"Technical design for all tasks","persona":"researcher","stage":"design","task_id":"cc30a6dd51","zone":""}}
 {"timestamp":"2026-02-10T23:24:50Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"cc30a6dd51"}}
+{"timestamp":"2026-02-10T23:25:04Z","action":"gate_approved","actor":"cli","details":{"note":"Concrete designs for all 4 REQs. Checkpoint path fix with JSON parsing, dynamic zones from tasks, project registry switch to ~/.mc/projects.json, stage override dialog with reason support.","stage":"design"}}
