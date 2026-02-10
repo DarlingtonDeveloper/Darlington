@@ -41,8 +41,10 @@
     },
     "requirements": {
       "stage": "requirements",
-      "status": "pending",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"]
+      "status": "approved",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"],
+      "approved_at": "2026-02-10T23:22:53Z",
+      "approval_note": "4 REQs: checkpoint path fix + UI, dynamic zones from task data, project registry unification (use CLI's ~/.mc/projects.json), stage override with confirmation dialog. 9 files, 1 new component."
     },
     "validate": {
       "stage": "validate",
