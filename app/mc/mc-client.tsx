@@ -5,6 +5,7 @@ import { useMCWebSocket } from "@/lib/mc/use-mc-websocket";
 import type { GraphData } from "@/lib/mc/types";
 import { adaptGraphResponse } from "@/lib/mc/adapters";
 import { DashboardHeader } from "@/components/mc/dashboard-header";
+import { StageOverrideDialog } from "@/components/mc/stage-override-dialog";
 import { MissionView } from "@/components/mc/mission-view";
 import { TraceView } from "@/components/mc/trace-view";
 import { ActivityView } from "@/components/mc/activity-view";
@@ -20,6 +21,7 @@ export function MCClient() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const mcState = useMCWebSocket();
   const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [showStageOverride, setShowStageOverride] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchGraph = useCallback(async () => {
@@ -76,6 +78,21 @@ export function MCClient() {
     });
   };
 
+  const handleStageOverride = async (stage: string, reason: string) => {
+    const res = await fetch(`${MC_API_URL}/api/stages/override`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage, reason }),
+    });
+    const result = await res.json();
+    if (result.success) setShowStageOverride(false);
+    return result;
+  };
+
+  const handleProjectSwitch = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-[#07070e] text-[#e8e4df]">
       <div className="flex items-center justify-between px-6 pt-2">
@@ -86,12 +103,24 @@ export function MCClient() {
         state={mcState}
         view={view}
         setView={(v: string) => setView(v as View)}
+        onProjectSwitch={handleProjectSwitch}
+        onStageOverride={() => setShowStageOverride(true)}
       />
+
+      {showStageOverride && (
+        <StageOverrideDialog
+          currentStage={mcState.stage.current}
+          onConfirm={handleStageOverride}
+          onCancel={() => setShowStageOverride(false)}
+        />
+      )}
 
       <main className="px-6 pb-6">
         {view === "mission" && (
           <MissionView
             workers={mcState.workers}
+            tasks={mcState.tasks}
+            checkpoints={mcState.checkpoints ?? []}
             gates={mcState.gates}
             tokens={mcState.tokens}
             currentStage={mcState.stage.current}
