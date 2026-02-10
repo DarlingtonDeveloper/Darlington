@@ -56,3 +56,4 @@
 {"timestamp":"2026-02-10T18:50:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"document","to_stage":"release"}}
 {"timestamp":"2026-02-10T18:51:00Z","action":"task_created","actor":"cli","details":{"name":"Release — PRs ready for review","persona":"developer","stage":"release","task_id":"acf3a3a002","zone":""}}
 {"timestamp":"2026-02-10T18:51:04Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"acf3a3a002"}}
+{"timestamp":"2026-02-10T18:51:04Z","action":"gate_approved","actor":"cli","details":{"note":"Mission 2 complete. MC PR #49, Darlington PR #26. Backend: route fix + findings/briefings endpoints. Frontend: FindingsView component with markdown rendering.","stage":"release"}}

@@ -44,8 +44,10 @@
     },
     "release": {
       "stage": "release",
-      "status": "pending",
-      "criteria": ["Deployed successfully", "Smoke tests pass"]
+      "status": "approved",
+      "criteria": ["Deployed successfully", "Smoke tests pass"],
+      "approved_at": "2026-02-10T18:51:04Z",
+      "approval_note": "Mission 2 complete. MC PR #49, Darlington PR #26. Backend: route fix + findings/briefings endpoints. Frontend: FindingsView component with markdown rendering."
     },
     "requirements": {
       "stage": "requirements",
