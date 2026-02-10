@@ -1,0 +1,19 @@
+{
+  "task_id": "a18c1cb9ad",
+  "mission": "MC Dashboard Mission 2 — Verify",
+  "files_changed": {
+    "MissionControl": [
+      "orchestrator/serve/serve.go",
+      "orchestrator/api/handlers.go",
+      "orchestrator/api/routes.go"
+    ],
+    "Darlington": [
+      "components/mc/findings-view.tsx",
+      "app/mc/mc-client.tsx",
+      "components/mc/trace-view.tsx",
+      "package.json"
+    ]
+  },
+  "requirements": ".mission/findings/f72aee52cb.md",
+  "design": ".mission/findings/6e2f90ed5a.md"
+}
