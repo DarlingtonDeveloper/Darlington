@@ -1,0 +1,57 @@
+{
+  "task_id": "9f98c99291",
+  "persona": "developer",
+  "mission": "MC Dashboard 3B — Fix verify issues",
+  "instruction": "Fix critical and high issues found by verify workers.",
+  "fixes": [
+    {
+      "priority": "HIGH",
+      "issue": "handleProjectSwitch accepts arbitrary paths — validate against project registry",
+      "file": "orchestrator/api/handlers.go",
+      "fix": "Load ~/.mc/projects.json, check that requested path is in the registry before switching"
+    },
+    {
+      "priority": "CRITICAL",
+      "issue": "handleStageOverride drops reason field — never passed to CLI",
+      "file": "orchestrator/api/handlers.go",
+      "fix": "Parse reason from request body, pass as --reason flag or --note to mc stage command"
+    },
+    {
+      "priority": "CRITICAL",
+      "issue": "Stage override doesn't broadcast via WebSocket",
+      "file": "orchestrator/api/handlers.go",
+      "fix": "After successful stage override, broadcast stage_changed event via hub"
+    },
+    {
+      "priority": "CRITICAL",
+      "issue": "missionDir race condition on project switch",
+      "file": "orchestrator/serve/serve.go",
+      "fix": "Add sync.RWMutex for missionDir access"
+    },
+    {
+      "priority": "HIGH",
+      "issue": "TestCheckpointsList uses old path/format — panics",
+      "file": "orchestrator/api/handlers_test.go (or wherever the test is)",
+      "fix": "Update test to use .mission/orchestrator/checkpoints/ with JSON files"
+    },
+    {
+      "priority": "MEDIUM",
+      "issue": "Missing projects.json returns error instead of empty array",
+      "file": "orchestrator/api/handlers.go",
+      "fix": "Return [] on file not found"
+    }
+  ],
+  "verify_commands": [
+    "cd /home/mike/MissionControl/orchestrator && go test ./... 2>&1",
+    "cd /home/mike/MissionControl/cmd/mc && go build ./... 2>&1",
+    "cd /home/mike/Darlington && npx tsc --noEmit 2>&1 | head -10"
+  ],
+  "repos": {
+    "mc": "/home/mike/MissionControl",
+    "darlington": "/home/mike/Darlington"
+  },
+  "constraints": [
+    "Write findings to /home/mike/Darlington/.mission/findings/9f98c99291.md (# Summary)",
+    "Mark done: /home/mike/MissionControl/dist/mc task update 9f98c99291 --status done"
+  ]
+}
