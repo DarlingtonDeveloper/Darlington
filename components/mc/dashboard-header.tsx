@@ -1,12 +1,22 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import type { MCState } from "@/lib/mc/types";
 import { PipelineBar } from "./pipeline-bar";
+import { MC_API_URL } from "@/lib/mc/constants";
+
+interface ProjectInfo {
+  name: string;
+  path: string;
+  active: boolean;
+}
 
 interface DashboardHeaderProps {
   state: MCState;
   view: string;
   setView: (view: string) => void;
+  onProjectSwitch?: () => void;
+  onStageOverride?: () => void;
 }
 
 function formatTokens(n: number): string {
@@ -23,11 +33,53 @@ export function DashboardHeader({
   state,
   view,
   setView,
+  onProjectSwitch,
+  onStageOverride,
 }: DashboardHeaderProps) {
   const tasks = state.tasks ?? [];
   const tokens = state.tokens;
   const connected = state.connected;
   const currentStage = state.stage?.current ?? "discovery";
+
+  const [projects, setProjects] = useState<ProjectInfo[]>([]);
+  const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const projectMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${MC_API_URL}/api/projects`)
+      .then((r) => r.json())
+      .then((data: ProjectInfo[]) => {
+        if (Array.isArray(data)) setProjects(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showProjectMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        projectMenuRef.current &&
+        !projectMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowProjectMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showProjectMenu]);
+
+  const activeProject = projects.find((p) => p.active);
+
+  const handleProjectSwitch = async (path: string) => {
+    setShowProjectMenu(false);
+    await fetch(`${MC_API_URL}/api/projects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+    onProjectSwitch?.();
+  };
 
   const counts = {
     active: tasks.filter((t) => t.status === "in_progress").length,
@@ -66,9 +118,41 @@ export function DashboardHeader({
             <h1 className="text-base font-semibold text-[#e8e4df] tracking-tight leading-tight font-serif">
               MissionControl
             </h1>
-            <span className="text-[10px] text-[#6b6560] font-mono tracking-wider">
-              mc.darlington.dev
-            </span>
+            <div className="relative" ref={projectMenuRef}>
+              <button
+                onClick={() =>
+                  projects.length > 1 && setShowProjectMenu((v) => !v)
+                }
+                className={[
+                  "text-[10px] text-[#6b6560] font-mono tracking-wider bg-transparent border-none p-0",
+                  projects.length > 1
+                    ? "cursor-pointer hover:text-[#a89880]"
+                    : "cursor-default",
+                ].join(" ")}
+              >
+                {activeProject?.name ?? "mc.darlington.dev"}
+                {projects.length > 1 && " ▾"}
+              </button>
+              {showProjectMenu && (
+                <div className="absolute top-full left-0 mt-1 min-w-[200px] rounded-lg border border-white/[0.08] bg-[#0d0d15] shadow-xl z-50 py-1">
+                  {projects.map((p) => (
+                    <button
+                      key={p.path}
+                      onClick={() => !p.active && handleProjectSwitch(p.path)}
+                      className={[
+                        "w-full text-left px-3 py-1.5 text-[11px] font-mono border-none bg-transparent cursor-pointer",
+                        p.active
+                          ? "text-[#c4b5a0]"
+                          : "text-[#6b6560] hover:text-[#e8e4df] hover:bg-white/[0.04]",
+                      ].join(" ")}
+                    >
+                      {p.active ? "✓ " : "  "}
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <span className="flex items-center gap-1.5 ml-2">
             <span className="relative inline-flex w-1.5 h-1.5">
@@ -137,8 +221,20 @@ export function DashboardHeader({
         </div>
       </div>
 
-      {/* Row 2 — Pipeline */}
-      <PipelineBar currentStage={currentStage} gates={state.gates} />
+      {/* Row 2 — Pipeline + Override */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <PipelineBar currentStage={currentStage} gates={state.gates} />
+        </div>
+        {onStageOverride && (
+          <button
+            onClick={onStageOverride}
+            className="shrink-0 px-2.5 py-1 rounded-md text-[10px] font-mono tracking-wider uppercase text-[#6b6560] hover:text-[#c4b5a0] border border-white/[0.06] hover:border-[#c4b5a0]/25 bg-transparent cursor-pointer transition-all"
+          >
+            Override
+          </button>
+        )}
+      </div>
 
       {/* Row 3 — View tabs */}
       <div className="flex gap-0.5 bg-white/[0.02] rounded-lg p-0.5">

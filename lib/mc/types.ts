@@ -96,6 +96,12 @@ export interface CheckpointInfo {
   auto?: boolean;
 }
 
+export interface ProjectInfo {
+  name: string;
+  path: string;
+  active: boolean;
+}
+
 export interface AuditEntry {
   timestamp: string;
   action: string;
