@@ -6,3 +6,4 @@
 {"timestamp":"2026-02-10T18:18:33Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
 {"timestamp":"2026-02-10T18:18:37Z","action":"task_created","actor":"cli","details":{"name":"Define goal: fix backend routes + wire frontend audit/findings/briefings","persona":"researcher","stage":"goal","task_id":"92f0454d7a","zone":""}}
 {"timestamp":"2026-02-10T18:19:13Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"92f0454d7a"}}
+{"timestamp":"2026-02-10T18:19:24Z","action":"gate_approved","actor":"cli","details":{"note":"9 success metrics across backend (5) and frontend (4). Path traversal risk noted for findings/briefings endpoints.","stage":"goal"}}

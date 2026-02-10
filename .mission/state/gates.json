@@ -19,8 +19,10 @@
     },
     "goal": {
       "stage": "goal",
-      "status": "pending",
-      "criteria": ["Goal statement defined", "Success metrics established"]
+      "status": "approved",
+      "criteria": ["Goal statement defined", "Success metrics established"],
+      "approved_at": "2026-02-10T18:19:24Z",
+      "approval_note": "9 success metrics across backend (5) and frontend (4). Path traversal risk noted for findings/briefings endpoints."
     },
     "implement": {
       "stage": "implement",
