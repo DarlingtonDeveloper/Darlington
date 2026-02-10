@@ -27,3 +27,4 @@
 {"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Infrastructure fixes — types, adapters, WS handlers","persona":"developer","stage":"implement","task_id":"dd2cf0271a","zone":""}}
 {"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Worker lifecycle panel","persona":"developer","stage":"implement","task_id":"b66c71ee7d","zone":""}}
 {"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Gate conditions panel","persona":"developer","stage":"implement","task_id":"f02174176d","zone":""}}
+{"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Token usage panel","persona":"developer","stage":"implement","task_id":"e9821a062e","zone":""}}
