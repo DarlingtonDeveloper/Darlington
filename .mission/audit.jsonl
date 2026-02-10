@@ -21,3 +21,4 @@
 {"timestamp":"2026-02-10T18:35:25Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
 {"timestamp":"2026-02-10T18:35:29Z","action":"task_created","actor":"cli","details":{"name":"Design API changes and component interfaces","persona":"researcher","stage":"design","task_id":"6e2f90ed5a","zone":""}}
 {"timestamp":"2026-02-10T18:37:35Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"6e2f90ed5a"}}
+{"timestamp":"2026-02-10T18:37:50Z","action":"gate_approved","actor":"cli","details":{"note":"Clean design. Task 2A collapses into 1A (audit wiring already exists in frontend, just needs buildState fix). 3 real implementation tasks: serve.go route fix, findings/briefings handlers, FindingsView component.","stage":"design"}}

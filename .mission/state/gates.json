@@ -2,8 +2,10 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "pending",
-      "criteria": ["Spec document complete", "Technical approach approved"]
+      "status": "approved",
+      "criteria": ["Spec document complete", "Technical approach approved"],
+      "approved_at": "2026-02-10T18:37:50Z",
+      "approval_note": "Clean design. Task 2A collapses into 1A (audit wiring already exists in frontend, just needs buildState fix). 3 real implementation tasks: serve.go route fix, findings/briefings handlers, FindingsView component."
     },
     "discovery": {
       "stage": "discovery",
