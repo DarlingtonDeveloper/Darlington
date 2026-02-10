@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/mc/dashboard-header";
 import { MissionView } from "@/components/mc/mission-view";
 import { TraceView } from "@/components/mc/trace-view";
 import { ActivityView } from "@/components/mc/activity-view";
+import BridgeStatusIndicator from "@/components/mc/bridge-status-indicator";
 import { MC_API_URL } from "@/lib/mc/constants";
 
 type View = "mission" | "trace" | "activity";
@@ -38,6 +39,10 @@ export function MCClient() {
 
   return (
     <div className="min-h-screen bg-[#07070e] text-[#e8e4df]">
+      <div className="flex items-center justify-between px-6 pt-2">
+        <div />
+        <BridgeStatusIndicator baseUrl={MC_API_URL} />
+      </div>
       <DashboardHeader
         state={mcState}
         view={view}
@@ -48,6 +53,9 @@ export function MCClient() {
         {view === "mission" && (
           <MissionView
             workers={mcState.workers}
+            gates={mcState.gates}
+            tokens={mcState.tokens}
+            currentStage={mcState.stage.current}
             onKillWorker={handleKillWorker}
           />
         )}
@@ -58,10 +66,10 @@ export function MCClient() {
           <ActivityView
             gates={mcState.gates}
             currentStage={mcState.stage.current}
-            audit={[]}
+            audit={mcState.audit ?? []}
             workers={mcState.workers}
             tasks={mcState.tasks}
-            checkpoints={[]}
+            checkpoints={mcState.checkpoints ?? []}
             tokens={mcState.tokens}
             onApproveGate={handleApproveGate}
             onRejectGate={handleRejectGate}

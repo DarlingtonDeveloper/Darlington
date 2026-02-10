@@ -1,7 +1,15 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { MCState, Task, Worker, Stage, GateCriteria } from "./types";
+import type { MCState, Task, Stage, AuditEntry, CheckpointInfo } from "./types";
 import { MC_API_URL, MC_WS_URL, MC_TOKEN } from "./constants";
+import {
+  adaptWorker,
+  adaptGate,
+  adaptTokens,
+  type RawWorker,
+  type RawGate,
+  type RawTokens,
+} from "./adapters";
 
 interface MCEvent {
   topic: string;
@@ -19,9 +27,12 @@ const initialState: MCState = {
     total_cost: 0,
     budget_limit: 0,
     budget_used: 0,
+    budget_remaining: 0,
     sessions: [],
   },
   connected: false,
+  audit: [],
+  checkpoints: [],
 };
 
 function handleTaskEvent(prev: MCState, event: MCEvent): MCState {
@@ -45,7 +56,7 @@ function handleTaskEvent(prev: MCState, event: MCEvent): MCState {
 }
 
 function handleWorkerEvent(prev: MCState, event: MCEvent): MCState {
-  const worker = event.data as unknown as Worker;
+  const worker = adaptWorker(event.data as unknown as RawWorker);
   switch (event.type) {
     case "spawned":
       return { ...prev, workers: [...prev.workers, worker] };
@@ -96,25 +107,35 @@ export function useMCWebSocket() {
           ],
         }),
       );
+      ws.send(JSON.stringify({ type: "request_sync" }));
     };
 
     ws.onmessage = (ev) => {
       const event: MCEvent = JSON.parse(ev.data);
 
-      // Handle initial state sync
+      // Handle initial state sync — full replacement
       if (event.topic === "sync" && event.type === "initial_state") {
         const d = event.data as Record<string, unknown>;
-        setState((prev) => ({
-          ...prev,
-          stage: (d?.stage as MCState["stage"]) ?? prev.stage,
-          tasks: (Array.isArray(d?.tasks) ? d.tasks : prev.tasks) as Task[],
-          workers: (Array.isArray(d?.workers)
-            ? d.workers
-            : prev.workers) as Worker[],
-          gates: (d?.gates as MCState["gates"]) ?? prev.gates,
-          tokens: (d?.tokens as MCState["tokens"]) ?? prev.tokens,
+        const rawWorkers = d?.workers as RawWorker[] | undefined;
+        const rawGates = d?.gates as Record<string, RawGate> | undefined;
+        const rawTokens = d?.tokens as RawTokens | undefined;
+
+        setState({
+          stage: (d?.stage as MCState["stage"]) ?? initialState.stage,
+          tasks: (Array.isArray(d?.tasks) ? d.tasks : []) as Task[],
+          workers: rawWorkers ? rawWorkers.map(adaptWorker) : [],
+          gates: rawGates
+            ? Object.fromEntries(
+                Object.entries(rawGates).map(([k, v]) => [k, adaptGate(v)]),
+              )
+            : {},
+          tokens: rawTokens ? adaptTokens(rawTokens) : initialState.tokens,
           connected: true,
-        }));
+          audit: (Array.isArray(d?.audit) ? d.audit : []) as AuditEntry[],
+          checkpoints: (Array.isArray(d?.checkpoints)
+            ? d.checkpoints
+            : []) as CheckpointInfo[],
+        });
         return;
       }
 
@@ -132,12 +153,30 @@ export function useMCWebSocket() {
               ...prev,
               gates: {
                 ...prev.gates,
-                [event.data.stage as string]:
-                  event.data as unknown as GateCriteria,
+                [event.data.stage as string]: adaptGate(
+                  event.data as unknown as RawGate,
+                ),
               },
             };
           case "token":
             return { ...prev, tokens: { ...prev.tokens, ...event.data } };
+          case "audit":
+            return {
+              ...prev,
+              audit: [...prev.audit, event.data as unknown as AuditEntry],
+            };
+          case "checkpoint":
+            return {
+              ...prev,
+              checkpoints: [
+                ...prev.checkpoints,
+                event.data as unknown as CheckpointInfo,
+              ],
+            };
+          case "zone":
+            return prev;
+          case "chat":
+            return prev;
           default:
             return prev;
         }

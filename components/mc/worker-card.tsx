@@ -1,3 +1,5 @@
+"use client";
+
 import { Worker } from "@/lib/mc/types";
 import { StatusDot } from "./status-dot";
 
