@@ -42,3 +42,4 @@
 {"timestamp":"2026-02-10T23:30:16Z","action":"task_created","actor":"cli","details":{"name":"Fix verify findings — security, wiring, test","persona":"developer","stage":"verify","task_id":"9f98c99291","zone":""}}
 {"timestamp":"2026-02-10T23:32:53Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"9f98c99291"}}
 {"timestamp":"2026-02-10T23:33:06Z","action":"gate_approved","actor":"cli","details":{"note":"3 personas found 6 issues (1 high security, 3 critical, 1 stale test, 1 edge case). All fixed: project path validation, reason passthrough, WS broadcast, mutex, test update, nil guard. Tests pass.","stage":"verify"}}
+{"timestamp":"2026-02-10T23:33:07Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-233307","session_id":"3f7e9802","stage":"verify"}}
