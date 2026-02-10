@@ -54,8 +54,10 @@
     },
     "validate": {
       "stage": "validate",
-      "status": "pending",
-      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"]
+      "status": "approved",
+      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"],
+      "approved_at": "2026-02-10T18:06:56Z",
+      "approval_note": "All 3 fixes applied: inline style→Tailwind, audit/checkpoints wired from state, use client added. tsc clean."
     },
     "verify": {
       "stage": "verify",
