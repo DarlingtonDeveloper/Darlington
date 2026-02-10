@@ -1,3 +1,5 @@
+"use client";
+
 import type { MCState } from "@/lib/mc/types";
 import { PipelineBar } from "./pipeline-bar";
 

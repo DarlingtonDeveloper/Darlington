@@ -1,0 +1,204 @@
+{
+  "id": "cp-20260210-180348",
+  "stage": "implement",
+  "created_at": "2026-02-10T18:03:48Z",
+  "session_id": "16e13a30",
+  "tasks": [
+    {
+      "id": "6cd643a6eb",
+      "name": "Research current dashboard state and API endpoints for Mission 1 features",
+      "stage": "discovery",
+      "zone": "",
+      "persona": "researcher",
+      "status": "done",
+      "created_at": "2026-02-10T17:51:10Z",
+      "updated_at": "2026-02-10T17:52:33Z"
+    },
+    {
+      "id": "2badbd13b3",
+      "name": "Define goal and success metrics for dashboard visibility",
+      "stage": "goal",
+      "zone": "",
+      "persona": "researcher",
+      "status": "done",
+      "created_at": "2026-02-10T17:52:49Z",
+      "updated_at": "2026-02-10T17:53:33Z"
+    },
+    {
+      "id": "ea424d08e8",
+      "name": "Define requirements for 5 dashboard features",
+      "stage": "requirements",
+      "zone": "",
+      "persona": "researcher",
+      "status": "complete",
+      "created_at": "2026-02-10T17:53:46Z",
+      "updated_at": "2026-02-10T17:55:12Z"
+    },
+    {
+      "id": "d2d685ccd4",
+      "name": "Plan implementation tasks for dashboard visibility",
+      "stage": "planning",
+      "zone": "",
+      "persona": "researcher",
+      "status": "done",
+      "created_at": "2026-02-10T17:55:27Z",
+      "updated_at": "2026-02-10T17:56:13Z"
+    },
+    {
+      "id": "9ddd832715",
+      "name": "Design all 5 dashboard components",
+      "stage": "design",
+      "zone": "",
+      "persona": "researcher",
+      "status": "complete",
+      "created_at": "2026-02-10T17:56:24Z",
+      "updated_at": "2026-02-10T17:58:52Z"
+    },
+    {
+      "id": "dd2cf0271a",
+      "name": "Infrastructure fixes — types, adapters, WS handlers",
+      "stage": "implement",
+      "zone": "",
+      "persona": "developer",
+      "status": "done",
+      "scope_paths": [
+        "lib/mc/types.ts",
+        "lib/mc/use-mc-websocket.ts",
+        "lib/mc/adapters.ts"
+      ],
+      "created_at": "2026-02-10T17:59:14Z",
+      "updated_at": "2026-02-10T18:01:03Z"
+    },
+    {
+      "id": "b66c71ee7d",
+      "name": "Worker lifecycle panel",
+      "stage": "implement",
+      "zone": "",
+      "persona": "developer",
+      "status": "done",
+      "scope_paths": ["components/mc/worker-panel.tsx"],
+      "created_at": "2026-02-10T17:59:14Z",
+      "updated_at": "2026-02-10T18:01:04Z"
+    },
+    {
+      "id": "f02174176d",
+      "name": "Gate conditions panel",
+      "stage": "implement",
+      "zone": "",
+      "persona": "developer",
+      "status": "done",
+      "scope_paths": ["components/mc/gate-conditions-panel.tsx"],
+      "created_at": "2026-02-10T17:59:14Z",
+      "updated_at": "2026-02-10T18:01:04Z"
+    },
+    {
+      "id": "e9821a062e",
+      "name": "Token usage panel",
+      "stage": "implement",
+      "zone": "",
+      "persona": "developer",
+      "status": "done",
+      "scope_paths": ["components/mc/token-usage-panel.tsx"],
+      "created_at": "2026-02-10T17:59:14Z",
+      "updated_at": "2026-02-10T18:01:04Z"
+    },
+    {
+      "id": "d9827a6707",
+      "name": "Bridge status indicator",
+      "stage": "implement",
+      "zone": "",
+      "persona": "developer",
+      "status": "done",
+      "scope_paths": [
+        "lib/mc/use-bridge-status.ts",
+        "components/mc/bridge-status-indicator.tsx"
+      ],
+      "created_at": "2026-02-10T17:59:15Z",
+      "updated_at": "2026-02-10T18:01:04Z"
+    },
+    {
+      "id": "ee50d5feb5",
+      "name": "Integrate all components into mission view",
+      "stage": "implement",
+      "zone": "",
+      "persona": "integrator",
+      "status": "complete",
+      "depends_on": [
+        "dd2cf0271a",
+        "b66c71ee7d",
+        "f02174176d",
+        "e9821a062e",
+        "d9827a6707"
+      ],
+      "scope_paths": ["components/mc/mission-view.tsx", "app/mc/mc-client.tsx"],
+      "created_at": "2026-02-10T18:00:54Z",
+      "updated_at": "2026-02-10T18:03:37Z"
+    }
+  ],
+  "gates": {
+    "design": {
+      "stage": "design",
+      "status": "approved",
+      "criteria": ["Spec document complete", "Technical approach approved"],
+      "approved_at": "2026-02-10T17:59:12Z",
+      "approval_note": "Full design spec for all 6 tasks. Exact types, adapters, component signatures, Tailwind classes, integration layout."
+    },
+    "discovery": {
+      "stage": "discovery",
+      "status": "approved",
+      "criteria": ["Problem space explored", "Stakeholders identified"],
+      "approved_at": "2026-02-10T17:52:48Z",
+      "approval_note": "Found type mismatches, unhandled WS events, audit 404, hardcoded burn rate. Clear gaps mapped against 5 backend APIs."
+    },
+    "document": {
+      "stage": "document",
+      "status": "pending",
+      "criteria": ["README updated", "API documented"]
+    },
+    "goal": {
+      "stage": "goal",
+      "status": "approved",
+      "criteria": ["Goal statement defined", "Success metrics established"],
+      "approved_at": "2026-02-10T17:53:44Z",
+      "approval_note": "7 success metrics. Key: type adapter for worker fields, token field fixes, 4 unhandled WS topics, audit 404 backend gap, stale cache request_sync."
+    },
+    "implement": {
+      "stage": "implement",
+      "status": "approved",
+      "criteria": ["All tasks complete", "Code compiles"],
+      "approved_at": "2026-02-10T18:03:48Z",
+      "approval_note": "6 tasks done: 5 parallel components + integrator. Build passes. Fixed 3 lint errors during integration."
+    },
+    "planning": {
+      "stage": "planning",
+      "status": "approved",
+      "criteria": ["Tasks broken down", "Dependencies mapped"],
+      "approved_at": "2026-02-10T17:56:23Z",
+      "approval_note": "6 tasks in 2 waves. 5 parallel (infra + 4 new components), 1 integrator. All new files, no conflicts."
+    },
+    "release": {
+      "stage": "release",
+      "status": "pending",
+      "criteria": ["Deployed successfully", "Smoke tests pass"]
+    },
+    "requirements": {
+      "stage": "requirements",
+      "status": "approved",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"],
+      "approved_at": "2026-02-10T17:55:26Z",
+      "approval_note": "5 REQs with file lists, acceptance criteria, implementation order. REQ-5 (infra) first, then REQ-1 (workers), REQ-3 (tokens), REQ-2 (gates), REQ-4 (bridge)."
+    },
+    "validate": {
+      "stage": "validate",
+      "status": "pending",
+      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"]
+    },
+    "verify": {
+      "stage": "verify",
+      "status": "pending",
+      "criteria": ["Tests passing", "Review complete"]
+    }
+  },
+  "decisions": null,
+  "blockers": null
+}

@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/b66c71ee7d.md",
+  "persona": "developer",
+  "scope_paths": ["components/mc/worker-panel.tsx"],
+  "stage": "implement",
+  "task_id": "b66c71ee7d",
+  "task_name": "Worker lifecycle panel",
+  "zone": ""
+}

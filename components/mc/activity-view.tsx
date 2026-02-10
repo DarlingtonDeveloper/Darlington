@@ -167,7 +167,7 @@ export function ActivityView({
                         : "text-[#6b6560]"
                     }`}
                   >
-                    {text}
+                    {text.description}
                   </span>
                 </div>
               );

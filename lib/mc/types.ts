@@ -36,7 +36,15 @@ export const ZONE_GLYPHS: Record<string, string> = {
 };
 
 export type TaskStatus = "pending" | "in_progress" | "complete" | "blocked";
-export type WorkerStatus = "busy" | "idle" | "error" | "offline";
+export type WorkerStatus =
+  | "busy"
+  | "idle"
+  | "error"
+  | "offline"
+  | "spawning"
+  | "running"
+  | "complete"
+  | "failed";
 
 export interface Task {
   id: string;
@@ -63,13 +71,21 @@ export interface Worker {
   tokens: number;
   cost_usd?: number;
   stdout?: string[];
+  started_at?: string;
+  model?: string;
+}
+
+export interface GateCriterion {
+  description: string;
+  met: boolean;
 }
 
 export interface GateCriteria {
   stage: Stage;
   status: "pending" | "approved" | "rejected";
-  criteria: string[];
+  criteria: GateCriterion[];
   approved_at?: string;
+  approval_note?: string;
 }
 
 export interface CheckpointInfo {
@@ -93,6 +109,7 @@ export interface TokenSummary {
   total_cost: number;
   budget_limit: number;
   budget_used: number;
+  budget_remaining: number;
   sessions: SessionTokens[];
 }
 
@@ -145,4 +162,6 @@ export interface MCState {
   gates: Record<string, GateCriteria>;
   tokens: TokenSummary;
   connected: boolean;
+  audit: AuditEntry[];
+  checkpoints: CheckpointInfo[];
 }

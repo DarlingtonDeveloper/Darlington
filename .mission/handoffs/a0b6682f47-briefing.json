@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/a0b6682f47.md",
+  "persona": "security",
+  "scope_paths": null,
+  "stage": "verify",
+  "task_id": "a0b6682f47",
+  "task_name": "Security review dashboard changes",
+  "zone": ""
+}
