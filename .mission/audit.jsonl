@@ -56,3 +56,4 @@
 {"timestamp":"2026-02-10T23:34:25Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"document","to_stage":"release"}}
 {"timestamp":"2026-02-10T23:34:26Z","action":"task_created","actor":"cli","details":{"name":"Release","persona":"developer","stage":"release","task_id":"1ceda24487","zone":""}}
 {"timestamp":"2026-02-10T23:34:29Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"1ceda24487"}}
+{"timestamp":"2026-02-10T23:34:30Z","action":"gate_approved","actor":"cli","details":{"note":"Mission 3B complete. MC #51 + Darlington #29. Checkpoints, zones, projects, stage override — all with security fixes from verify.","stage":"release"}}
