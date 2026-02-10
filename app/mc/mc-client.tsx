@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/mc/dashboard-header";
 import { MissionView } from "@/components/mc/mission-view";
 import { TraceView } from "@/components/mc/trace-view";
 import { ActivityView } from "@/components/mc/activity-view";
+import { FindingsView } from "@/components/mc/findings-view";
 import BridgeStatusIndicator from "@/components/mc/bridge-status-indicator";
 import { MC_API_URL } from "@/lib/mc/constants";
 
@@ -13,6 +14,7 @@ type View = "mission" | "trace" | "activity";
 
 export function MCClient() {
   const [view, setView] = useState<View>("mission");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const mcState = useMCWebSocket();
 
   const handleKillWorker = async (id: string) => {
@@ -60,7 +62,17 @@ export function MCClient() {
           />
         )}
 
-        {view === "trace" && <TraceView graph={null} tasks={mcState.tasks} />}
+        {view === "trace" && (
+          <>
+            <TraceView
+              graph={null}
+              tasks={mcState.tasks}
+              selectedTaskId={selectedTaskId}
+              onSelectTask={setSelectedTaskId}
+            />
+            <FindingsView taskId={selectedTaskId} baseUrl={MC_API_URL} />
+          </>
+        )}
 
         {view === "activity" && (
           <ActivityView
