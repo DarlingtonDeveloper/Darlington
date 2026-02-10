@@ -30,3 +30,4 @@
 {"timestamp":"2026-02-10T17:59:14Z","action":"task_created","actor":"cli","details":{"name":"Token usage panel","persona":"developer","stage":"implement","task_id":"e9821a062e","zone":""}}
 {"timestamp":"2026-02-10T17:59:15Z","action":"task_created","actor":"cli","details":{"name":"Bridge status indicator","persona":"developer","stage":"implement","task_id":"d9827a6707","zone":""}}
 {"timestamp":"2026-02-10T18:00:25Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"d9827a6707"}}
+{"timestamp":"2026-02-10T18:00:27Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"b66c71ee7d"}}
