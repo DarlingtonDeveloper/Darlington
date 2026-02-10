@@ -7,3 +7,4 @@
 {"id":"8d441a69d4","name":"Checkpoints + dynamic zones in mission view","stage":"implement","zone":"","persona":"developer","status":"done","created_at":"2026-02-10T23:25:10Z","updated_at":"2026-02-10T23:27:09Z"}
 {"id":"19db3b0d3b","name":"Project switcher + stage override dialog","stage":"implement","zone":"","persona":"developer","status":"done","created_at":"2026-02-10T23:25:10Z","updated_at":"2026-02-10T23:28:00Z"}
 {"id":"e31320348d","name":"Code review","stage":"verify","zone":"","persona":"reviewer","status":"pending","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:28:25Z","updated_at":"2026-02-10T23:28:25Z"}
+{"id":"479692c8fd","name":"Security review","stage":"verify","zone":"","persona":"security","status":"pending","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:28:25Z","updated_at":"2026-02-10T23:28:25Z"}
