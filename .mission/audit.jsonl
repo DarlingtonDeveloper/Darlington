@@ -34,3 +34,4 @@
 {"timestamp":"2026-02-10T18:44:39Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-184439","session_id":"1313717c","stage":"implement"}}
 {"timestamp":"2026-02-10T18:44:39Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
 {"timestamp":"2026-02-10T18:44:45Z","action":"task_created","actor":"cli","details":{"name":"Code review of all changes","persona":"reviewer","stage":"verify","task_id":"021c9af423","zone":""}}
+{"timestamp":"2026-02-10T18:44:45Z","action":"task_created","actor":"cli","details":{"name":"Security review — path traversal, input validation","persona":"security","stage":"verify","task_id":"c18fc6bd10","zone":""}}
