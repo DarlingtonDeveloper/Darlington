@@ -16,8 +16,10 @@
     },
     "document": {
       "stage": "document",
-      "status": "pending",
-      "criteria": ["README updated", "API documented"]
+      "status": "approved",
+      "criteria": ["README updated", "API documented"],
+      "approved_at": "2026-02-10T23:34:25Z",
+      "approval_note": "MC PR #51, Darlington PR #29. Clean commits, lint fixed."
     },
     "goal": {
       "stage": "goal",
