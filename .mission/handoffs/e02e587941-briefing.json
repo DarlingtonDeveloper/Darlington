@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/e02e587941.md",
+  "persona": "reviewer",
+  "scope_paths": null,
+  "stage": "verify",
+  "task_id": "e02e587941",
+  "task_name": "Code review dashboard visibility changes",
+  "zone": ""
+}
