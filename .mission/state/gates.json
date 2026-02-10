@@ -54,8 +54,10 @@
     },
     "validate": {
       "stage": "validate",
-      "status": "pending",
-      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"]
+      "status": "approved",
+      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"],
+      "approved_at": "2026-02-10T18:49:51Z",
+      "approval_note": "All 5 REQs confirmed met against actual code. Full coverage."
     },
     "verify": {
       "stage": "verify",

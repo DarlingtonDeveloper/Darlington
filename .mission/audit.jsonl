@@ -46,3 +46,4 @@
 {"timestamp":"2026-02-10T18:48:51Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"verify","to_stage":"validate"}}
 {"timestamp":"2026-02-10T18:48:54Z","action":"task_created","actor":"cli","details":{"name":"Validate requirements coverage","persona":"reviewer","stage":"validate","task_id":"0728141616","zone":""}}
 {"timestamp":"2026-02-10T18:49:42Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"0728141616"}}
+{"timestamp":"2026-02-10T18:49:51Z","action":"gate_approved","actor":"cli","details":{"note":"All 5 REQs confirmed met against actual code. Full coverage.","stage":"validate"}}
