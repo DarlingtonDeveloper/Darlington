@@ -41,8 +41,10 @@
     },
     "requirements": {
       "stage": "requirements",
-      "status": "pending",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"]
+      "status": "approved",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"],
+      "approved_at": "2026-02-10T17:55:26Z",
+      "approval_note": "5 REQs with file lists, acceptance criteria, implementation order. REQ-5 (infra) first, then REQ-1 (workers), REQ-3 (tokens), REQ-2 (gates), REQ-4 (bridge)."
     },
     "validate": {
       "stage": "validate",
