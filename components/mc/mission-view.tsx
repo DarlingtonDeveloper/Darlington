@@ -1,5 +1,18 @@
 "use client";
 
+const STAGE_ICONS: Record<string, string> = {
+  discovery: "🔍",
+  goal: "🎯",
+  requirements: "📋",
+  planning: "📐",
+  design: "✏️",
+  implement: "🔨",
+  verify: "✅",
+  validate: "🧪",
+  document: "📝",
+  release: "🚀",
+};
+
 import type {
   Worker,
   Task,
