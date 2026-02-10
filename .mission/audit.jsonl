@@ -60,3 +60,4 @@
 {"timestamp":"2026-02-10T18:06:57Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"validate","to_stage":"document"}}
 {"timestamp":"2026-02-10T18:07:02Z","action":"task_created","actor":"cli","details":{"name":"No docs needed for dashboard UI update","persona":"researcher","stage":"document","task_id":"a2370acf60","zone":""}}
 {"timestamp":"2026-02-10T18:07:06Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"a2370acf60"}}
+{"timestamp":"2026-02-10T18:07:06Z","action":"gate_approved","actor":"cli","details":{"note":"No docs needed for dashboard UI changes.","stage":"document"}}

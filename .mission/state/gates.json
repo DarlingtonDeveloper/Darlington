@@ -16,8 +16,10 @@
     },
     "document": {
       "stage": "document",
-      "status": "pending",
-      "criteria": ["README updated", "API documented"]
+      "status": "approved",
+      "criteria": ["README updated", "API documented"],
+      "approved_at": "2026-02-10T18:07:06Z",
+      "approval_note": "No docs needed for dashboard UI changes."
     },
     "goal": {
       "stage": "goal",
