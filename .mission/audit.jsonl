@@ -54,3 +54,4 @@
 {"timestamp":"2026-02-10T18:05:53Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-180553","session_id":"16e13a30","stage":"verify"}}
 {"timestamp":"2026-02-10T18:05:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"verify","to_stage":"validate"}}
 {"timestamp":"2026-02-10T18:05:59Z","action":"task_created","actor":"cli","details":{"name":"Fix inline style, wire audit/checkpoints from state, add missing use client","persona":"developer","stage":"validate","task_id":"890d15c230","zone":""}}
+{"timestamp":"2026-02-10T18:06:47Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"890d15c230"}}
