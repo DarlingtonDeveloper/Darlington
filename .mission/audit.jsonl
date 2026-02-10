@@ -50,3 +50,4 @@
 {"timestamp":"2026-02-10T18:04:44Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"e02e587941"}}
 {"timestamp":"2026-02-10T18:05:07Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"a0b6682f47"}}
 {"timestamp":"2026-02-10T18:05:39Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"753e43f216"}}
+{"timestamp":"2026-02-10T18:05:53Z","action":"gate_approved","actor":"cli","details":{"note":"3 personas done. Reviewer: inline style + hardcoded audit arrays (will fix). Security: low risk, MC_TOKEN in client is known/accepted for internal. Tester: TS clean, build passes.","stage":"verify"}}

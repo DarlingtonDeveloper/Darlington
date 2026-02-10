@@ -59,8 +59,10 @@
     },
     "verify": {
       "stage": "verify",
-      "status": "pending",
-      "criteria": ["Tests passing", "Review complete"]
+      "status": "approved",
+      "criteria": ["Tests passing", "Review complete"],
+      "approved_at": "2026-02-10T18:05:53Z",
+      "approval_note": "3 personas done. Reviewer: inline style + hardcoded audit arrays (will fix). Security: low risk, MC_TOKEN in client is known/accepted for internal. Tester: TS clean, build passes."
     }
   }
 }
