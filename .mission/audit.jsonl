@@ -7,3 +7,4 @@
 {"timestamp":"2026-02-10T23:20:56Z","action":"task_created","actor":"cli","details":{"name":"Define goal for 3B","persona":"researcher","stage":"goal","task_id":"092b3c2636","zone":""}}
 {"timestamp":"2026-02-10T23:21:04Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"092b3c2636"}}
 {"timestamp":"2026-02-10T23:21:04Z","action":"gate_approved","actor":"cli","details":{"note":"5 outcomes: checkpoints UI with path fix, zones grouping, project switcher with registry unification, stage override with confirmation, backend fixes.","stage":"goal"}}
+{"timestamp":"2026-02-10T23:21:05Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232105","session_id":"3f7e9802","stage":"goal"}}
