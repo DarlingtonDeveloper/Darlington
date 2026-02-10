@@ -1,0 +1,21 @@
+{
+  "task_id": "0ec5d00dfa",
+  "persona": "developer",
+  "mission": "MC Dashboard Mission 2 — Findings + briefings endpoints",
+  "stage": "implement",
+  "instruction": "Add findings and briefings serving endpoints. Read design at /home/mike/Darlington/.mission/findings/6e2f90ed5a.md for exact signatures.",
+  "steps": [
+    "Read /home/mike/MissionControl/orchestrator/api/handlers.go",
+    "Read /home/mike/MissionControl/orchestrator/api/routes.go",
+    "Add validateTaskID(id string) error — reject ids containing '..', '/', '\\'",
+    "Add handleTaskFindings(w, r, missionDir, taskID) — serve .mission/findings/{id}.md as text/markdown",
+    "Add handleTaskBriefing(w, r, missionDir, taskID) — serve .mission/handoffs/{id}-briefing.json as application/json",
+    "Wire into handleTaskRouter switch statement: case 'findings' and case 'briefing'",
+    "Handle 404 (file not found) and 400 (invalid id) with JSON error responses",
+    "Run 'go build ./...' to verify compilation",
+    "Write findings to /home/mike/Darlington/.mission/findings/0ec5d00dfa.md",
+    "Mark done: /home/mike/MissionControl/dist/mc task update 0ec5d00dfa --status done"
+  ],
+  "scope_paths": ["orchestrator/api/handlers.go", "orchestrator/api/routes.go"],
+  "repo": "/home/mike/MissionControl"
+}

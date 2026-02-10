@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/92f0454d7a.md",
+  "persona": "researcher",
+  "scope_paths": null,
+  "stage": "goal",
+  "task_id": "92f0454d7a",
+  "task_name": "Define goal: fix backend routes + wire frontend audit/findings/briefings",
+  "zone": ""
+}

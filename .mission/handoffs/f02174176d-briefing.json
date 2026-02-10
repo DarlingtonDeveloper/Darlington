@@ -1,9 +1,0 @@
-{
-  "output": ".mission/findings/f02174176d.md",
-  "persona": "developer",
-  "scope_paths": ["components/mc/gate-conditions-panel.tsx"],
-  "stage": "implement",
-  "task_id": "f02174176d",
-  "task_name": "Gate conditions panel",
-  "zone": ""
-}

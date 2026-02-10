@@ -43,10 +43,26 @@ const statusColors: Record<
 interface TraceViewProps {
   graph: GraphData | null;
   tasks: Task[];
+  selectedTaskId?: string | null;
+  onSelectTask?: (id: string | null) => void;
 }
 
-export function TraceView({ graph, tasks }: TraceViewProps) {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+export function TraceView({
+  graph,
+  tasks,
+  selectedTaskId,
+  onSelectTask,
+}: TraceViewProps) {
+  const [localSelectedNodeId, setLocalSelectedNodeId] = useState<string | null>(
+    null,
+  );
+
+  const selectedNodeId =
+    selectedTaskId !== undefined ? selectedTaskId : localSelectedNodeId;
+  const setSelectedNodeId = (id: string | null) => {
+    if (onSelectTask) onSelectTask(id);
+    else setLocalSelectedNodeId(id);
+  };
   const [filterStage, setFilterStage] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 

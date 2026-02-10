@@ -1,0 +1,33 @@
+{
+  "task_id": "4d21bccea9",
+  "persona": "researcher",
+  "mission": "MC Dashboard Visibility — Mission 2: Audit trail, findings/briefings browser",
+  "stage": "planning",
+  "instruction": "Create an implementation plan based on the requirements in .mission/findings/f72aee52cb.md. The plan must define task breakdown with file-level scope paths, wave ordering (what can be parallel vs sequential), and dependencies. Output a findings file with the plan.",
+  "context": {
+    "requirements_findings": ".mission/findings/f72aee52cb.md",
+    "mc_repo": "/home/mike/MissionControl",
+    "darlington_repo": "/home/mike/Darlington",
+    "branch": "feature/mc-dashboard-audit",
+    "key_files_mc": [
+      "orchestrator/serve/serve.go",
+      "orchestrator/api/routes.go",
+      "orchestrator/api/handlers.go"
+    ],
+    "key_files_darlington": [
+      "components/mc/activity-view.tsx",
+      "components/mc/mission-view.tsx",
+      "app/mc/mc-client.tsx",
+      "lib/mc/use-mc-websocket.ts",
+      "lib/mc/types.ts"
+    ]
+  },
+  "constraints": [
+    "One worker per file or clear file-level boundaries",
+    "MC repo changes (REQ-1,2,3) must land first — frontend depends on working endpoints",
+    "Use react-markdown for findings rendering",
+    "Follow existing codebase patterns (Radix + CVA, dark theme #07070e, accent #c4b5a0)",
+    "Write findings to .mission/findings/4d21bccea9.md",
+    "Mark task complete when done: ~/MissionControl/dist/mc task update 4d21bccea9 --status done"
+  ]
+}

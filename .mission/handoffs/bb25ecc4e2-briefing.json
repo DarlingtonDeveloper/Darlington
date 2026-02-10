@@ -1,0 +1,41 @@
+{
+  "task_id": "bb25ecc4e2",
+  "persona": "developer",
+  "mission": "MC Dashboard Mission 2 — Fix verify issues",
+  "stage": "verify",
+  "instruction": "Fix all issues found by verify workers. Read their findings then fix.",
+  "findings_to_fix": [
+    {
+      "source": ".mission/findings/a18c1cb9ad.md",
+      "issues": [
+        "handleStatus in handlers.go missing stage field — read stage.json and include in status response",
+        "routes_test.go mock tracker Get() return type mismatch — fix to match updated TrackerReader interface"
+      ]
+    },
+    {
+      "source": ".mission/findings/021c9af423.md",
+      "priority_fixes": [
+        "Add json.Valid() check in handleTaskBriefing before serving",
+        "Add AbortController in FindingsView useEffect to prevent stale fetch race conditions"
+      ]
+    },
+    {
+      "source": ".mission/findings/c18fc6bd10.md",
+      "optional": [
+        "Add transformLinkUri to react-markdown to block javascript: URIs"
+      ]
+    }
+  ],
+  "repos": {
+    "mc": "/home/mike/MissionControl",
+    "darlington": "/home/mike/Darlington"
+  },
+  "verify_commands": [
+    "cd /home/mike/MissionControl/orchestrator && go test ./... 2>&1",
+    "cd /home/mike/Darlington && npx tsc --noEmit 2>&1 | head -20"
+  ],
+  "constraints": [
+    "Write findings to /home/mike/Darlington/.mission/findings/bb25ecc4e2.md",
+    "Mark done: /home/mike/MissionControl/dist/mc task update bb25ecc4e2 --status done"
+  ]
+}

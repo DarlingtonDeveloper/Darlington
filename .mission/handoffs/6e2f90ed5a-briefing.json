@@ -1,0 +1,28 @@
+{
+  "task_id": "6e2f90ed5a",
+  "persona": "researcher",
+  "mission": "MC Dashboard Visibility — Mission 2",
+  "stage": "design",
+  "instruction": "Create technical design for the 4 implementation tasks. Read the plan at .mission/findings/4d21bccea9.md and requirements at .mission/findings/f72aee52cb.md. Read current code to produce concrete designs: function signatures, component props, data flow. Keep it focused — this is a small mission.",
+  "context": {
+    "plan": ".mission/findings/4d21bccea9.md",
+    "requirements": ".mission/findings/f72aee52cb.md",
+    "key_files": {
+      "serve.go": "/home/mike/MissionControl/orchestrator/serve/serve.go",
+      "routes.go": "/home/mike/MissionControl/orchestrator/api/routes.go",
+      "handlers.go": "/home/mike/MissionControl/orchestrator/api/handlers.go",
+      "server.go": "/home/mike/MissionControl/orchestrator/api/server.go",
+      "activity-view.tsx": "/home/mike/Darlington/components/mc/activity-view.tsx",
+      "mc-client.tsx": "/home/mike/Darlington/app/mc/mc-client.tsx",
+      "use-mc-websocket.ts": "/home/mike/Darlington/lib/mc/use-mc-websocket.ts",
+      "types.ts": "/home/mike/Darlington/lib/mc/types.ts",
+      "mission-view.tsx": "/home/mike/Darlington/components/mc/mission-view.tsx"
+    }
+  },
+  "constraints": [
+    "Write findings to .mission/findings/6e2f90ed5a.md (start with # Summary)",
+    "Mark task done: /home/mike/MissionControl/dist/mc task update 6e2f90ed5a --status done",
+    "Include: function signatures for new handlers, component prop interfaces, data flow diagram",
+    "Follow existing patterns in the codebase"
+  ]
+}

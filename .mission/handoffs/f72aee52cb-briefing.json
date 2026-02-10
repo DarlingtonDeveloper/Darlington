@@ -1,0 +1,9 @@
+{
+  "output": ".mission/findings/f72aee52cb.md",
+  "persona": "researcher",
+  "scope_paths": null,
+  "stage": "requirements",
+  "task_id": "f72aee52cb",
+  "task_name": "Define requirements for backend route fix + frontend audit/findings",
+  "zone": ""
+}
