@@ -20,3 +20,4 @@
 {"timestamp":"2026-02-10T23:23:07Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232307","session_id":"3f7e9802","stage":"planning"}}
 {"timestamp":"2026-02-10T23:23:08Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
 {"timestamp":"2026-02-10T23:23:12Z","action":"task_created","actor":"cli","details":{"name":"Technical design for all tasks","persona":"researcher","stage":"design","task_id":"cc30a6dd51","zone":""}}
+{"timestamp":"2026-02-10T23:24:50Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"cc30a6dd51"}}
