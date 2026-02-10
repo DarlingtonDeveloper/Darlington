@@ -70,3 +70,4 @@ logs
 
 # Next.js telemetry
 .next-telemetry.mission/
+.mission/
