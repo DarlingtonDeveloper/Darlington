@@ -15,3 +15,4 @@
 {"timestamp":"2026-02-10T23:22:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232254","session_id":"3f7e9802","stage":"requirements"}}
 {"timestamp":"2026-02-10T23:22:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"requirements","to_stage":"planning"}}
 {"timestamp":"2026-02-10T23:22:57Z","action":"task_created","actor":"cli","details":{"name":"Plan implementation waves","persona":"researcher","stage":"planning","task_id":"42817bc272","zone":""}}
+{"timestamp":"2026-02-10T23:23:07Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"42817bc272"}}
