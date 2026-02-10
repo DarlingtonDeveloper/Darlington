@@ -64,3 +64,4 @@
 {"timestamp":"2026-02-10T18:07:07Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-180707","session_id":"16e13a30","stage":"document"}}
 {"timestamp":"2026-02-10T18:07:07Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"document","to_stage":"release"}}
 {"timestamp":"2026-02-10T18:07:11Z","action":"task_created","actor":"cli","details":{"name":"Commit, push, PR, deploy","persona":"developer","stage":"release","task_id":"56927bb4aa","zone":""}}
+{"timestamp":"2026-02-10T18:11:58Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"56927bb4aa"}}
