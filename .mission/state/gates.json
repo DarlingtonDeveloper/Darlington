@@ -2,8 +2,10 @@
   "gates": {
     "design": {
       "stage": "design",
-      "status": "pending",
-      "criteria": ["Spec document complete", "Technical approach approved"]
+      "status": "approved",
+      "criteria": ["Spec document complete", "Technical approach approved"],
+      "approved_at": "2026-02-10T17:59:12Z",
+      "approval_note": "Full design spec for all 6 tasks. Exact types, adapters, component signatures, Tailwind classes, integration layout."
     },
     "discovery": {
       "stage": "discovery",
