@@ -43,3 +43,4 @@
 {"timestamp":"2026-02-10T18:03:37Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"pending","task_id":"ee50d5feb5"}}
 {"timestamp":"2026-02-10T18:03:48Z","action":"gate_approved","actor":"cli","details":{"note":"6 tasks done: 5 parallel components + integrator. Build passes. Fixed 3 lint errors during integration.","stage":"implement"}}
 {"timestamp":"2026-02-10T18:03:48Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-180348","session_id":"16e13a30","stage":"implement"}}
+{"timestamp":"2026-02-10T18:03:48Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
