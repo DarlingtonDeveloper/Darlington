@@ -41,8 +41,10 @@
     },
     "requirements": {
       "stage": "requirements",
-      "status": "pending",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"]
+      "status": "approved",
+      "criteria": ["Requirements documented", "Acceptance criteria defined"],
+      "approved_at": "2026-02-10T18:33:39Z",
+      "approval_note": "Requirements are thorough — REQ-1 through REQ-5 cover route fixing, new endpoints, and frontend wiring. File boundaries are clear. Ready for planning."
     },
     "validate": {
       "stage": "validate",
