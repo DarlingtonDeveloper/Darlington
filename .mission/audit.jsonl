@@ -3,3 +3,4 @@
 {"timestamp":"2026-02-10T18:18:16Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"complete","task_id":"ac16ee9dca"}}
 {"timestamp":"2026-02-10T18:18:32Z","action":"gate_approved","actor":"cli","details":{"note":"Critical finding: api.Server.Routes() never mounted in serve.go — audit/tasks/gates all 404. Need backend fix in MC repo + new findings/briefing endpoints. Frontend activity view already has audit rendering ready.","stage":"discovery"}}
 {"timestamp":"2026-02-10T18:18:32Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-181832","session_id":"1313717c","stage":"discovery"}}
+{"timestamp":"2026-02-10T18:18:33Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
