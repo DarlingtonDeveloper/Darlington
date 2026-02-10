@@ -59,8 +59,10 @@
     },
     "verify": {
       "stage": "verify",
-      "status": "pending",
-      "criteria": ["Tests passing", "Review complete"]
+      "status": "approved",
+      "criteria": ["Tests passing", "Review complete"],
+      "approved_at": "2026-02-10T18:48:50Z",
+      "approval_note": "3 verify personas ran. Tester found 2 real bugs (stage field, mock type), reviewer found 3 priority fixes (json validation, abort controller, XSS). All 5 fixed, tests pass. Clean."
     }
   }
 }
