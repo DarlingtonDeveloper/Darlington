@@ -1,60 +1,53 @@
-{"timestamp":"2026-02-10T18:16:09Z","action":"project_initialized","actor":"cli","details":{"openclaw":true,"path":"/home/mike/Darlington"}}
-{"timestamp":"2026-02-10T18:16:29Z","action":"task_created","actor":"cli","details":{"name":"Research audit API, findings/briefings serving, and requirements coverage","persona":"researcher","stage":"discovery","task_id":"ac16ee9dca","zone":""}}
-{"timestamp":"2026-02-10T18:18:16Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"complete","task_id":"ac16ee9dca"}}
-{"timestamp":"2026-02-10T18:18:32Z","action":"gate_approved","actor":"cli","details":{"note":"Critical finding: api.Server.Routes() never mounted in serve.go — audit/tasks/gates all 404. Need backend fix in MC repo + new findings/briefing endpoints. Frontend activity view already has audit rendering ready.","stage":"discovery"}}
-{"timestamp":"2026-02-10T18:18:32Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-181832","session_id":"1313717c","stage":"discovery"}}
-{"timestamp":"2026-02-10T18:18:33Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
-{"timestamp":"2026-02-10T18:18:37Z","action":"task_created","actor":"cli","details":{"name":"Define goal: fix backend routes + wire frontend audit/findings/briefings","persona":"researcher","stage":"goal","task_id":"92f0454d7a","zone":""}}
-{"timestamp":"2026-02-10T18:19:13Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"92f0454d7a"}}
-{"timestamp":"2026-02-10T18:19:24Z","action":"gate_approved","actor":"cli","details":{"note":"9 success metrics across backend (5) and frontend (4). Path traversal risk noted for findings/briefings endpoints.","stage":"goal"}}
-{"timestamp":"2026-02-10T18:19:25Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-181925","session_id":"1313717c","stage":"goal"}}
-{"timestamp":"2026-02-10T18:19:25Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"goal","to_stage":"requirements"}}
-{"timestamp":"2026-02-10T18:19:26Z","action":"task_created","actor":"cli","details":{"name":"Define requirements for backend route fix + frontend audit/findings","persona":"researcher","stage":"requirements","task_id":"f72aee52cb","zone":""}}
-{"timestamp":"2026-02-10T18:20:37Z","action":"task_updated","actor":"cli","details":{"new_status":"complete","old_status":"complete","task_id":"f72aee52cb"}}
-{"timestamp":"2026-02-10T18:33:39Z","action":"gate_approved","actor":"cli","details":{"note":"Requirements are thorough — REQ-1 through REQ-5 cover route fixing, new endpoints, and frontend wiring. File boundaries are clear. Ready for planning.","stage":"requirements"}}
-{"timestamp":"2026-02-10T18:33:39Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-183339","session_id":"1313717c","stage":"requirements"}}
-{"timestamp":"2026-02-10T18:33:40Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"requirements","to_stage":"planning"}}
-{"timestamp":"2026-02-10T18:33:46Z","action":"task_created","actor":"cli","details":{"name":"Plan implementation for audit/findings/briefings","persona":"researcher","stage":"planning","task_id":"4d21bccea9","zone":""}}
-{"timestamp":"2026-02-10T18:35:09Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"4d21bccea9"}}
-{"timestamp":"2026-02-10T18:35:25Z","action":"gate_approved","actor":"cli","details":{"note":"Clean 4-task plan across 2 waves. Good insight that audit view already works — just needs route mounting. Combined findings+briefings into one task since they share files. Moving to design.","stage":"planning"}}
-{"timestamp":"2026-02-10T18:35:25Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-183525","session_id":"1313717c","stage":"planning"}}
-{"timestamp":"2026-02-10T18:35:25Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
-{"timestamp":"2026-02-10T18:35:29Z","action":"task_created","actor":"cli","details":{"name":"Design API changes and component interfaces","persona":"researcher","stage":"design","task_id":"6e2f90ed5a","zone":""}}
-{"timestamp":"2026-02-10T18:37:35Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"6e2f90ed5a"}}
-{"timestamp":"2026-02-10T18:37:50Z","action":"gate_approved","actor":"cli","details":{"note":"Clean design. Task 2A collapses into 1A (audit wiring already exists in frontend, just needs buildState fix). 3 real implementation tasks: serve.go route fix, findings/briefings handlers, FindingsView component.","stage":"design"}}
-{"timestamp":"2026-02-10T18:37:51Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-183751","session_id":"1313717c","stage":"design"}}
-{"timestamp":"2026-02-10T18:37:51Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"design","to_stage":"implement"}}
-{"timestamp":"2026-02-10T18:37:55Z","action":"task_created","actor":"cli","details":{"name":"Fix route mounting in serve.go + add audit to buildState","persona":"developer","stage":"implement","task_id":"9c2b8daadf","zone":""}}
-{"timestamp":"2026-02-10T18:37:58Z","action":"task_created","actor":"cli","details":{"name":"Add findings and briefings endpoints","persona":"developer","stage":"implement","task_id":"0ec5d00dfa","zone":""}}
-{"timestamp":"2026-02-10T18:38:02Z","action":"task_created","actor":"cli","details":{"name":"Build FindingsView component + install react-markdown","persona":"developer","stage":"implement","task_id":"9858de5381","zone":""}}
-{"timestamp":"2026-02-10T18:39:18Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"0ec5d00dfa"}}
-{"timestamp":"2026-02-10T18:40:05Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"9c2b8daadf"}}
-{"timestamp":"2026-02-10T18:42:22Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"9858de5381"}}
-{"timestamp":"2026-02-10T18:44:38Z","action":"gate_approved","actor":"cli","details":{"note":"All 3 tasks done. Go builds clean, TypeScript clean. Build failure is pre-existing (evening webhook needs Supabase env at build time, not our change). Moving to verify with 3 personas.","stage":"implement"}}
-{"timestamp":"2026-02-10T18:44:39Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-184439","session_id":"1313717c","stage":"implement"}}
-{"timestamp":"2026-02-10T18:44:39Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
-{"timestamp":"2026-02-10T18:44:45Z","action":"task_created","actor":"cli","details":{"name":"Code review of all changes","persona":"reviewer","stage":"verify","task_id":"021c9af423","zone":""}}
-{"timestamp":"2026-02-10T18:44:45Z","action":"task_created","actor":"cli","details":{"name":"Security review — path traversal, input validation","persona":"security","stage":"verify","task_id":"c18fc6bd10","zone":""}}
-{"timestamp":"2026-02-10T18:44:45Z","action":"task_created","actor":"cli","details":{"name":"Test endpoints and component rendering","persona":"tester","stage":"verify","task_id":"a18c1cb9ad","zone":""}}
-{"timestamp":"2026-02-10T18:45:56Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"c18fc6bd10"}}
-{"timestamp":"2026-02-10T18:46:06Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"a18c1cb9ad"}}
-{"timestamp":"2026-02-10T18:46:24Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"021c9af423"}}
-{"timestamp":"2026-02-10T18:46:37Z","action":"task_created","actor":"cli","details":{"name":"Fix verify findings — test failures + review suggestions","persona":"developer","stage":"verify","task_id":"bb25ecc4e2","zone":""}}
-{"timestamp":"2026-02-10T18:48:37Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"bb25ecc4e2"}}
-{"timestamp":"2026-02-10T18:48:50Z","action":"gate_approved","actor":"cli","details":{"note":"3 verify personas ran. Tester found 2 real bugs (stage field, mock type), reviewer found 3 priority fixes (json validation, abort controller, XSS). All 5 fixed, tests pass. Clean.","stage":"verify"}}
-{"timestamp":"2026-02-10T18:48:51Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-184851","session_id":"1313717c","stage":"verify"}}
-{"timestamp":"2026-02-10T18:48:51Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"verify","to_stage":"validate"}}
-{"timestamp":"2026-02-10T18:48:54Z","action":"task_created","actor":"cli","details":{"name":"Validate requirements coverage","persona":"reviewer","stage":"validate","task_id":"0728141616","zone":""}}
-{"timestamp":"2026-02-10T18:49:42Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"0728141616"}}
-{"timestamp":"2026-02-10T18:49:51Z","action":"gate_approved","actor":"cli","details":{"note":"All 5 REQs confirmed met against actual code. Full coverage.","stage":"validate"}}
-{"timestamp":"2026-02-10T18:49:52Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-184952","session_id":"1313717c","stage":"validate"}}
-{"timestamp":"2026-02-10T18:49:52Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"validate","to_stage":"document"}}
-{"timestamp":"2026-02-10T18:49:55Z","action":"task_created","actor":"cli","details":{"name":"Document changes for PR","persona":"developer","stage":"document","task_id":"68a19f96ac","zone":""}}
-{"timestamp":"2026-02-10T18:50:53Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"68a19f96ac"}}
-{"timestamp":"2026-02-10T18:50:54Z","action":"gate_approved","actor":"cli","details":{"note":"PRs opened: MC #49 (backend endpoints) and Darlington #26 (frontend viewer). Commit messages document all changes.","stage":"document"}}
-{"timestamp":"2026-02-10T18:50:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-185054","session_id":"1313717c","stage":"document"}}
-{"timestamp":"2026-02-10T18:50:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"document","to_stage":"release"}}
-{"timestamp":"2026-02-10T18:51:00Z","action":"task_created","actor":"cli","details":{"name":"Release — PRs ready for review","persona":"developer","stage":"release","task_id":"acf3a3a002","zone":""}}
-{"timestamp":"2026-02-10T18:51:04Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"acf3a3a002"}}
-{"timestamp":"2026-02-10T18:51:04Z","action":"gate_approved","actor":"cli","details":{"note":"Mission 2 complete. MC PR #49, Darlington PR #26. Backend: route fix + findings/briefings endpoints. Frontend: FindingsView component with markdown rendering.","stage":"release"}}
-{"timestamp":"2026-02-10T18:51:05Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-185105","session_id":"1313717c","stage":"release"}}
+{"timestamp":"2026-02-10T22:53:07Z","action":"project_initialized","actor":"cli","details":{"openclaw":true,"path":"/home/mike/Darlington"}}
+{"timestamp":"2026-02-10T22:53:13Z","action":"task_created","actor":"cli","details":{"name":"Discover current graph/specs state in dashboard and MC API","persona":"researcher","stage":"discovery","task_id":"da923dc8ec","zone":""}}
+{"timestamp":"2026-02-10T22:54:19Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"da923dc8ec"}}
+{"timestamp":"2026-02-10T22:54:31Z","action":"gate_approved","actor":"cli","details":{"note":"Clear picture: graph API exists but unused (hardcoded null), type mismatches (name/title, from-to/source-target), specs endpoints are stubs. TraceView has SVG renderer ready — just needs real data.","stage":"discovery"}}
+{"timestamp":"2026-02-10T22:54:31Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-225431","session_id":"c56ef6a9","stage":"discovery"}}
+{"timestamp":"2026-02-10T22:54:31Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
+{"timestamp":"2026-02-10T22:54:35Z","action":"task_created","actor":"cli","details":{"name":"Define goal for graph + specs viewer","persona":"researcher","stage":"goal","task_id":"126604f93d","zone":""}}
+{"timestamp":"2026-02-10T22:54:51Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"126604f93d"}}
+{"timestamp":"2026-02-10T22:54:54Z","action":"gate_approved","actor":"cli","details":{"note":"5 clear outcomes: wire graph, add to buildState, implement specs endpoint, build specs viewer, real-time updates.","stage":"goal"}}
+{"timestamp":"2026-02-10T22:54:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-225454","session_id":"c56ef6a9","stage":"goal"}}
+{"timestamp":"2026-02-10T22:54:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"goal","to_stage":"requirements"}}
+{"timestamp":"2026-02-10T22:54:58Z","action":"task_created","actor":"cli","details":{"name":"Define requirements for graph wiring + specs viewer","persona":"researcher","stage":"requirements","task_id":"03d2652e8a","zone":""}}
+{"timestamp":"2026-02-10T22:56:19Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"03d2652e8a"}}
+{"timestamp":"2026-02-10T22:56:33Z","action":"gate_approved","actor":"cli","details":{"note":"6 REQs with clear acceptance criteria and file boundaries. Graph needs type alignment (Go→TS), specs endpoints need real implementation. 2 new files, 8 modified.","stage":"requirements"}}
+{"timestamp":"2026-02-10T22:56:33Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-225633","session_id":"c56ef6a9","stage":"requirements"}}
+{"timestamp":"2026-02-10T22:56:33Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"requirements","to_stage":"planning"}}
+{"timestamp":"2026-02-10T22:56:36Z","action":"task_created","actor":"cli","details":{"name":"Plan implementation waves","persona":"researcher","stage":"planning","task_id":"42817bc272","zone":""}}
+{"timestamp":"2026-02-10T22:56:48Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"42817bc272"}}
+{"timestamp":"2026-02-10T22:56:48Z","action":"gate_approved","actor":"cli","details":{"note":"5 tasks, 3 waves. Backend parallel (graph types + specs endpoint), frontend parallel (adapter/wiring + specs viewer), then integrator. Clean file boundaries.","stage":"planning"}}
+{"timestamp":"2026-02-10T22:56:48Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-225648","session_id":"c56ef6a9","stage":"planning"}}
+{"timestamp":"2026-02-10T22:56:48Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"planning","to_stage":"design"}}
+{"timestamp":"2026-02-10T22:56:51Z","action":"task_created","actor":"cli","details":{"name":"Design graph types, specs API, and component interfaces","persona":"researcher","stage":"design","task_id":"416a3d518a","zone":""}}
+{"timestamp":"2026-02-10T22:58:41Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"416a3d518a"}}
+{"timestamp":"2026-02-10T22:58:55Z","action":"gate_approved","actor":"cli","details":{"note":"Concrete design with Go structs, exported BuildGraph for reuse in buildState, adapter function for shape compat, specs endpoints with orphan detection, SpecsView component. All signatures specified.","stage":"design"}}
+{"timestamp":"2026-02-10T22:58:55Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-225855","session_id":"c56ef6a9","stage":"design"}}
+{"timestamp":"2026-02-10T22:58:55Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"design","to_stage":"implement"}}
+{"timestamp":"2026-02-10T22:59:00Z","action":"task_created","actor":"cli","details":{"name":"Graph type alignment + BuildGraph export + buildState","persona":"developer","stage":"implement","task_id":"ab422931b5","zone":""}}
+{"timestamp":"2026-02-10T22:59:00Z","action":"task_created","actor":"cli","details":{"name":"Implement specs endpoints","persona":"developer","stage":"implement","task_id":"b7056b1498","zone":""}}
+{"timestamp":"2026-02-10T22:59:05Z","action":"task_created","actor":"cli","details":{"name":"Type adapter + graph wiring in mc-client","persona":"developer","stage":"implement","task_id":"99aa3b69b4","zone":""}}
+{"timestamp":"2026-02-10T22:59:05Z","action":"task_created","actor":"cli","details":{"name":"Specs viewer component","persona":"developer","stage":"implement","task_id":"dc02076d77","zone":""}}
+{"timestamp":"2026-02-10T22:59:05Z","action":"task_created","actor":"cli","details":{"name":"Integration — verify wiring","persona":"developer","stage":"implement","task_id":"72a15e7e96","zone":""}}
+{"timestamp":"2026-02-10T23:00:28Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"b7056b1498"}}
+{"timestamp":"2026-02-10T23:00:30Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"ab422931b5"}}
+{"timestamp":"2026-02-10T23:02:08Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"99aa3b69b4"}}
+{"timestamp":"2026-02-10T23:02:17Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"dc02076d77"}}
+{"timestamp":"2026-02-10T23:03:09Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"72a15e7e96"}}
+{"timestamp":"2026-02-10T23:03:19Z","action":"gate_approved","actor":"cli","details":{"note":"5 tasks done across 3 waves. Both backend workers (graph types, specs endpoints) and frontend workers (adapter/wiring, specs viewer) completed. Integrator confirmed clean builds, no conflicts.","stage":"implement"}}
+{"timestamp":"2026-02-10T23:03:19Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-230319","session_id":"c56ef6a9","stage":"implement"}}
+{"timestamp":"2026-02-10T23:03:19Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"implement","to_stage":"verify"}}
+{"timestamp":"2026-02-10T23:03:23Z","action":"task_created","actor":"cli","details":{"name":"Code review","persona":"reviewer","stage":"verify","task_id":"e31320348d","zone":""}}
+{"timestamp":"2026-02-10T23:03:23Z","action":"task_created","actor":"cli","details":{"name":"Security review","persona":"security","stage":"verify","task_id":"479692c8fd","zone":""}}
+{"timestamp":"2026-02-10T23:03:23Z","action":"task_created","actor":"cli","details":{"name":"Test coverage","persona":"tester","stage":"verify","task_id":"76820e1a02","zone":""}}
+{"timestamp":"2026-02-10T23:04:14Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"479692c8fd"}}
+{"timestamp":"2026-02-10T23:04:36Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"76820e1a02"}}
+{"timestamp":"2026-02-10T23:04:47Z","action":"gate_approved","actor":"cli","details":{"note":"3 personas: reviewer, security, tester. All pass. Go 11/11 tests, TS clean, all 6 REQs verified, no security issues, edge cases covered in adapters and specs view.","stage":"verify"}}
+{"timestamp":"2026-02-10T23:04:47Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-230447","session_id":"c56ef6a9","stage":"verify"}}
+{"timestamp":"2026-02-10T23:04:47Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"verify","to_stage":"validate"}}
+{"timestamp":"2026-02-10T23:04:50Z","action":"task_created","actor":"cli","details":{"name":"Validate all 6 requirements met","persona":"reviewer","stage":"validate","task_id":"5f8edf0ad2","zone":""}}
+{"timestamp":"2026-02-10T23:04:54Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"5f8edf0ad2"}}
+{"timestamp":"2026-02-10T23:04:54Z","action":"gate_approved","actor":"cli","details":{"note":"Tester already verified all 6 REQs against code in verify stage. All confirmed met.","stage":"validate"}}
+{"timestamp":"2026-02-10T23:04:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-230454","session_id":"c56ef6a9","stage":"validate"}}
+{"timestamp":"2026-02-10T23:04:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"validate","to_stage":"document"}}
+{"timestamp":"2026-02-10T23:04:58Z","action":"task_created","actor":"cli","details":{"name":"Commit and open PRs","persona":"developer","stage":"document","task_id":"523b1a2f69","zone":""}}

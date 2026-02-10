@@ -3,72 +3,98 @@
     "design": {
       "stage": "design",
       "status": "approved",
-      "criteria": ["Spec document complete", "Technical approach approved"],
-      "approved_at": "2026-02-10T18:37:50Z",
-      "approval_note": "Clean design. Task 2A collapses into 1A (audit wiring already exists in frontend, just needs buildState fix). 3 real implementation tasks: serve.go route fix, findings/briefings handlers, FindingsView component."
+      "criteria": [
+        "Spec document complete",
+        "Technical approach approved"
+      ],
+      "approved_at": "2026-02-10T22:58:55Z",
+      "approval_note": "Concrete design with Go structs, exported BuildGraph for reuse in buildState, adapter function for shape compat, specs endpoints with orphan detection, SpecsView component. All signatures specified."
     },
     "discovery": {
       "stage": "discovery",
       "status": "approved",
-      "criteria": ["Problem space explored", "Stakeholders identified"],
-      "approved_at": "2026-02-10T18:18:32Z",
-      "approval_note": "Critical finding: api.Server.Routes() never mounted in serve.go — audit/tasks/gates all 404. Need backend fix in MC repo + new findings/briefing endpoints. Frontend activity view already has audit rendering ready."
+      "criteria": [
+        "Problem space explored",
+        "Stakeholders identified"
+      ],
+      "approved_at": "2026-02-10T22:54:31Z",
+      "approval_note": "Clear picture: graph API exists but unused (hardcoded null), type mismatches (name/title, from-to/source-target), specs endpoints are stubs. TraceView has SVG renderer ready — just needs real data."
     },
     "document": {
       "stage": "document",
-      "status": "approved",
-      "criteria": ["README updated", "API documented"],
-      "approved_at": "2026-02-10T18:50:54Z",
-      "approval_note": "PRs opened: MC #49 (backend endpoints) and Darlington #26 (frontend viewer). Commit messages document all changes."
+      "status": "pending",
+      "criteria": [
+        "README updated",
+        "API documented"
+      ]
     },
     "goal": {
       "stage": "goal",
       "status": "approved",
-      "criteria": ["Goal statement defined", "Success metrics established"],
-      "approved_at": "2026-02-10T18:19:24Z",
-      "approval_note": "9 success metrics across backend (5) and frontend (4). Path traversal risk noted for findings/briefings endpoints."
+      "criteria": [
+        "Goal statement defined",
+        "Success metrics established"
+      ],
+      "approved_at": "2026-02-10T22:54:54Z",
+      "approval_note": "5 clear outcomes: wire graph, add to buildState, implement specs endpoint, build specs viewer, real-time updates."
     },
     "implement": {
       "stage": "implement",
       "status": "approved",
-      "criteria": ["All tasks complete", "Code compiles"],
-      "approved_at": "2026-02-10T18:44:38Z",
-      "approval_note": "All 3 tasks done. Go builds clean, TypeScript clean. Build failure is pre-existing (evening webhook needs Supabase env at build time, not our change). Moving to verify with 3 personas."
+      "criteria": [
+        "All tasks complete",
+        "Code compiles"
+      ],
+      "approved_at": "2026-02-10T23:03:19Z",
+      "approval_note": "5 tasks done across 3 waves. Both backend workers (graph types, specs endpoints) and frontend workers (adapter/wiring, specs viewer) completed. Integrator confirmed clean builds, no conflicts."
     },
     "planning": {
       "stage": "planning",
       "status": "approved",
-      "criteria": ["Tasks broken down", "Dependencies mapped"],
-      "approved_at": "2026-02-10T18:35:25Z",
-      "approval_note": "Clean 4-task plan across 2 waves. Good insight that audit view already works — just needs route mounting. Combined findings+briefings into one task since they share files. Moving to design."
+      "criteria": [
+        "Tasks broken down",
+        "Dependencies mapped"
+      ],
+      "approved_at": "2026-02-10T22:56:48Z",
+      "approval_note": "5 tasks, 3 waves. Backend parallel (graph types + specs endpoint), frontend parallel (adapter/wiring + specs viewer), then integrator. Clean file boundaries."
     },
     "release": {
       "stage": "release",
-      "status": "approved",
-      "criteria": ["Deployed successfully", "Smoke tests pass"],
-      "approved_at": "2026-02-10T18:51:04Z",
-      "approval_note": "Mission 2 complete. MC PR #49, Darlington PR #26. Backend: route fix + findings/briefings endpoints. Frontend: FindingsView component with markdown rendering."
+      "status": "pending",
+      "criteria": [
+        "Deployed successfully",
+        "Smoke tests pass"
+      ]
     },
     "requirements": {
       "stage": "requirements",
       "status": "approved",
-      "criteria": ["Requirements documented", "Acceptance criteria defined"],
-      "approved_at": "2026-02-10T18:33:39Z",
-      "approval_note": "Requirements are thorough — REQ-1 through REQ-5 cover route fixing, new endpoints, and frontend wiring. File boundaries are clear. Ready for planning."
+      "criteria": [
+        "Requirements documented",
+        "Acceptance criteria defined"
+      ],
+      "approved_at": "2026-02-10T22:56:33Z",
+      "approval_note": "6 REQs with clear acceptance criteria and file boundaries. Graph needs type alignment (Go→TS), specs endpoints need real implementation. 2 new files, 8 modified."
     },
     "validate": {
       "stage": "validate",
       "status": "approved",
-      "criteria": ["Acceptance criteria met", "Stakeholder sign-off"],
-      "approved_at": "2026-02-10T18:49:51Z",
-      "approval_note": "All 5 REQs confirmed met against actual code. Full coverage."
+      "criteria": [
+        "Acceptance criteria met",
+        "Stakeholder sign-off"
+      ],
+      "approved_at": "2026-02-10T23:04:54Z",
+      "approval_note": "Tester already verified all 6 REQs against code in verify stage. All confirmed met."
     },
     "verify": {
       "stage": "verify",
       "status": "approved",
-      "criteria": ["Tests passing", "Review complete"],
-      "approved_at": "2026-02-10T18:48:50Z",
-      "approval_note": "3 verify personas ran. Tester found 2 real bugs (stage field, mock type), reviewer found 3 priority fixes (json validation, abort controller, XSS). All 5 fixed, tests pass. Clean."
+      "criteria": [
+        "Tests passing",
+        "Review complete"
+      ],
+      "approved_at": "2026-02-10T23:04:47Z",
+      "approval_note": "3 personas: reviewer, security, tester. All pass. Go 11/11 tests, TS clean, all 6 REQs verified, no security issues, edge cases covered in adapters and specs view."
     }
   }
 }
