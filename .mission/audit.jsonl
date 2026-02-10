@@ -5,3 +5,4 @@
 {"timestamp":"2026-02-10T17:52:48Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-175248","session_id":"16e13a30","stage":"discovery"}}
 {"timestamp":"2026-02-10T17:52:48Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
 {"timestamp":"2026-02-10T17:52:49Z","action":"task_created","actor":"cli","details":{"name":"Define goal and success metrics for dashboard visibility","persona":"researcher","stage":"goal","task_id":"2badbd13b3","zone":""}}
+{"timestamp":"2026-02-10T17:53:33Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"2badbd13b3"}}
