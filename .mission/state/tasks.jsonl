@@ -12,4 +12,4 @@
 {"id":"9f98c99291","name":"Fix verify findings — security, wiring, test","stage":"verify","zone":"","persona":"developer","status":"done","created_at":"2026-02-10T23:30:16Z","updated_at":"2026-02-10T23:32:53Z"}
 {"id":"56f9fc64fe","name":"Validate requirements","stage":"validate","zone":"","persona":"reviewer","status":"done","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:33:08Z","updated_at":"2026-02-10T23:33:12Z"}
 {"id":"9337fc4963","name":"Commit and PR","stage":"document","zone":"","persona":"developer","status":"done","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:33:17Z","updated_at":"2026-02-10T23:34:24Z"}
-{"id":"1ceda24487","name":"Release","stage":"release","zone":"","persona":"developer","status":"pending","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:34:26Z","updated_at":"2026-02-10T23:34:26Z"}
+{"id":"1ceda24487","name":"Release","stage":"release","zone":"","persona":"developer","status":"done","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:34:26Z","updated_at":"2026-02-10T23:34:29Z"}
