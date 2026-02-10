@@ -1,0 +1,27 @@
+{
+  "task_id": "9858de5381",
+  "persona": "developer",
+  "mission": "MC Dashboard Mission 2 — FindingsView component",
+  "stage": "implement",
+  "instruction": "Build a FindingsView component and wire it into the MC dashboard. Read design at /home/mike/Darlington/.mission/findings/6e2f90ed5a.md for exact specs.",
+  "steps": [
+    "cd /home/mike/Darlington && npm install react-markdown remark-gfm",
+    "Read /home/mike/Darlington/components/mc/mission-view.tsx and /home/mike/Darlington/app/mc/mc-client.tsx to understand current structure",
+    "Read /home/mike/Darlington/lib/mc/types.ts for type definitions",
+    "Create components/mc/findings-view.tsx: tabbed UI with Findings (markdown) and Briefing (JSON) tabs",
+    "Props: { taskId: string | null, mcUrl: string }. Fetch /api/tasks/{id}/findings and /api/tasks/{id}/briefing from mcUrl",
+    "Use react-markdown + remark-gfm for markdown rendering. Style with dark theme (#07070e bg, #c4b5a0 accent, DM Sans font)",
+    "Handle loading, error, and empty states gracefully",
+    "Wire into mc-client.tsx: add selectedTaskId state, pass to FindingsView. Show FindingsView when a task is selected.",
+    "Add task selection: in the trace view or mission view task list, clicking a task sets selectedTaskId",
+    "Run 'npm run build' to verify compilation",
+    "Write findings to /home/mike/Darlington/.mission/findings/9858de5381.md",
+    "Mark done: /home/mike/MissionControl/dist/mc task update 9858de5381 --status done"
+  ],
+  "scope_paths": [
+    "components/mc/findings-view.tsx",
+    "app/mc/mc-client.tsx",
+    "package.json"
+  ],
+  "repo": "/home/mike/Darlington"
+}
