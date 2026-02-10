@@ -13,3 +13,4 @@
 {"timestamp":"2026-02-10T23:22:41Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"86c49fc6a2"}}
 {"timestamp":"2026-02-10T23:22:53Z","action":"gate_approved","actor":"cli","details":{"note":"4 REQs: checkpoint path fix + UI, dynamic zones from task data, project registry unification (use CLI's ~/.mc/projects.json), stage override with confirmation dialog. 9 files, 1 new component.","stage":"requirements"}}
 {"timestamp":"2026-02-10T23:22:54Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232254","session_id":"3f7e9802","stage":"requirements"}}
+{"timestamp":"2026-02-10T23:22:54Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"requirements","to_stage":"planning"}}
