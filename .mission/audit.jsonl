@@ -27,3 +27,4 @@
 {"timestamp":"2026-02-10T23:25:10Z","action":"task_created","actor":"cli","details":{"name":"Fix checkpoint path + project registry","persona":"developer","stage":"implement","task_id":"1091a638d3","zone":""}}
 {"timestamp":"2026-02-10T23:25:10Z","action":"task_created","actor":"cli","details":{"name":"Checkpoints + dynamic zones in mission view","persona":"developer","stage":"implement","task_id":"8d441a69d4","zone":""}}
 {"timestamp":"2026-02-10T23:25:10Z","action":"task_created","actor":"cli","details":{"name":"Project switcher + stage override dialog","persona":"developer","stage":"implement","task_id":"19db3b0d3b","zone":""}}
+{"timestamp":"2026-02-10T23:26:49Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"1091a638d3"}}

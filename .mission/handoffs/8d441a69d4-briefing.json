@@ -1,0 +1,20 @@
+{
+  "task_id": "8d441a69d4",
+  "persona": "developer",
+  "mission": "MC Dashboard 3B — Checkpoints + zones UI",
+  "instruction": "Read design at /home/mike/Darlington/.mission/findings/cc30a6dd51.md. Update mission view with real checkpoints and dynamic zones.",
+  "steps": [
+    "Read /home/mike/Darlington/components/mc/mission-view.tsx",
+    "Read /home/mike/Darlington/lib/mc/types.ts",
+    "Remove hardcoded ZONES array, derive zones dynamically from tasks+workers",
+    "Add tasks prop to MissionView, group tasks by zone, show task status breakdown per zone",
+    "Wire real checkpoint data (from props, not mock) — show timestamp, stage, task count",
+    "Update types.ts if needed for checkpoint/zone types",
+    "Style: dark theme #07070e, accent #c4b5a0, Tailwind",
+    "Run: cd /home/mike/Darlington && npx tsc --noEmit 2>&1 | head -20",
+    "Write findings to /home/mike/Darlington/.mission/findings/8d441a69d4.md",
+    "Mark done: /home/mike/MissionControl/dist/mc task update 8d441a69d4 --status done"
+  ],
+  "scope_paths": ["components/mc/mission-view.tsx", "lib/mc/types.ts"],
+  "repo": "/home/mike/Darlington"
+}
