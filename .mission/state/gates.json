@@ -31,8 +31,10 @@
     },
     "planning": {
       "stage": "planning",
-      "status": "pending",
-      "criteria": ["Tasks broken down", "Dependencies mapped"]
+      "status": "approved",
+      "criteria": ["Tasks broken down", "Dependencies mapped"],
+      "approved_at": "2026-02-10T23:23:07Z",
+      "approval_note": "5 tasks, 2 waves. Backend fixes parallel, then frontend parallel, then integrator."
     },
     "release": {
       "stage": "release",
