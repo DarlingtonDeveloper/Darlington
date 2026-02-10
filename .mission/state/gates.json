@@ -7,8 +7,10 @@
     },
     "discovery": {
       "stage": "discovery",
-      "status": "pending",
-      "criteria": ["Problem space explored", "Stakeholders identified"]
+      "status": "approved",
+      "criteria": ["Problem space explored", "Stakeholders identified"],
+      "approved_at": "2026-02-10T17:52:48Z",
+      "approval_note": "Found type mismatches, unhandled WS events, audit 404, hardcoded burn rate. Clear gaps mapped against 5 backend APIs."
     },
     "document": {
       "stage": "document",
