@@ -10,4 +10,4 @@
 {"id":"479692c8fd","name":"Security review","stage":"verify","zone":"","persona":"security","status":"done","created_at":"2026-02-10T23:28:25Z","updated_at":"2026-02-10T23:29:22Z"}
 {"id":"76820e1a02","name":"Test coverage","stage":"verify","zone":"","persona":"tester","status":"done","created_at":"2026-02-10T23:28:26Z","updated_at":"2026-02-10T23:30:03Z"}
 {"id":"9f98c99291","name":"Fix verify findings — security, wiring, test","stage":"verify","zone":"","persona":"developer","status":"done","created_at":"2026-02-10T23:30:16Z","updated_at":"2026-02-10T23:32:53Z"}
-{"id":"56f9fc64fe","name":"Validate requirements","stage":"validate","zone":"","persona":"reviewer","status":"pending","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:33:08Z","updated_at":"2026-02-10T23:33:08Z"}
+{"id":"56f9fc64fe","name":"Validate requirements","stage":"validate","zone":"","persona":"reviewer","status":"done","scope_paths":[".mission/findings/"],"created_at":"2026-02-10T23:33:08Z","updated_at":"2026-02-10T23:33:12Z"}
