@@ -44,8 +44,10 @@
     },
     "release": {
       "stage": "release",
-      "status": "pending",
-      "criteria": ["Deployed successfully", "Smoke tests pass"]
+      "status": "approved",
+      "criteria": ["Deployed successfully", "Smoke tests pass"],
+      "approved_at": "2026-02-10T23:34:30Z",
+      "approval_note": "Mission 3B complete. MC #51 + Darlington #29. Checkpoints, zones, projects, stage override — all with security fixes from verify."
     },
     "requirements": {
       "stage": "requirements",
