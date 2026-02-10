@@ -1,0 +1,29 @@
+{
+  "task_id": "16a52a5594",
+  "persona": "researcher",
+  "mission": "MC Dashboard Mission 3B — Checkpoints, zones, projects, stage override",
+  "stage": "discovery",
+  "instruction": "Assess current state of checkpoints, zones, projects, and stage override functionality in both MC backend and Darlington frontend.",
+  "files_to_read": {
+    "handlers": "/home/mike/MissionControl/orchestrator/api/handlers.go",
+    "routes": "/home/mike/MissionControl/orchestrator/api/routes.go",
+    "types": "/home/mike/MissionControl/orchestrator/api/types.go",
+    "serve": "/home/mike/MissionControl/orchestrator/serve/serve.go",
+    "mc_client": "/home/mike/Darlington/app/mc/mc-client.tsx",
+    "mission_view": "/home/mike/Darlington/components/mc/mission-view.tsx",
+    "types_ts": "/home/mike/Darlington/lib/mc/types.ts",
+    "ws": "/home/mike/Darlington/lib/mc/use-mc-websocket.ts"
+  },
+  "questions": [
+    "What do GET /api/checkpoints, /api/zones, /api/projects, /api/stages/override return?",
+    "Are these stubs or real implementations?",
+    "What data shapes do they return?",
+    "Does the frontend reference any of these?",
+    "What mc CLI commands exist for checkpoints/zones/projects?",
+    "What .mission/ directory structure exists for each?"
+  ],
+  "constraints": [
+    "Write findings to /home/mike/Darlington/.mission/findings/16a52a5594.md (# Summary)",
+    "Mark done: /home/mike/MissionControl/dist/mc task update 16a52a5594 --status done"
+  ]
+}
