@@ -10,3 +10,4 @@
 {"timestamp":"2026-02-10T23:21:05Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232105","session_id":"3f7e9802","stage":"goal"}}
 {"timestamp":"2026-02-10T23:21:05Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"goal","to_stage":"requirements"}}
 {"timestamp":"2026-02-10T23:21:08Z","action":"task_created","actor":"cli","details":{"name":"Define requirements","persona":"researcher","stage":"requirements","task_id":"86c49fc6a2","zone":""}}
+{"timestamp":"2026-02-10T23:22:41Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"86c49fc6a2"}}
