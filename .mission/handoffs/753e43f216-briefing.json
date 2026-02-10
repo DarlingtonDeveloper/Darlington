@@ -1,9 +1,0 @@
-{
-  "output": ".mission/findings/753e43f216.md",
-  "persona": "tester",
-  "scope_paths": null,
-  "stage": "verify",
-  "task_id": "753e43f216",
-  "task_name": "Test dashboard build and component rendering",
-  "zone": ""
-}

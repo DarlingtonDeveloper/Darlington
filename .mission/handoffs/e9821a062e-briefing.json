@@ -1,9 +1,0 @@
-{
-  "output": ".mission/findings/e9821a062e.md",
-  "persona": "developer",
-  "scope_paths": ["components/mc/token-usage-panel.tsx"],
-  "stage": "implement",
-  "task_id": "e9821a062e",
-  "task_name": "Token usage panel",
-  "zone": ""
-}
