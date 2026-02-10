@@ -16,8 +16,10 @@
     },
     "document": {
       "stage": "document",
-      "status": "pending",
-      "criteria": ["README updated", "API documented"]
+      "status": "approved",
+      "criteria": ["README updated", "API documented"],
+      "approved_at": "2026-02-10T18:50:54Z",
+      "approval_note": "PRs opened: MC #49 (backend endpoints) and Darlington #26 (frontend viewer). Commit messages document all changes."
     },
     "goal": {
       "stage": "goal",
