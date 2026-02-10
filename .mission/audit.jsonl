@@ -52,3 +52,4 @@
 {"timestamp":"2026-02-10T23:33:17Z","action":"task_created","actor":"cli","details":{"name":"Commit and PR","persona":"developer","stage":"document","task_id":"9337fc4963","zone":""}}
 {"timestamp":"2026-02-10T23:34:24Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"pending","task_id":"9337fc4963"}}
 {"timestamp":"2026-02-10T23:34:25Z","action":"gate_approved","actor":"cli","details":{"note":"MC PR #51, Darlington PR #29. Clean commits, lint fixed.","stage":"document"}}
+{"timestamp":"2026-02-10T23:34:25Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-233425","session_id":"3f7e9802","stage":"document"}}
