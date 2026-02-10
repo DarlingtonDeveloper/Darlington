@@ -3,3 +3,4 @@
 {"timestamp":"2026-02-10T23:20:38Z","action":"task_completed","actor":"cli","details":{"new_status":"done","old_status":"complete","task_id":"16a52a5594"}}
 {"timestamp":"2026-02-10T23:20:52Z","action":"gate_approved","actor":"cli","details":{"note":"All 4 endpoints real. Found checkpoint path bug and dual project registry. Zones are implicit from task metadata. Frontend has partial wiring already.","stage":"discovery"}}
 {"timestamp":"2026-02-10T23:20:52Z","action":"checkpoint_created","actor":"cli","details":{"checkpoint_id":"cp-20260210-232052","session_id":"3f7e9802","stage":"discovery"}}
+{"timestamp":"2026-02-10T23:20:52Z","action":"stage_advanced","actor":"cli","details":{"from_stage":"discovery","to_stage":"goal"}}
