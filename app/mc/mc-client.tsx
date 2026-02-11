@@ -12,6 +12,8 @@ import { ActivityView } from "@/components/mc/activity-view";
 import { SpecsView } from "@/components/mc/specs-view";
 import { FindingsView } from "@/components/mc/findings-view";
 import BridgeStatusIndicator from "@/components/mc/bridge-status-indicator";
+import { ChatPanel } from "@/components/mc/chat-panel";
+import { useChatConnection } from "@/lib/mc/use-chat-connection";
 import { MC_API_URL } from "@/lib/mc/constants";
 
 type View = "mission" | "trace" | "activity" | "specs";
@@ -20,6 +22,28 @@ export function MCClient() {
   const [view, setView] = useState<View>("mission");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const mcState = useMCWebSocket();
+  const chat = useChatConnection();
+  const [autoMode, setAutoMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("mc-auto-mode") === "true";
+    }
+    return false;
+  });
+
+  const handleToggleAutoMode = useCallback(() => {
+    const next = !autoMode;
+    setAutoMode(next);
+    localStorage.setItem("mc-auto-mode", String(next));
+    if (next) {
+      chat.send(
+        "Enable auto mode — proceed through stages autonomously, only pause for gate approvals that need human judgment.",
+      );
+    } else {
+      chat.send(
+        "Disable auto mode — pause and ask before proceeding to each new stage.",
+      );
+    }
+  }, [autoMode, chat]);
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [showStageOverride, setShowStageOverride] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -115,48 +139,59 @@ export function MCClient() {
         />
       )}
 
-      <main className="px-6 pb-6">
-        {view === "mission" && (
-          <MissionView
-            workers={mcState.workers}
-            tasks={mcState.tasks}
-            checkpoints={mcState.checkpoints ?? []}
-            gates={mcState.gates}
-            tokens={mcState.tokens}
-            currentStage={mcState.stage.current}
-            onKillWorker={handleKillWorker}
-          />
-        )}
-
-        {view === "trace" && (
-          <>
-            <TraceView
-              graph={graphData}
+      <main className="grid h-[calc(100vh-120px)] grid-cols-[3fr_2fr] gap-3.5 px-6 pb-6">
+        <div className="overflow-auto">
+          {view === "mission" && (
+            <MissionView
+              workers={mcState.workers}
               tasks={mcState.tasks}
-              selectedTaskId={selectedTaskId}
-              onSelectTask={setSelectedTaskId}
+              checkpoints={mcState.checkpoints ?? []}
+              gates={mcState.gates}
+              tokens={mcState.tokens}
+              currentStage={mcState.stage.current}
+              onKillWorker={handleKillWorker}
             />
-            <FindingsView taskId={selectedTaskId} baseUrl={MC_API_URL} />
-          </>
-        )}
+          )}
 
-        {view === "specs" && <SpecsView baseUrl={MC_API_URL} />}
+          {view === "trace" && (
+            <>
+              <TraceView
+                graph={graphData}
+                tasks={mcState.tasks}
+                selectedTaskId={selectedTaskId}
+                onSelectTask={setSelectedTaskId}
+              />
+              <FindingsView taskId={selectedTaskId} baseUrl={MC_API_URL} />
+            </>
+          )}
 
-        {view === "activity" && (
-          <ActivityView
-            gates={mcState.gates}
-            currentStage={mcState.stage.current}
-            audit={mcState.audit ?? []}
-            workers={mcState.workers}
-            tasks={mcState.tasks}
-            checkpoints={mcState.checkpoints ?? []}
-            tokens={mcState.tokens}
-            onApproveGate={handleApproveGate}
-            onRejectGate={handleRejectGate}
-            onCreateCheckpoint={handleCreateCheckpoint}
-            onRestoreCheckpoint={handleRestoreCheckpoint}
-          />
-        )}
+          {view === "specs" && <SpecsView baseUrl={MC_API_URL} />}
+
+          {view === "activity" && (
+            <ActivityView
+              gates={mcState.gates}
+              currentStage={mcState.stage.current}
+              audit={mcState.audit ?? []}
+              workers={mcState.workers}
+              tasks={mcState.tasks}
+              checkpoints={mcState.checkpoints ?? []}
+              tokens={mcState.tokens}
+              onApproveGate={handleApproveGate}
+              onRejectGate={handleRejectGate}
+              onCreateCheckpoint={handleCreateCheckpoint}
+              onRestoreCheckpoint={handleRestoreCheckpoint}
+            />
+          )}
+        </div>
+
+        <ChatPanel
+          messages={chat.messages}
+          isStreaming={chat.isStreaming}
+          connState={chat.connState}
+          onSend={chat.send}
+          autoMode={autoMode}
+          onToggleAutoMode={handleToggleAutoMode}
+        />
       </main>
     </div>
   );
