@@ -85,7 +85,8 @@ export function DashboardHeader({
     active: tasks.filter((t) => t.status === "in_progress").length,
     blocked: tasks.filter((t) => t.status === "blocked").length,
     pending: tasks.filter((t) => t.status === "pending").length,
-    done: tasks.filter((t) => t.status === "complete").length,
+    done: tasks.filter((t) => t.status === "complete" || t.status === "done")
+      .length,
   };
 
   const totalTokens = tokens?.total_tokens ?? 0;

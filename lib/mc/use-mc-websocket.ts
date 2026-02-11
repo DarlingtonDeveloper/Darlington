@@ -159,7 +159,10 @@ export function useMCWebSocket() {
               },
             };
           case "token":
-            return { ...prev, tokens: { ...prev.tokens, ...event.data } };
+            return {
+              ...prev,
+              tokens: adaptTokens(event.data as unknown as RawTokens),
+            };
           case "audit":
             return {
               ...prev,

@@ -7,7 +7,13 @@ import { SectionLabel } from "./section-label";
 import type { GraphData, GraphNode, GraphEdge, Task } from "@/lib/mc/types";
 import { STAGES } from "@/lib/mc/types";
 
-const STATUSES = ["pending", "in_progress", "complete", "blocked"] as const;
+const STATUSES = [
+  "pending",
+  "in_progress",
+  "complete",
+  "done",
+  "blocked",
+] as const;
 
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 80;
@@ -29,6 +35,11 @@ const statusColors: Record<
     dot: "#c4b5a0",
   },
   complete: {
+    bg: "rgba(74,222,128,0.08)",
+    border: "rgba(74,222,128,0.3)",
+    dot: "#4ade80",
+  },
+  done: {
     bg: "rgba(74,222,128,0.08)",
     border: "rgba(74,222,128,0.3)",
     dot: "#4ade80",
@@ -113,6 +124,7 @@ export function TraceView({
       (n) =>
         n.status !== "blocked" &&
         n.status !== "complete" &&
+        n.status !== "done" &&
         n.status !== "in_progress",
     ).length;
   const blockedCount =
@@ -374,7 +386,8 @@ export function TraceView({
                   variant={
                     selectedNode.status === "blocked"
                       ? "danger"
-                      : selectedNode.status === "complete"
+                      : selectedNode.status === "complete" ||
+                          selectedNode.status === "done"
                         ? "success"
                         : selectedNode.status === "in_progress"
                           ? "accent"
