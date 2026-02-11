@@ -118,7 +118,7 @@ export function MCClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07070e] text-[#e8e4df]">
+    <div className="flex h-full flex-col overflow-hidden bg-[#07070e] text-[#e8e4df]">
       <div className="flex items-center justify-between px-6 pt-2">
         <div />
         <BridgeStatusIndicator baseUrl={MC_API_URL} />
@@ -139,7 +139,7 @@ export function MCClient() {
         />
       )}
 
-      <main className="grid h-[calc(100vh-120px)] grid-cols-[3fr_2fr] grid-rows-[1fr] gap-3.5 px-6 pb-6">
+      <main className="grid flex-1 min-h-0 grid-cols-[3fr_2fr] grid-rows-[1fr] gap-3.5 px-6 pb-6">
         <div className="overflow-auto">
           {view === "mission" && (
             <MissionView
