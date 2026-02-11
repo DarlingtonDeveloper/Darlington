@@ -31,14 +31,17 @@ export function DemoClient() {
   const [done, setDone] = useState(false);
   const [mobileTab, setMobileTab] = useState<"chat" | "dashboard">("chat");
   const [dashView, setDashView] = useState<DashboardView>("mission");
+
   const stepRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const hasDashboardRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // No deps — uses refs only, so no stale closures
   const runStep = useCallback(() => {
     const idx = stepRef.current;
     if (idx >= DEMO_SCRIPT.length) {
@@ -71,33 +74,42 @@ export function DemoClient() {
         }
       } else if (step.type === "state" && step.patch) {
         setDemoState((prev) => ({ ...prev, ...step.patch! }));
-        if (!hasDashboard) {
+        if (!hasDashboardRef.current) {
+          hasDashboardRef.current = true;
           setHasDashboard(true);
         }
         stepRef.current++;
         runStep();
       }
     }, step.delay);
-  }, [hasDashboard]);
+  }, []);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   const startDemo = useCallback(() => {
+    clearTimer();
     setMessages([]);
     setDemoState(INITIAL_STATE);
     setIsTyping(false);
     setHasDashboard(false);
+    hasDashboardRef.current = false;
     setDone(false);
     setMobileTab("chat");
     setDashView("mission");
     stepRef.current = 0;
-    runStep();
-  }, [runStep]);
+    // Delay start slightly so state resets flush first
+    setTimeout(() => runStep(), 50);
+  }, [runStep, clearTimer]);
 
   // Auto-start on mount
   useEffect(() => {
     startDemo();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    return clearTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -110,10 +122,10 @@ export function DemoClient() {
 
   return (
     <div className="flex h-full relative">
-      {/* Chat panel */}
+      {/* Chat panel — only transition width */}
       <div
         className={[
-          "flex flex-col transition-all duration-500 ease-out",
+          "flex flex-col transition-[width] duration-500 ease-out will-change-[width]",
           hasDashboard ? "w-[400px] shrink-0 max-md:w-full" : "w-full",
           hasDashboard && mobileTab === "dashboard" ? "max-md:hidden" : "",
         ].join(" ")}
@@ -168,77 +180,77 @@ export function DemoClient() {
         </div>
       </div>
 
-      {/* Dashboard panel */}
-      {hasDashboard && (
-        <div
-          className={[
-            "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-500 ease-out animate-in fade-in slide-in-from-right-4",
-            "border-l",
-            mobileTab === "chat" ? "max-md:hidden" : "max-md:w-full",
-          ].join(" ")}
-          style={{ borderColor: "oklch(1 0 0 / 8%)" }}
-        >
-          {/* Pipeline + View Tabs */}
-          <div className="px-4 py-3 flex flex-col gap-2 shrink-0">
-            <PipelineBar
-              currentStage={demoState.stage}
-              gates={demoState.gates}
-            />
-            <div
-              className="flex gap-0.5 rounded-lg p-0.5"
-              style={{ background: "oklch(1 0 0 / 3%)" }}
-            >
-              {VIEW_TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setDashView(tab.key)}
-                  className={[
-                    "flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all",
-                    dashView === tab.key
-                      ? "bg-[#c4b5a0]/15 text-[#c4b5a0]"
-                      : "text-[#6b6560] hover:text-[#a89880]",
-                  ].join(" ")}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* View Content */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {dashView === "mission" && (
-              <MissionView
-                workers={demoState.workers}
-                tasks={demoState.tasks}
-                checkpoints={demoState.checkpoints}
-                gates={demoState.gates}
-                tokens={demoState.tokens}
-                currentStage={demoState.stage}
-                onKillWorker={noop}
-              />
-            )}
-            {dashView === "trace" && (
-              <TraceView graph={demoState.graph} tasks={demoState.tasks} />
-            )}
-            {dashView === "activity" && (
-              <ActivityView
-                gates={demoState.gates}
-                currentStage={demoState.stage}
-                audit={demoState.audit}
-                workers={demoState.workers}
-                tasks={demoState.tasks}
-                checkpoints={demoState.checkpoints}
-                tokens={demoState.tokens}
-                onApproveGate={noop}
-                onRejectGate={noop}
-                onCreateCheckpoint={noop}
-                onRestoreCheckpoint={noop}
-              />
-            )}
+      {/* Dashboard panel — always in DOM, opacity/translate animate in */}
+      <div
+        className={[
+          "flex-1 min-w-0 flex flex-col overflow-hidden border-l",
+          "transition-[opacity,transform] duration-500 ease-out",
+          hasDashboard
+            ? "opacity-100 translate-x-0"
+            : "opacity-0 translate-x-4 pointer-events-none w-0 overflow-hidden",
+          hasDashboard && mobileTab === "chat"
+            ? "max-md:hidden"
+            : "max-md:w-full",
+        ].join(" ")}
+        style={{ borderColor: "oklch(1 0 0 / 8%)" }}
+      >
+        {/* Pipeline + View Tabs */}
+        <div className="px-4 py-3 flex flex-col gap-2 shrink-0">
+          <PipelineBar currentStage={demoState.stage} gates={demoState.gates} />
+          <div
+            className="flex gap-0.5 rounded-lg p-0.5"
+            style={{ background: "oklch(1 0 0 / 3%)" }}
+          >
+            {VIEW_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setDashView(tab.key)}
+                className={[
+                  "flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all",
+                  dashView === tab.key
+                    ? "bg-[#c4b5a0]/15 text-[#c4b5a0]"
+                    : "text-[#6b6560] hover:text-[#a89880]",
+                ].join(" ")}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* View Content */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          {dashView === "mission" && (
+            <MissionView
+              workers={demoState.workers}
+              tasks={demoState.tasks}
+              checkpoints={demoState.checkpoints}
+              gates={demoState.gates}
+              tokens={demoState.tokens}
+              currentStage={demoState.stage}
+              onKillWorker={noop}
+            />
+          )}
+          {dashView === "trace" && (
+            <TraceView graph={demoState.graph} tasks={demoState.tasks} />
+          )}
+          {dashView === "activity" && (
+            <ActivityView
+              gates={demoState.gates}
+              currentStage={demoState.stage}
+              audit={demoState.audit}
+              workers={demoState.workers}
+              tasks={demoState.tasks}
+              checkpoints={demoState.checkpoints}
+              tokens={demoState.tokens}
+              onApproveGate={noop}
+              onRejectGate={noop}
+              onCreateCheckpoint={noop}
+              onRestoreCheckpoint={noop}
+            />
+          )}
+        </div>
+      </div>
 
       {/* Mobile tab bar */}
       {hasDashboard && (
