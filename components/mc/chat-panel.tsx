@@ -104,7 +104,7 @@ export function ChatPanel({
   }, []);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02]">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
         <span className="text-sm">🤖</span>
@@ -136,7 +136,7 @@ export function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <ChatStarters onSelect={onSend} disabled={!isOnline} />
         ) : (

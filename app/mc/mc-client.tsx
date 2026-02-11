@@ -139,7 +139,7 @@ export function MCClient() {
         />
       )}
 
-      <main className="grid h-[calc(100vh-120px)] grid-cols-[3fr_2fr] gap-3.5 px-6 pb-6">
+      <main className="grid h-[calc(100vh-120px)] grid-cols-[3fr_2fr] grid-rows-[1fr] gap-3.5 px-6 pb-6">
         <div className="overflow-auto">
           {view === "mission" && (
             <MissionView
