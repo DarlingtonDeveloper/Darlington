@@ -3,14 +3,22 @@
 import { useEffect, useRef } from "react";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
+import { StarterPrompts, type StarterPrompt } from "./starter-prompts";
 import type { Message } from "@/app/kai/kai-client";
 
 interface MessageListProps {
   messages: Message[];
   isStreaming: boolean;
+  starters?: StarterPrompt[];
+  onStarterSelect?: (message: string) => void;
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({
+  messages,
+  isStreaming,
+  starters,
+  onStarterSelect,
+}: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,16 +46,25 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     >
       {messages.length === 0 ? (
         <div className="h-full flex items-center justify-center text-center px-8">
-          <div>
+          <div className="flex flex-col items-center">
             <p
               className="font-display text-2xl mb-2"
               style={{ color: "var(--accent, #c4b5a0)" }}
             >
               Kai
             </p>
-            <p className="text-sm" style={{ color: "var(--fg2, #6b6560)" }}>
-              Ask me anything
-            </p>
+            {starters && starters.length > 0 && onStarterSelect ? (
+              <div className="mt-4">
+                <StarterPrompts
+                  starters={starters}
+                  onSelect={onStarterSelect}
+                />
+              </div>
+            ) : (
+              <p className="text-sm" style={{ color: "var(--fg2, #6b6560)" }}>
+                Ask me anything
+              </p>
+            )}
           </div>
         </div>
       ) : (
