@@ -75,7 +75,7 @@ export function ChatPanel({
   onToggleAutoMode,
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const autoModeRef = useRef(autoMode);
   const onToggleAutoModeRef = useRef(onToggleAutoMode);
 
@@ -88,7 +88,10 @@ export function ChatPanel({
   }, [onToggleAutoMode]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesRef.current?.scrollTo({
+      top: messagesRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   const isOnline = connState === "connected";
@@ -136,7 +139,10 @@ export function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div
+        ref={messagesRef}
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+      >
         {messages.length === 0 ? (
           <ChatStarters onSelect={onSend} disabled={!isOnline} />
         ) : (
@@ -173,7 +179,6 @@ export function ChatPanel({
                   </div>
                 </div>
               )}
-            <div ref={endRef} />
           </>
         )}
       </div>
