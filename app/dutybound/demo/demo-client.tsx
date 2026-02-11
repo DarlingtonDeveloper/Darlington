@@ -5,13 +5,23 @@ import { MessageBubble } from "@/components/kai/message-bubble";
 import { TypingIndicator } from "@/components/kai/typing-indicator";
 import { PipelineBar } from "@/components/mc/pipeline-bar";
 import { MissionView } from "@/components/mc/mission-view";
+import { TraceView } from "@/components/mc/trace-view";
+import { ActivityView } from "@/components/mc/activity-view";
 import { DEMO_SCRIPT, INITIAL_STATE, type DemoState } from "./demo-script";
 import Link from "next/link";
+
+type DashboardView = "mission" | "trace" | "activity";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+const VIEW_TABS: { key: DashboardView; label: string }[] = [
+  { key: "mission", label: "Mission" },
+  { key: "trace", label: "Trace" },
+  { key: "activity", label: "Activity" },
+];
 
 export function DemoClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -20,6 +30,7 @@ export function DemoClient() {
   const [hasDashboard, setHasDashboard] = useState(false);
   const [done, setDone] = useState(false);
   const [mobileTab, setMobileTab] = useState<"chat" | "dashboard">("chat");
+  const [dashView, setDashView] = useState<DashboardView>("mission");
   const stepRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -40,7 +51,6 @@ export function DemoClient() {
     timerRef.current = setTimeout(() => {
       if (step.type === "message") {
         if (step.role === "assistant") {
-          // Show typing indicator briefly, then reveal message
           setIsTyping(true);
           timerRef.current = setTimeout(() => {
             setIsTyping(false);
@@ -52,7 +62,6 @@ export function DemoClient() {
             runStep();
           }, 1200);
         } else {
-          // User messages appear immediately
           setMessages((prev) => [
             ...prev,
             { role: step.role!, content: step.content! },
@@ -78,6 +87,7 @@ export function DemoClient() {
     setHasDashboard(false);
     setDone(false);
     setMobileTab("chat");
+    setDashView("mission");
     stepRef.current = 0;
     runStep();
   }, [runStep]);
@@ -95,6 +105,8 @@ export function DemoClient() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
+
+  const noop = () => {};
 
   return (
     <div className="flex h-full relative">
@@ -160,22 +172,71 @@ export function DemoClient() {
       {hasDashboard && (
         <div
           className={[
-            "flex-1 min-w-0 overflow-y-auto px-4 py-3 transition-all duration-500 ease-out animate-in fade-in slide-in-from-right-4",
+            "flex-1 min-w-0 flex flex-col overflow-hidden transition-all duration-500 ease-out animate-in fade-in slide-in-from-right-4",
             "border-l",
             mobileTab === "chat" ? "max-md:hidden" : "max-md:w-full",
           ].join(" ")}
           style={{ borderColor: "oklch(1 0 0 / 8%)" }}
         >
-          <PipelineBar currentStage={demoState.stage} gates={demoState.gates} />
-          <MissionView
-            workers={demoState.workers}
-            tasks={demoState.tasks}
-            checkpoints={demoState.checkpoints}
-            gates={demoState.gates}
-            tokens={demoState.tokens}
-            currentStage={demoState.stage}
-            onKillWorker={() => {}}
-          />
+          {/* Pipeline + View Tabs */}
+          <div className="px-4 py-3 flex flex-col gap-2 shrink-0">
+            <PipelineBar
+              currentStage={demoState.stage}
+              gates={demoState.gates}
+            />
+            <div
+              className="flex gap-0.5 rounded-lg p-0.5"
+              style={{ background: "oklch(1 0 0 / 3%)" }}
+            >
+              {VIEW_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setDashView(tab.key)}
+                  className={[
+                    "flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all",
+                    dashView === tab.key
+                      ? "bg-[#c4b5a0]/15 text-[#c4b5a0]"
+                      : "text-[#6b6560] hover:text-[#a89880]",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* View Content */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            {dashView === "mission" && (
+              <MissionView
+                workers={demoState.workers}
+                tasks={demoState.tasks}
+                checkpoints={demoState.checkpoints}
+                gates={demoState.gates}
+                tokens={demoState.tokens}
+                currentStage={demoState.stage}
+                onKillWorker={noop}
+              />
+            )}
+            {dashView === "trace" && (
+              <TraceView graph={demoState.graph} tasks={demoState.tasks} />
+            )}
+            {dashView === "activity" && (
+              <ActivityView
+                gates={demoState.gates}
+                currentStage={demoState.stage}
+                audit={demoState.audit}
+                workers={demoState.workers}
+                tasks={demoState.tasks}
+                checkpoints={demoState.checkpoints}
+                tokens={demoState.tokens}
+                onApproveGate={noop}
+                onRejectGate={noop}
+                onCreateCheckpoint={noop}
+                onRestoreCheckpoint={noop}
+              />
+            )}
+          </div>
         </div>
       )}
 
