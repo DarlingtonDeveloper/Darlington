@@ -87,6 +87,11 @@ export function ActivityView({
   const allMet = gate?.status === "approved";
   const metCount = allMet ? criteria.length : 0;
 
+  // Derive unique categories from actual audit data
+  const auditCategories = Array.from(
+    new Set(audit.map((e) => e.category)),
+  ).sort();
+
   // Filtered audit
   const filteredAudit =
     filterCategory === "all"
@@ -97,7 +102,9 @@ export function ActivityView({
   const activeWorkers = workers.filter((w) => w.status !== "offline").length;
   const busyWorkers = workers.filter((w) => w.status === "busy").length;
   const totalTasks = tasks.length;
-  const completeTasks = tasks.filter((t) => t.status === "complete").length;
+  const completeTasks = tasks.filter(
+    (t) => t.status === "complete" || t.status === "done",
+  ).length;
 
   // Token chart
   const sessions = tokens.sessions ?? [];
@@ -201,11 +208,14 @@ export function ActivityView({
               className="px-1.5 py-0.5 rounded-md text-[10px] bg-white/[0.04] border border-white/[0.08] text-[#e8e4df] font-mono"
             >
               <option value="all">All</option>
-              <option value="worker">Workers</option>
-              <option value="stage">Stages</option>
-              <option value="gate">Gates</option>
-              <option value="task">Tasks</option>
-              <option value="checkpoint">Checkpoints</option>
+              {auditCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {(CATEGORY_ICONS[cat] ?? "📌") +
+                    " " +
+                    cat.charAt(0).toUpperCase() +
+                    cat.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex flex-col gap-0.5">

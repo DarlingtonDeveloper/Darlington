@@ -70,7 +70,13 @@ export function MissionView({
 
   // Task status counts per zone for display
   const taskStatusCounts = (zoneTasks: Task[]) => {
-    const counts = { pending: 0, in_progress: 0, complete: 0, blocked: 0 };
+    const counts = {
+      pending: 0,
+      in_progress: 0,
+      complete: 0,
+      done: 0,
+      blocked: 0,
+    };
     zoneTasks.forEach((t) => {
       counts[t.status] = (counts[t.status] || 0) + 1;
     });
@@ -133,8 +139,12 @@ export function MissionView({
           <Badge>{activeWorkers.length} total</Badge>
           {tasks.length > 0 && (
             <Badge>
-              {tasks.filter((t) => t.status === "complete").length}/
-              {tasks.length} tasks
+              {
+                tasks.filter(
+                  (t) => t.status === "complete" || t.status === "done",
+                ).length
+              }
+              /{tasks.length} tasks
             </Badge>
           )}
         </div>

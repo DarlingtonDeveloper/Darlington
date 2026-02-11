@@ -35,7 +35,12 @@ export const ZONE_GLYPHS: Record<string, string> = {
   shared: "◫",
 };
 
-export type TaskStatus = "pending" | "in_progress" | "complete" | "blocked";
+export type TaskStatus =
+  | "pending"
+  | "in_progress"
+  | "complete"
+  | "done"
+  | "blocked";
 export type WorkerStatus =
   | "busy"
   | "idle"

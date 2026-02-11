@@ -10,6 +10,7 @@ const PROTECTED_ROUTES = [
   "/health",
   "/kai",
   "/mc",
+  "/dutybound",
   "/cron",
 ];
 
