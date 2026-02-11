@@ -30,7 +30,8 @@ const ONBOARDING_STARTERS: StarterPrompt[] = [
   },
   {
     label: "Show me how DutyBound works",
-    message: "Show me how DutyBound works",
+    message: "",
+    href: "/dutybound/demo",
   },
 ];
 

@@ -14,7 +14,13 @@ const PROTECTED_ROUTES = [
   "/cron",
 ];
 
-const PUBLIC_ROUTES = ["/", "/login", "/signup", "/auth/callback"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/auth/callback",
+  "/dutybound/demo",
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,12 +32,16 @@ export async function middleware(request: NextRequest) {
 
   const { user, response } = await updateSession(request);
 
-  const isProtectedRoute = PROTECTED_ROUTES.some(
+  const isPublicRoute = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const isPublicRoute = PUBLIC_ROUTES.some(
+  // Public routes skip auth entirely
+  if (isPublicRoute) {
+    return response;
+  }
+
+  const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
