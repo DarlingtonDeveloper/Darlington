@@ -1,5 +1,5 @@
-import { MCClient } from "./mc-client";
+import { redirect } from "next/navigation";
 
 export default function MCPage() {
-  return <MCClient />;
+  redirect("/dutybound");
 }
