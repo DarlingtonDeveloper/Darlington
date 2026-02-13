@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 let cache: { value: number; ts: number } | null = null;
-const TTL = 60 * 60 * 1000; // 1 hour
+const TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=300" };
 
 export async function GET() {
-  if (cache && Date.now() - cache.ts < TTL) {
-    return NextResponse.json({ total: cache.value });
+  if (cache && Date.now() - cache.ts < TTL_MS) {
+    return NextResponse.json({ total: cache.value }, { headers: CACHE_HEADERS });
   }
 
   const token = process.env.GITHUB_TOKEN;
@@ -25,13 +26,23 @@ export async function GET() {
       }),
     });
 
+    if (!res.ok) {
+      return NextResponse.json({ error: "GitHub API error" }, { status: 502 });
+    }
+
     const json = await res.json();
+
+    if (json.errors) {
+      console.error("GraphQL errors:", json.errors);
+      return NextResponse.json({ error: "GraphQL query failed" }, { status: 502 });
+    }
+
     const total =
       json?.data?.user?.contributionsCollection?.contributionCalendar
         ?.totalContributions ?? 0;
 
     cache = { value: total, ts: Date.now() };
-    return NextResponse.json({ total });
+    return NextResponse.json({ total }, { headers: CACHE_HEADERS });
   } catch {
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }
