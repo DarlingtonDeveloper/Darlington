@@ -1,37 +1,53 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { PanelWrapper } from './panel-wrapper'
+import { motion } from "framer-motion";
+import { PanelWrapper } from "./panel-wrapper";
 
 const SYSTEMS = [
   {
-    icon: '◈',
-    name: 'MissionControl',
-    desc: 'Distributed command layer for autonomous agents. Manages task orchestration, agent lifecycles, and real-time communication.',
-    stack: ['Go', 'React', 'WebSocket', 'TypeScript'],
+    icon: "⚡",
+    name: "The Swarm",
+    desc: "A network of specialised AI agents coordinated through NATS messaging, managed by Warren, and orchestrated by MissionControl. Each agent has persistent memory, defined capabilities, and a soul.",
+    stack: ["Go", "Docker Swarm", "NATS", "WebSocket"],
   },
   {
-    icon: '◉',
-    name: 'Kai',
-    desc: 'Personal AI agent with memory, tool use, and multi-modal reasoning. Acts as the central intelligence for my systems.',
-    stack: ['Python', 'Claude API', 'MCP'],
+    icon: "🦊",
+    name: "Kai",
+    desc: "King of the swarm. Orchestrates work, reviews output, manages infrastructure. Runs 24/7 on dedicated hardware with persistent memory and WhatsApp/Slack/web connectivity.",
+    stack: ["Claude Opus", "OpenClaw", "TypeScript"],
   },
   {
-    icon: '◎',
-    name: 'Personal OS',
-    desc: 'Life infrastructure — habits, health, finance, calendar. All data flows through a single pane of glass.',
-    stack: ['Next.js', 'Supabase', 'iOS Shortcuts', 'Vercel'],
+    icon: "◈",
+    name: "MissionControl",
+    desc: "10-stage agentic workflow engine. Progressive refinement through Discovery → Plan → Design → Implement → Verify → Validate → Release → Retro → Maintain → Archive.",
+    stack: ["Go", "Rust", "React", "WebSocket"],
   },
-]
+  {
+    icon: "🏛️",
+    name: "Infrastructure",
+    desc: "Warren (reverse proxy + lifecycle), Alexandria (knowledge + secrets), PromptForge (prompt VCS), Dispatch (task broker), Hermes (NATS message bus), Context Graph (identity resolution).",
+    stack: ["Go", "Python", "pgvector", "Supabase"],
+  },
+  {
+    icon: "◎",
+    name: "Personal OS",
+    desc: "Life infrastructure — habits, health, finance, calendar, Mandarin practice. All data flows through a single interface at darlington.dev.",
+    stack: ["Next.js 15", "Supabase", "React 19", "Vercel"],
+  },
+];
 
 const stagger = {
   animate: { transition: { staggerChildren: 0.06 } },
-}
+};
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
-}
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+};
 
 export function WhatPanel() {
   return (
@@ -49,46 +65,82 @@ export function WhatPanel() {
           Active Systems
         </motion.h3>
 
-        {/* Grid: one top-centre, two bottom flanking */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-          {/* Top centre card — spans middle on desktop */}
-          <motion.div className="md:col-start-2" variants={fadeUp}>
-            <SystemCard system={SYSTEMS[0]} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+          {/* The Swarm — full width hero card */}
+          <motion.div className="md:col-span-2" variants={fadeUp}>
+            <SystemCard system={SYSTEMS[0]} featured />
           </motion.div>
-          {/* Bottom two cards */}
-          <motion.div className="md:col-start-1 md:row-start-2" variants={fadeUp}>
+
+          {/* Kai + MissionControl */}
+          <motion.div variants={fadeUp}>
             <SystemCard system={SYSTEMS[1]} />
           </motion.div>
-          <motion.div className="md:col-start-3 md:row-start-2" variants={fadeUp}>
+          <motion.div variants={fadeUp}>
             <SystemCard system={SYSTEMS[2]} />
+          </motion.div>
+
+          {/* Infrastructure + Personal OS */}
+          <motion.div variants={fadeUp}>
+            <SystemCard system={SYSTEMS[3]} />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <SystemCard system={SYSTEMS[4]} />
           </motion.div>
         </div>
       </motion.div>
     </PanelWrapper>
-  )
+  );
 }
 
-function SystemCard({ system }: { system: typeof SYSTEMS[number] }) {
+function SystemCard({
+  system,
+  featured,
+}: {
+  system: (typeof SYSTEMS)[number];
+  featured?: boolean;
+}) {
   return (
-    <div className="relative group p-5 rounded-xl border border-white/5 hover:border-white/10
-                    bg-[#07070e]/80 backdrop-blur-xl transition-all duration-300">
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl text-[var(--accent)]">{system.icon}</span>
+    <div
+      className={`relative group p-5 rounded-xl border border-white/5 hover:border-white/10
+                    bg-[#07070e]/80 backdrop-blur-xl transition-all duration-300 h-full
+                    ${featured ? "md:text-center" : ""}`}
+    >
+      <div
+        className={`flex items-center gap-3 mb-3 ${featured ? "md:justify-center" : ""}`}
+      >
+        <span
+          className={`text-[var(--accent)] ${featured ? "text-3xl" : "text-2xl"}`}
+        >
+          {system.icon}
+        </span>
         <div className="flex items-center gap-2">
-          <h4 className="text-[15px] font-medium text-[var(--fg)]">{system.name}</h4>
+          <h4
+            className={`font-medium text-[var(--fg)] ${featured ? "text-[17px]" : "text-[15px]"}`}
+          >
+            {system.name}
+          </h4>
           <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--status-green)] bg-[var(--status-green)]/10 px-1.5 py-0.5 rounded-full">
             Active
           </span>
         </div>
       </div>
-      <p className="text-[13px] leading-relaxed text-[var(--fg2)] mb-4">{system.desc}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {system.stack.map(tech => (
-          <span key={tech} className="font-mono text-[10px] text-[var(--fg2)] bg-white/5 px-2 py-0.5 rounded">
+      <p
+        className={`text-[13px] leading-relaxed text-[var(--fg2)] mb-4 ${featured ? "max-w-2xl md:mx-auto" : ""}`}
+      >
+        {system.desc}
+      </p>
+      <div
+        className={`flex flex-wrap gap-1.5 ${featured ? "md:justify-center" : ""}`}
+      >
+        {system.stack.map((tech) => (
+          <span
+            key={tech}
+            className="font-mono text-[10px] text-[var(--fg2)] bg-white/5 px-2 py-0.5 rounded"
+          >
             {tech}
           </span>
         ))}
       </div>
     </div>
-  )
+  );
 }
