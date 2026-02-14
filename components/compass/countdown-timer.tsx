@@ -38,7 +38,7 @@ export function CountdownTimer() {
     fetch("/api/github/contributions")
       .then((r) => r.json())
       .then((d) => {
-        if (typeof d.total === "number") setIterations(10000 - d.total);
+        if (typeof d.total === "number") setIterations(Math.max(0, 10000 - d.total));
       })
       .catch(() => {});
   }, []);
