@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMCWebSocket } from "@/lib/mc/use-mc-websocket";
-import type { GraphData } from "@/lib/mc/types";
+import type { GraphData, SwarmOverview } from "@/lib/mc/types";
 import { adaptGraphResponse } from "@/lib/mc/adapters";
 import { DashboardHeader } from "@/components/mc/dashboard-header";
 import { StageOverrideDialog } from "@/components/mc/stage-override-dialog";
@@ -11,12 +11,13 @@ import { TraceView } from "@/components/mc/trace-view";
 import { ActivityView } from "@/components/mc/activity-view";
 import { SpecsView } from "@/components/mc/specs-view";
 import { FindingsView } from "@/components/mc/findings-view";
+import { SwarmView } from "@/components/mc/swarm-view";
 import BridgeStatusIndicator from "@/components/mc/bridge-status-indicator";
 import { ChatPanel } from "@/components/mc/chat-panel";
 import { useChatConnection } from "@/lib/mc/use-chat-connection";
 import { MC_API_URL } from "@/lib/mc/constants";
 
-type View = "mission" | "trace" | "activity" | "specs";
+type View = "mission" | "trace" | "activity" | "specs" | "swarm";
 
 export function MCClient() {
   const [view, setView] = useState<View>("mission");
@@ -113,6 +114,28 @@ export function MCClient() {
     return result;
   };
 
+  // Swarm fleet data
+  const [swarmData, setSwarmData] = useState<SwarmOverview | null>(null);
+
+  const fetchSwarm = useCallback(async () => {
+    try {
+      const res = await fetch(`${MC_API_URL}/api/swarm/overview`);
+      if (!res.ok) return;
+      const data: SwarmOverview = await res.json();
+      setSwarmData(data);
+    } catch {
+      // keep existing swarmData
+    }
+  }, []);
+
+  // Poll swarm data when on swarm view
+  useEffect(() => {
+    if (view !== "swarm") return;
+    fetchSwarm();
+    const interval = setInterval(fetchSwarm, 30_000);
+    return () => clearInterval(interval);
+  }, [view, fetchSwarm]);
+
   const handleProjectSwitch = () => {
     window.location.reload();
   };
@@ -166,6 +189,10 @@ export function MCClient() {
           )}
 
           {view === "specs" && <SpecsView baseUrl={MC_API_URL} />}
+
+          {view === "swarm" && (
+            <SwarmView data={swarmData} onRefresh={fetchSwarm} />
+          )}
 
           {view === "activity" && (
             <ActivityView
