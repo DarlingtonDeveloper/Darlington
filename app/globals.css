@@ -96,7 +96,7 @@
   --accent: #c4b5a0;
   --accent2: #a89880;
   --status-green: #4ade80;
-  --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -238,7 +238,8 @@
 
 /* Focus border animation for focused habits */
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
     background-position: 0% 50%;
   }
@@ -286,11 +287,22 @@
 
 /* Shake animation for incorrect answers */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .animate-shake {
@@ -393,9 +405,23 @@
 
 /* Board reset animations */
 @keyframes board-shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-  20%, 40%, 60%, 80% { transform: translateX(8px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-8px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(8px);
+  }
 }
 
 @keyframes word-fade-out {
@@ -434,12 +460,30 @@
 
 /* Compass tagline dot animation */
 @keyframes tagline-dots {
-  0%, 25% { content: '.'; }
-  26%, 50% { content: '..'; }
-  51%, 100% { content: '...'; }
+  0%,
+  25% {
+    content: ".";
+  }
+  26%,
+  50% {
+    content: "..";
+  }
+  51%,
+  100% {
+    content: "...";
+  }
 }
 
 .tagline-dots::after {
-  content: '.';
+  content: ".";
   animation: tagline-dots 2s steps(1) infinite;
+}
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }

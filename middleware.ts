@@ -1,54 +1,67 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
 const PROTECTED_ROUTES = [
-  '/habits',
-  '/goals',
-  '/hanzi',
-  '/finance',
-  '/calendar',
-  '/health',
-  '/kai',
-  '/cron',
-]
+  "/habits",
+  "/goals",
+  "/hanzi",
+  "/finance",
+  "/calendar",
+  "/health",
+  "/kai",
+  "/swarm",
+  "/dutybound",
+  "/cron",
+];
 
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback']
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/auth/callback",
+  "/dutybound/demo",
+];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
 
   // Skip auth for API routes - they handle their own auth
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next()
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
   }
 
-  const { user, response } = await updateSession(request)
-
-  const isProtectedRoute = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
+  const { user, response } = await updateSession(request);
 
   const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  // Public routes skip auth entirely
+  if (isPublicRoute) {
+    return response;
+  }
+
+  const isProtectedRoute = PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
 
   // Redirect unauthenticated users to login
   if (isProtectedRoute && !user) {
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(redirectUrl)
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect authenticated users away from login/signup
-  if (user && (pathname === '/login' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/', request.url))
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return response
+  return response;
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-}
+};
