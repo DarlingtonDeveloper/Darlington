@@ -104,6 +104,7 @@ export function DashboardHeader({
     { key: "trace", label: "◇ Trace" },
     { key: "activity", label: "◷ Activity" },
     { key: "specs", label: "◆ Specs" },
+    { key: "swarm", label: "◎ Swarm" },
   ];
 
   return (

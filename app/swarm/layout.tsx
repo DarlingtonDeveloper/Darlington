@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "MissionControl | Darlington",
-  description: "OpenClaw orchestrator dashboard",
+  title: "Swarm | Darlington",
+  description: "Fleet monitoring dashboard",
 };
 
 export default function McLayout({ children }: { children: React.ReactNode }) {

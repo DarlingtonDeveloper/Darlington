@@ -177,3 +177,87 @@ export interface MCState {
   checkpoints: CheckpointInfo[];
   graph?: GraphData;
 }
+
+// ─── Swarm Fleet Types ──────────────────────────────────────
+
+export interface SwarmOverview {
+  warren?: WarrenData;
+  chronicle?: ChronicleData;
+  dispatch?: DispatchData;
+  promptforge?: PromptForgeData;
+  alexandria?: AlexandriaData;
+  errors: Record<string, string>;
+  fetched_at: string;
+}
+
+export interface WarrenData {
+  health?: WarrenHealth;
+  agents?: WarrenAgent[];
+}
+
+export interface WarrenHealth {
+  status: string;
+  uptime?: number;
+  version?: string;
+  agents_connected?: number;
+}
+
+export interface WarrenAgent {
+  id: string;
+  name: string;
+  state: string;
+  connections?: number;
+  policy?: string;
+  started_at?: string;
+}
+
+export interface ChronicleData {
+  metrics?: ChronicleMetrics;
+  dlq?: DLQStats;
+}
+
+export interface ChronicleMetrics {
+  total_events?: number;
+  events_per_minute?: number;
+  error_rate?: number;
+  [key: string]: unknown;
+}
+
+export interface DLQStats {
+  depth?: number;
+  oldest_age_seconds?: number;
+  processing_rate?: number;
+  [key: string]: unknown;
+}
+
+export interface DispatchData {
+  stats?: DispatchStats;
+  agents?: DispatchAgent[];
+}
+
+export interface DispatchStats {
+  pending?: number;
+  in_progress?: number;
+  completed?: number;
+  failed?: number;
+  total?: number;
+  [key: string]: unknown;
+}
+
+export interface DispatchAgent {
+  id: string;
+  name?: string;
+  status: string;
+  current_task?: string;
+  tasks_completed?: number;
+}
+
+export interface PromptForgeData {
+  prompt_count?: number;
+  prompts?: unknown;
+}
+
+export interface AlexandriaData {
+  collection_count?: number;
+  collections?: unknown;
+}

@@ -9,7 +9,7 @@ const PROTECTED_ROUTES = [
   "/calendar",
   "/health",
   "/kai",
-  "/mc",
+  "/swarm",
   "/dutybound",
   "/cron",
 ];
