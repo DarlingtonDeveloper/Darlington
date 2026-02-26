@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
 import { PanelWrapper } from "./panel-wrapper";
 
 const SYSTEMS = [
@@ -27,6 +28,13 @@ const SYSTEMS = [
     name: "Infrastructure",
     desc: "Warren (reverse proxy + lifecycle), Alexandria (knowledge + secrets), PromptForge (prompt VCS), Dispatch (task broker), Hermes (NATS message bus), Context Graph (identity resolution).",
     stack: ["Go", "Python", "pgvector", "Supabase"],
+  },
+  {
+    icon: "🧠",
+    name: "Cortex",
+    desc: "Embedded graph memory for AI agents. Typed knowledge nodes, auto-linking via embeddings, decay of unused knowledge, briefings synthesised on demand. One binary. One file. Zero dependencies.",
+    stack: ["Rust", "HNSW", "Knowledge Graph"],
+    href: "https://github.com/MikeSquared-Agency/cortex",
   },
   {
     icon: "◎",
@@ -79,12 +87,17 @@ export function WhatPanel() {
             <SystemCard system={SYSTEMS[2]} />
           </motion.div>
 
-          {/* Infrastructure + Personal OS */}
+          {/* Infrastructure + Cortex */}
           <motion.div variants={fadeUp}>
             <SystemCard system={SYSTEMS[3]} />
           </motion.div>
           <motion.div variants={fadeUp}>
             <SystemCard system={SYSTEMS[4]} />
+          </motion.div>
+
+          {/* Personal OS — full width */}
+          <motion.div className="md:col-span-2" variants={fadeUp}>
+            <SystemCard system={SYSTEMS[5]} />
           </motion.div>
         </div>
       </motion.div>
@@ -99,9 +112,19 @@ function SystemCard({
   system: (typeof SYSTEMS)[number];
   featured?: boolean;
 }) {
+  const Tag = system.href ? "a" : "div";
+  const linkProps = system.href
+    ? {
+        href: system.href,
+        target: "_blank" as const,
+        rel: "noopener noreferrer",
+      }
+    : {};
+
   return (
-    <div
-      className={`relative group p-5 rounded-xl border border-white/5 hover:border-white/10
+    <Tag
+      {...linkProps}
+      className={`relative group block p-5 rounded-xl border border-white/5 hover:border-white/10
                     bg-[#07070e]/80 backdrop-blur-xl transition-all duration-300 h-full
                     ${featured ? "md:text-center" : ""}`}
     >
@@ -122,6 +145,12 @@ function SystemCard({
           <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--status-green)] bg-[var(--status-green)]/10 px-1.5 py-0.5 rounded-full">
             Active
           </span>
+          {system.href && (
+            <ExternalLink
+              size={12}
+              className="text-[var(--fg2)] opacity-0 group-hover:opacity-100 transition-opacity"
+            />
+          )}
         </div>
       </div>
       <p
@@ -141,6 +170,6 @@ function SystemCard({
           </span>
         ))}
       </div>
-    </div>
+    </Tag>
   );
 }
