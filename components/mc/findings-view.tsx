@@ -23,7 +23,7 @@ export function FindingsView({ taskId, baseUrl }: FindingsViewProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMarkdown(null);
+    setMarkdown(null); // eslint-disable-line react-hooks/set-state-in-effect -- reset on taskId change
     setBriefing(null);
     setError(null);
     if (!taskId) return;

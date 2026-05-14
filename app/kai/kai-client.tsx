@@ -309,7 +309,7 @@ export function KaiClient({ starters }: KaiClientProps = {}) {
       }
 
       // Auto-reconnect
-      reconnectTimer.current = setTimeout(() => connect(), 3000);
+      reconnectTimer.current = setTimeout(() => connect(), 3000); // eslint-disable-line react-hooks/immutability -- WS reconnect
     };
 
     ws.onerror = () => {

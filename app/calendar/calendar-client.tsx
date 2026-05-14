@@ -1,153 +1,154 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { format, addDays, subDays, formatDistanceToNow } from 'date-fns'
+import { useState, useEffect, useCallback, useRef } from "react";
+import { format, addDays, subDays, formatDistanceToNow } from "date-fns";
 
 interface CalendarEvent {
-  id: string
-  summary: string
-  description?: string
-  location?: string
-  start: { dateTime?: string; date?: string; timeZone?: string }
-  end: { dateTime?: string; date?: string; timeZone?: string }
-  calendarName?: string
+  id: string;
+  summary: string;
+  description?: string;
+  location?: string;
+  start: { dateTime?: string; date?: string; timeZone?: string };
+  end: { dateTime?: string; date?: string; timeZone?: string };
+  calendarName?: string;
 }
 
 interface TimeBlock {
-  type: 'free' | 'event'
-  start: string
-  end: string
-  durationMinutes: number
-  event?: CalendarEvent
+  type: "free" | "event";
+  start: string;
+  end: string;
+  durationMinutes: number;
+  event?: CalendarEvent;
 }
 
 interface DailySummary {
-  date: string
-  totalEvents: number
-  allDayEvents: number
-  meetingHours: number
-  freeHours: number
-  firstEventTime: string | null
-  lastEventTime: string | null
-  longestFreeBlockHours: number
+  date: string;
+  totalEvents: number;
+  allDayEvents: number;
+  meetingHours: number;
+  freeHours: number;
+  firstEventTime: string | null;
+  lastEventTime: string | null;
+  longestFreeBlockHours: number;
 }
 
 interface CalendarData {
-  events: CalendarEvent[]
-  timeBlocks: TimeBlock[]
-  summary: DailySummary
-  allDayEvents: CalendarEvent[]
-  dateRange: { start: string; end: string }
+  events: CalendarEvent[];
+  timeBlocks: TimeBlock[];
+  summary: DailySummary;
+  allDayEvents: CalendarEvent[];
+  dateRange: { start: string; end: string };
 }
 
 interface CalendarClientProps {
-  initialDate: string
+  initialDate: string;
 }
 
 export function CalendarClient({ initialDate }: CalendarClientProps) {
-  const [date, setDate] = useState(new Date(initialDate))
-  const [data, setData] = useState<CalendarData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requiresReauth, setRequiresReauth] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
-  const syncChecked = useRef(false)
+  const [date, setDate] = useState(new Date(initialDate));
+  const [data, setData] = useState<CalendarData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [requiresReauth, setRequiresReauth] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const syncChecked = useRef(false);
 
   // Check sync status and auto-sync if stale
   useEffect(() => {
-    if (syncChecked.current) return
-    syncChecked.current = true
+    if (syncChecked.current) return;
+    syncChecked.current = true;
 
     async function checkAndSync() {
       try {
-        const res = await fetch('/api/calendar/sync')
-        const { lastSyncedAt: syncTime, isStale } = await res.json()
-        setLastSyncedAt(syncTime)
+        const res = await fetch("/api/calendar/sync");
+        const { lastSyncedAt: syncTime, isStale } = await res.json();
+        setLastSyncedAt(syncTime);
 
         if (isStale) {
           // Auto-sync in background
-          setSyncing(true)
-          const syncRes = await fetch('/api/calendar/sync', { method: 'POST' })
+          setSyncing(true);
+          const syncRes = await fetch("/api/calendar/sync", { method: "POST" });
           if (syncRes.ok) {
-            const { synced } = await syncRes.json()
-            setLastSyncedAt(new Date().toISOString())
-            console.log(`Synced ${synced} days to Supabase`)
+            const { synced } = await syncRes.json();
+            setLastSyncedAt(new Date().toISOString());
+            console.log(`Synced ${synced} days to Supabase`);
           }
-          setSyncing(false)
+          setSyncing(false);
         }
       } catch (err) {
-        console.error('Sync check failed:', err)
+        console.error("Sync check failed:", err);
       }
     }
 
-    checkAndSync()
-  }, [])
+    checkAndSync();
+  }, []);
 
   const handleManualSync = async () => {
-    setSyncing(true)
+    setSyncing(true);
     try {
-      const res = await fetch('/api/calendar/sync', { method: 'POST' })
+      const res = await fetch("/api/calendar/sync", { method: "POST" });
       if (res.ok) {
-        setLastSyncedAt(new Date().toISOString())
+        setLastSyncedAt(new Date().toISOString());
       }
     } catch (err) {
-      console.error('Manual sync failed:', err)
+      console.error("Manual sync failed:", err);
     } finally {
-      setSyncing(false)
+      setSyncing(false);
     }
-  }
+  };
 
   const fetchCalendarData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const dateStr = format(date, 'yyyy-MM-dd')
-      const response = await fetch(`/api/calendar/events?date=${dateStr}`)
-      const result = await response.json()
+      const dateStr = format(date, "yyyy-MM-dd");
+      const response = await fetch(`/api/calendar/events?date=${dateStr}`);
+      const result = await response.json();
 
       if (!response.ok) {
         if (result.requiresReauth) {
-          setRequiresReauth(true)
-          setError(result.message)
+          setRequiresReauth(true);
+          setError(result.message);
         } else {
-          setError(result.error || 'Failed to load calendar')
+          setError(result.error || "Failed to load calendar");
         }
-        return
+        return;
       }
 
-      setData(result)
-      setRequiresReauth(false)
+      setData(result);
+      setRequiresReauth(false);
     } catch (err) {
-      setError('Failed to connect to calendar')
-      console.error(err)
+      setError("Failed to connect to calendar");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [date])
+  }, [date]);
 
   useEffect(() => {
-    fetchCalendarData()
-  }, [fetchCalendarData])
+    fetchCalendarData(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
+  }, [fetchCalendarData]);
 
-  const goToToday = () => setDate(new Date())
-  const goToPrevDay = () => setDate((d) => subDays(d, 1))
-  const goToNextDay = () => setDate((d) => addDays(d, 1))
+  const goToToday = () => setDate(new Date());
+  const goToPrevDay = () => setDate((d) => subDays(d, 1));
+  const goToNextDay = () => setDate((d) => addDays(d, 1));
 
-  const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+  const isToday =
+    format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
   const formatDuration = (minutes: number) => {
-    if (minutes < 60) return `${minutes}m`
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
-  }
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
 
   const formatTime = (isoString: string) => {
-    const date = new Date(isoString)
-    return format(date, 'HH:mm')
-  }
+    const date = new Date(isoString);
+    return format(date, "HH:mm");
+  };
 
   if (requiresReauth) {
     return (
@@ -180,7 +181,7 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
           </a>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -191,17 +192,27 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
           onClick={goToPrevDay}
           className="p-2 -ml-2 text-neutral-400 hover:text-neutral-200 active:text-neutral-300 transition-colors"
         >
-          <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          <svg
+            className="size-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 19.5 8.25 12l7.5-7.5"
+            />
           </svg>
         </button>
 
         <div className="text-center">
           <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
-            {isToday ? 'Today' : format(date, 'EEEE')}
+            {isToday ? "Today" : format(date, "EEEE")}
           </p>
           <p className="text-lg font-semibold text-neutral-100">
-            {format(date, 'MMMM d')}
+            {format(date, "MMMM d")}
           </p>
         </div>
 
@@ -209,8 +220,18 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
           onClick={goToNextDay}
           className="p-2 -mr-2 text-neutral-400 hover:text-neutral-200 active:text-neutral-300 transition-colors"
         >
-          <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          <svg
+            className="size-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m8.25 4.5 7.5 7.5-7.5 7.5"
+            />
           </svg>
         </button>
       </div>
@@ -264,7 +285,7 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
                   {data.summary.totalEvents}
                 </p>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  {data.summary.totalEvents === 1 ? 'event' : 'events'}
+                  {data.summary.totalEvents === 1 ? "event" : "events"}
                 </p>
               </div>
             </div>
@@ -280,7 +301,7 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
                 ) : lastSyncedAt ? (
                   `Synced ${formatDistanceToNow(new Date(lastSyncedAt), { addSuffix: true })}`
                 ) : (
-                  'Not synced'
+                  "Not synced"
                 )}
               </p>
               <button
@@ -324,7 +345,9 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
             {data.timeBlocks.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-sm text-neutral-500">No scheduled events</p>
-                <p className="text-xs text-neutral-600 mt-1">Your day is clear</p>
+                <p className="text-xs text-neutral-600 mt-1">
+                  Your day is clear
+                </p>
               </div>
             ) : (
               data.timeBlocks.map((block, index) => (
@@ -337,7 +360,7 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
                   </div>
 
                   {/* Block */}
-                  {block.type === 'free' ? (
+                  {block.type === "free" ? (
                     <div className="flex-1 border-l-2 border-dashed border-neutral-800 pl-3 py-2 min-h-[40px]">
                       <p className="text-xs text-neutral-600">
                         {formatDuration(block.durationMinutes)} free
@@ -346,14 +369,28 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
                   ) : (
                     <div className="flex-1 bg-neutral-900/80 border border-neutral-800 rounded-lg px-3 py-2">
                       <p className="text-sm font-medium text-neutral-200">
-                        {block.event?.summary || 'Untitled'}
+                        {block.event?.summary || "Untitled"}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         {block.event?.location && (
                           <p className="text-xs text-neutral-500 flex items-center gap-1">
-                            <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            <svg
+                              className="size-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                              />
                             </svg>
                             {block.event.location}
                           </p>
@@ -371,5 +408,5 @@ export function CalendarClient({ initialDate }: CalendarClientProps) {
         </>
       )}
     </div>
-  )
+  );
 }

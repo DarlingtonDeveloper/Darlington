@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface ReviewSettingsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  userId: string
-  currentInputMethod: 'tap' | 'type'
-  onInputMethodChange: (method: 'tap' | 'type') => void
+  isOpen: boolean;
+  onClose: () => void;
+  userId: string;
+  currentInputMethod: "tap" | "type";
+  onInputMethodChange: (method: "tap" | "type") => void;
 }
 
 export function ReviewSettingsModal({
@@ -19,49 +19,51 @@ export function ReviewSettingsModal({
   currentInputMethod,
   onInputMethodChange,
 }: ReviewSettingsModalProps) {
-  const supabase = createClient()
-  const [localInputMethod, setLocalInputMethod] = useState<'tap' | 'type'>(currentInputMethod)
-  const [isSaving, setIsSaving] = useState(false)
-
-  // Sync local state when prop changes
-  useEffect(() => {
-    setLocalInputMethod(currentInputMethod)
-  }, [currentInputMethod])
+  const supabase = createClient();
+  const [localInputMethod, setLocalInputMethod] = useState<"tap" | "type">(
+    currentInputMethod,
+  );
+  const [prevInputMethod, setPrevInputMethod] = useState(currentInputMethod);
+  if (currentInputMethod !== prevInputMethod) {
+    setPrevInputMethod(currentInputMethod);
+    setLocalInputMethod(currentInputMethod);
+  }
+  const [isSaving, setIsSaving] = useState(false);
 
   // Close on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
+      if (e.key === "Escape" && isOpen) {
+        onClose();
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, isOpen])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const handleSave = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       await supabase
-        .from('hanzi_profiles')
+        .from("hanzi_profiles")
         .update({
           input_method: localInputMethod,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', userId)
+        .eq("user_id", userId);
 
-      onInputMethodChange(localInputMethod)
-      onClose()
+      onInputMethodChange(localInputMethod);
+      onClose();
     } catch (error) {
-      console.error('Error saving settings:', error)
+      console.error("Error saving settings:", error);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
-  const hasChanges = localInputMethod !== currentInputMethod
+  const hasChanges = localInputMethod !== currentInputMethod;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -108,31 +110,32 @@ export function ReviewSettingsModal({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setLocalInputMethod('tap')}
+                onClick={() => setLocalInputMethod("tap")}
                 className={cn(
-                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
-                  localInputMethod === 'tap'
-                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
-                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                  "py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors",
+                  localInputMethod === "tap"
+                    ? "bg-emerald-600/20 border-emerald-600 text-emerald-400"
+                    : "bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600",
                 )}
               >
                 Tap
               </button>
               <button
                 type="button"
-                onClick={() => setLocalInputMethod('type')}
+                onClick={() => setLocalInputMethod("type")}
                 className={cn(
-                  'py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors',
-                  localInputMethod === 'type'
-                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400'
-                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
+                  "py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors",
+                  localInputMethod === "type"
+                    ? "bg-emerald-600/20 border-emerald-600 text-emerald-400"
+                    : "bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600",
                 )}
               >
                 Type Pinyin
               </button>
             </div>
             <p className="mt-2 text-xs text-neutral-500">
-              Tap mode shows multiple choice. Type mode lets you practice typing pinyin with tone numbers.
+              Tap mode shows multiple choice. Type mode lets you practice typing
+              pinyin with tone numbers.
             </p>
           </div>
 
@@ -148,13 +151,13 @@ export function ReviewSettingsModal({
               onClick={handleSave}
               disabled={!hasChanges || isSaving}
               className={cn(
-                'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors',
+                "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors",
                 hasChanges && !isSaving
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-650'
-                  : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                  ? "bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-650"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed",
               )}
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -163,5 +166,5 @@ export function ReviewSettingsModal({
         <div className="pb-safe" />
       </div>
     </div>
-  )
+  );
 }

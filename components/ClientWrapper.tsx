@@ -1,21 +1,25 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from "react";
 
 interface ClientWrapperProps {
-    children: React.ReactNode
+  children: React.ReactNode;
 }
 
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export default function ClientWrapper({ children }: ClientWrapperProps) {
-    const [isMounted, setIsMounted] = useState(false)
+  const isMounted = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
+  if (!isMounted) {
+    return null;
+  }
 
-    if (!isMounted) {
-        return null
-    }
-
-    return <>{children}</>
+  return <>{children}</>;
 }

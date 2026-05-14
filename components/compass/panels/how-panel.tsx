@@ -43,7 +43,10 @@ const fadeUp = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+    transition: {
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
   },
 };
 
@@ -55,6 +58,9 @@ function formatTime(iso: string): string {
 
 export function HowPanel() {
   const [activity, setActivity] = useState<ActivityEntry[] | null>(null);
+  const [skeletonWidths] = useState(() =>
+    Array.from({ length: 6 }, () => 60 + Math.random() * 30),
+  );
 
   useEffect(() => {
     fetch("/api/github/activity")
@@ -129,11 +135,11 @@ export function HowPanel() {
           <div className="space-y-1">
             {activity === null ? (
               // Skeleton loading
-              Array.from({ length: 6 }).map((_, i) => (
+              skeletonWidths.map((w, i) => (
                 <motion.div
                   key={i}
                   className="h-[1.1rem] rounded bg-white/5 animate-pulse"
-                  style={{ width: `${60 + Math.random() * 30}%` }}
+                  style={{ width: `${w}%` }}
                   variants={fadeUp}
                 />
               ))

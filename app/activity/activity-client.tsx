@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { formatDistanceToNow, format } from 'date-fns'
+import { useState, useEffect, useCallback, useRef } from "react";
+import { formatDistanceToNow, format } from "date-fns";
 import {
   GitCommit,
   Clock,
@@ -12,102 +12,99 @@ import {
   MessageSquare,
   Bot,
   GitPullRequest,
-} from 'lucide-react'
+} from "lucide-react";
 
 interface ActivityEvent {
-  id: string
-  timestamp: string
-  type: 'commit' | 'cron' | 'deploy' | 'agent' | 'message' | 'pr'
-  description: string
-  repo?: string
-  link?: string
-  author?: string
-  hash?: string
+  id: string;
+  timestamp: string;
+  type: "commit" | "cron" | "deploy" | "agent" | "message" | "pr";
+  description: string;
+  repo?: string;
+  link?: string;
+  author?: string;
+  hash?: string;
 }
 
 const typeConfig: Record<
   string,
   { icon: typeof GitCommit; color: string; label: string }
 > = {
-  commit: { icon: GitCommit, color: 'text-emerald-400', label: 'Commit' },
-  cron: { icon: Clock, color: 'text-blue-400', label: 'Cron' },
-  deploy: { icon: Rocket, color: 'text-purple-400', label: 'Deploy' },
-  agent: { icon: Bot, color: 'text-amber-400', label: 'Agent' },
-  message: { icon: MessageSquare, color: 'text-cyan-400', label: 'Message' },
-  pr: { icon: GitPullRequest, color: 'text-pink-400', label: 'PR' },
-}
+  commit: { icon: GitCommit, color: "text-emerald-400", label: "Commit" },
+  cron: { icon: Clock, color: "text-blue-400", label: "Cron" },
+  deploy: { icon: Rocket, color: "text-purple-400", label: "Deploy" },
+  agent: { icon: Bot, color: "text-amber-400", label: "Agent" },
+  message: { icon: MessageSquare, color: "text-cyan-400", label: "Message" },
+  pr: { icon: GitPullRequest, color: "text-pink-400", label: "PR" },
+};
 
 export function ActivityClient() {
-  const [events, setEvents] = useState<ActivityEvent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [nextCursor, setNextCursor] = useState<string | null>(null)
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-  const refreshTimer = useRef<NodeJS.Timeout | null>(null)
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const refreshTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchEvents = useCallback(
-    async (cursor?: string | null) => {
-      try {
-        const params = new URLSearchParams({ limit: '30' })
-        if (cursor) params.set('cursor', cursor)
-        const res = await fetch(`/api/activity?${params}`)
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          throw new Error(data.error || 'Failed to load activity')
-        }
-        const data = await res.json()
-        return data
-      } catch (err) {
-        throw err
+  const fetchEvents = useCallback(async (cursor?: string | null) => {
+    try {
+      const params = new URLSearchParams({ limit: "30" });
+      if (cursor) params.set("cursor", cursor);
+      const res = await fetch(`/api/activity?${params}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to load activity");
       }
-    },
-    []
-  )
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
 
   const loadInitial = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const data = await fetchEvents()
-      setEvents(data.events)
-      setNextCursor(data.nextCursor)
-      setLastRefresh(new Date())
+      const data = await fetchEvents();
+      setEvents(data.events);
+      setNextCursor(data.nextCursor);
+      setLastRefresh(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect')
+      setError(err instanceof Error ? err.message : "Failed to connect");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [fetchEvents])
+  }, [fetchEvents]);
 
   const loadMore = useCallback(async () => {
-    if (!nextCursor || loadingMore) return
-    setLoadingMore(true)
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
     try {
-      const data = await fetchEvents(nextCursor)
-      setEvents((prev) => [...prev, ...data.events])
-      setNextCursor(data.nextCursor)
+      const data = await fetchEvents(nextCursor);
+      setEvents((prev) => [...prev, ...data.events]);
+      setNextCursor(data.nextCursor);
     } catch {
       // Silently fail on load more
     } finally {
-      setLoadingMore(false)
+      setLoadingMore(false);
     }
-  }, [nextCursor, loadingMore, fetchEvents])
+  }, [nextCursor, loadingMore, fetchEvents]);
 
   // Initial load
   useEffect(() => {
-    loadInitial()
-  }, [loadInitial])
+    loadInitial(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
+  }, [loadInitial]);
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
     refreshTimer.current = setInterval(() => {
-      loadInitial()
-    }, 30_000)
+      loadInitial();
+    }, 30_000);
     return () => {
-      if (refreshTimer.current) clearInterval(refreshTimer.current)
-    }
-  }, [loadInitial])
+      if (refreshTimer.current) clearInterval(refreshTimer.current);
+    };
+  }, [loadInitial]);
 
   return (
     <div className="px-4 sm:px-6 sm:max-w-2xl sm:mx-auto py-4">
@@ -126,9 +123,7 @@ export function ActivityClient() {
           disabled={loading}
           className="p-2 rounded-md text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-colors disabled:opacity-50"
         >
-          <RefreshCw
-            className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
-          />
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
@@ -162,9 +157,9 @@ export function ActivityClient() {
 
           <div className="space-y-1">
             {events.map((event) => {
-              const config = typeConfig[event.type] || typeConfig.commit
-              const Icon = config.icon
-              const time = new Date(event.timestamp)
+              const config = typeConfig[event.type] || typeConfig.commit;
+              const Icon = config.icon;
+              const time = new Date(event.timestamp);
 
               return (
                 <div
@@ -197,13 +192,13 @@ export function ActivityClient() {
                     </p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-neutral-600">
                       {event.author && <span>{event.author}</span>}
-                      <span title={format(time, 'PPpp')}>
+                      <span title={format(time, "PPpp")}>
                         {formatDistanceToNow(time, { addSuffix: true })}
                       </span>
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
 
@@ -218,12 +213,12 @@ export function ActivityClient() {
                 {loadingMore ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : null}
-                {loadingMore ? 'Loading…' : 'Load more'}
+                {loadingMore ? "Loading…" : "Load more"}
               </button>
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }

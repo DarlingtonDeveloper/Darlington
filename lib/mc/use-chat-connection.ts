@@ -279,10 +279,11 @@ export function useChatConnection(): ChatConnection {
         return;
       const delay = reconnectDelay.current;
       reconnectDelay.current = Math.min(delay * 2, 30000);
-      reconnectTimer.current = setTimeout(() => connect(), delay);
+      reconnectTimer.current = setTimeout(() => connect(), delay); // eslint-disable-line react-hooks/immutability -- WS reconnect
     };
 
     ws.onerror = () => setConnState("error");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- connState read in timeout is intentionally stale
   }, [fetchConfig, request]);
 
   useEffect(() => {
