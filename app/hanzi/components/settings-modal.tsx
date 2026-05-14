@@ -39,11 +39,11 @@ export function SettingsModal({
   isSaving = false,
 }: SettingsModalProps) {
   const [localSettings, setLocalSettings] = useState<LinkSettings>(settings);
-
-  // Sync local state when settings prop changes
-  useEffect(() => {
-    setLocalSettings(settings); // eslint-disable-line react-hooks/set-state-in-effect -- sync from prop
-  }, [settings]);
+  const [prevSettings, setPrevSettings] = useState(settings);
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
+    setLocalSettings(settings);
+  }
 
   // Close on escape key
   useEffect(() => {

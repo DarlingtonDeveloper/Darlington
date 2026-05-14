@@ -39,14 +39,16 @@ export function PartialComplete({
   const [note, setNote] = useState(currentNote || "");
   const [showNoteInput, setShowNoteInput] = useState(!!currentNote);
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedPercentage(currentPercentage); // eslint-disable-line react-hooks/set-state-in-effect -- sync on open
-      setNote(currentNote || "");
-      setShowNoteInput(!!currentNote);
-    }
-  }, [isOpen, currentPercentage, currentNote]);
+  // Reset state when modal opens (adjust during render)
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+  if (isOpen && !prevOpen) {
+    setPrevOpen(true);
+    setSelectedPercentage(currentPercentage);
+    setNote(currentNote || "");
+    setShowNoteInput(!!currentNote);
+  } else if (!isOpen && prevOpen) {
+    setPrevOpen(false);
+  }
 
   // Close on escape key
   useEffect(() => {

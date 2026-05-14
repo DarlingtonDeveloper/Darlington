@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 
 const TARGET = new Date("2027-01-01T00:00:00").getTime();
 const YEAR_START = new Date("2026-01-01T00:00:00").getTime();
@@ -24,15 +24,16 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-export function CountdownTimer() {
-  const [time, setTime] = useState<ReturnType<typeof getTimeLeft> | null>(null);
-  const [iterations, setIterations] = useState<number | null>(null);
+const subscribe = (cb: () => void) => {
+  const id = setInterval(cb, 1000);
+  return () => clearInterval(id);
+};
+const getSnapshot = () => getTimeLeft();
+const getServerSnapshot = () => null;
 
-  useEffect(() => {
-    setTime(getTimeLeft()); // eslint-disable-line react-hooks/set-state-in-effect -- timer subscription
-    const id = setInterval(() => setTime(getTimeLeft()), 1000);
-    return () => clearInterval(id);
-  }, []);
+export function CountdownTimer() {
+  const time = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [iterations, setIterations] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/github/contributions")

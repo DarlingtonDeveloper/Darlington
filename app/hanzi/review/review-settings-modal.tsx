@@ -23,12 +23,12 @@ export function ReviewSettingsModal({
   const [localInputMethod, setLocalInputMethod] = useState<"tap" | "type">(
     currentInputMethod,
   );
+  const [prevInputMethod, setPrevInputMethod] = useState(currentInputMethod);
+  if (currentInputMethod !== prevInputMethod) {
+    setPrevInputMethod(currentInputMethod);
+    setLocalInputMethod(currentInputMethod);
+  }
   const [isSaving, setIsSaving] = useState(false);
-
-  // Sync local state when prop changes
-  useEffect(() => {
-    setLocalInputMethod(currentInputMethod); // eslint-disable-line react-hooks/set-state-in-effect -- sync from prop
-  }, [currentInputMethod]);
 
   // Close on escape key
   useEffect(() => {

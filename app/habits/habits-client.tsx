@@ -100,7 +100,7 @@ export function HabitsClient({
     "medium",
   );
   const [contextNotes, setContextNotes] = useState("");
-  const [hasMounted, setHasMounted] = useState(false);
+  const hasMountedRef = useRef(false);
   const [justCompletedIds, setJustCompletedIds] = useState<Set<string>>(
     new Set(),
   );
@@ -245,35 +245,29 @@ export function HabitsClient({
     [supabase, userId, hasCheckedIn, todaysFocusHabits],
   );
 
-  // On mount: check cache and sync dates
+  // On mount: check cache and sync dates (runs once via ref guard)
   useEffect(() => {
-    if (!hasMounted) {
-      setHasMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- mount flag
+    if (hasMountedRef.current) return;
+    hasMountedRef.current = true;
 
-      const browserToday = format(new Date(), "yyyy-MM-dd");
-      const cachedData = getCachedHabits();
+    const browserToday = format(new Date(), "yyyy-MM-dd");
+    const cachedData = getCachedHabits();
 
-      // If we have cached data, check if it needs refreshing
-      if (cachedData) {
-        if (isCacheStale(cachedData)) {
-          // Background refresh - don't show loading state
-          loadHabitsForDate(new Date());
-        }
-      } else if (initialDate !== browserToday) {
-        // No cache and server date mismatch - need to fetch
-        loadHabitsForDate(new Date());
-      } else {
-        // No cache but server data is good - cache it
-        setCachedHabits(
-          initialHabits,
-          browserToday,
-          hasCheckedInToday,
-          focusHabitIds,
-        );
+    if (cachedData) {
+      if (isCacheStale(cachedData)) {
+        loadHabitsForDate(new Date()); // eslint-disable-line react-hooks/set-state-in-effect -- mount cache check
       }
+    } else if (initialDate !== browserToday) {
+      loadHabitsForDate(new Date());
+    } else {
+      setCachedHabits(
+        initialHabits,
+        browserToday,
+        hasCheckedInToday,
+        focusHabitIds,
+      );
     }
   }, [
-    hasMounted,
     initialDate,
     initialHabits,
     hasCheckedInToday,
@@ -283,11 +277,11 @@ export function HabitsClient({
 
   // Keep cache in sync when habits change (for today only)
   useEffect(() => {
-    if (hasMounted && isToday(viewingDate) && habits.length > 0) {
+    if (hasMountedRef.current && isToday(viewingDate) && habits.length > 0) {
       const todayStr = format(viewingDate, "yyyy-MM-dd");
       setCachedHabits(habits, todayStr, hasCheckedIn, todaysFocusHabits);
     }
-  }, [habits, hasMounted, viewingDate, hasCheckedIn, todaysFocusHabits]);
+  }, [habits, viewingDate, hasCheckedIn, todaysFocusHabits]);
 
   // Handle date change
   const handleDateChange = useCallback(

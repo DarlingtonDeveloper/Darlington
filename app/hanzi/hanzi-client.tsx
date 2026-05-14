@@ -304,23 +304,22 @@ export function HanziClient({
     prepareSentenceRoundData,
   ]);
 
-  // Initialize on mount or mode change
+  // Initialize on mount or mode change (ref-guarded to run once per mode)
+  const lastInitMode = useRef<string | null>(null);
   useEffect(() => {
-    if (isSentenceMode) {
-      if (sentenceChineseItems.length === 0 && sentences.length > 0) {
-        initializeSentenceGame(); // eslint-disable-line react-hooks/set-state-in-effect -- init game
-      }
-    } else {
-      if (englishItems.length === 0 && words.length > 0) {
-        initializeGame();
-      }
+    const modeKey = isSentenceMode ? "sentence" : "word";
+    if (lastInitMode.current === modeKey) return;
+    if (isSentenceMode && sentences.length > 0) {
+      lastInitMode.current = modeKey;
+      initializeSentenceGame(); // eslint-disable-line react-hooks/set-state-in-effect -- game init
+    } else if (!isSentenceMode && words.length > 0) {
+      lastInitMode.current = modeKey;
+      initializeGame();
     }
   }, [
     isSentenceMode,
     words,
     sentences,
-    englishItems.length,
-    sentenceChineseItems.length,
     initializeGame,
     initializeSentenceGame,
   ]);
@@ -533,8 +532,8 @@ export function HanziClient({
   );
 
   // Board reset animation sequence
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- async callback with sequential state updates
   const performBoardReset = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- async callback with sequential state updates
     async (reason: ResetReason) => {
       if (isResetting) return;
 
@@ -587,13 +586,12 @@ export function HanziClient({
           : "Stepping up the challenge";
       setResetNotification(message);
       setTimeout(() => setResetNotification(null), 2000);
-      // eslint-disable-next-line react-hooks/preserve-manual-memoization -- async sequential state updates
     },
     [
       isResetting,
       getFilteredWords,
       currentUnit,
-      expectedDifficulty,
+      expectedDifficulty, // eslint-disable-line react-hooks/preserve-manual-memoization -- compiler limitation
       settings.wordCount,
     ],
   );
@@ -1273,12 +1271,14 @@ export function HanziClient({
     setRecentlyCompleted([]); // Reset cooldown for new unit
   }, []);
 
-  // Re-initialize when unit changes
+  // Re-initialize when unit changes (ref-guarded)
+  const lastInitUnit = useRef(currentUnit);
   useEffect(() => {
-    if (englishItems.length === 0 && words.length > 0) {
-      initializeGame(); // eslint-disable-line react-hooks/set-state-in-effect -- re-init on unit change
+    if (lastInitUnit.current !== currentUnit && words.length > 0) {
+      lastInitUnit.current = currentUnit;
+      initializeGame();
     }
-  }, [currentUnit, englishItems.length, words.length, initializeGame]);
+  }, [currentUnit, words.length, initializeGame]);
 
   // Calculate stats
   const unitWords = words.filter((w) => w.unit <= currentUnit);

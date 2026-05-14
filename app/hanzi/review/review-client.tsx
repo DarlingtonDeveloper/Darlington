@@ -116,10 +116,11 @@ export function ReviewClient({
     initialLifetimeHighScore,
   );
 
-  // Timer state
-  const [timeRemaining, setTimeRemaining] = useState(TIMER_DURATION);
+  // Timer state — driven by a tick counter to avoid setState in effect
+  const [timerTick, setTimerTick] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const timeRemaining = Math.max(0, TIMER_DURATION - timerTick);
 
   // Current item (word or sentence)
   const currentWord = !isSentenceMode ? words[currentIndex] : null;
@@ -168,33 +169,30 @@ export function ReviewClient({
     }, 1500);
   }, [selectedAnswer, isLoading, currentIndex, itemCount]);
 
-  // Timer logic
+  // Timer logic — uses timerTick to derive timeRemaining without setState in effect
   useEffect(() => {
     if (!hasItems || selectedAnswer) return;
 
     startTimeRef.current = Date.now();
-    setTimeRemaining(TIMER_DURATION); // eslint-disable-line react-hooks/set-state-in-effect -- timer subscription
+    setTimerTick(0); // eslint-disable-line react-hooks/set-state-in-effect -- timer reset on index change
 
     const tick = () => {
       const elapsed = Date.now() - startTimeRef.current;
-      const remaining = Math.max(0, TIMER_DURATION - elapsed);
-      setTimeRemaining(remaining);
+      setTimerTick(elapsed);
 
-      if (remaining <= 0) {
-        // Time's up - count as miss, break streak
+      if (elapsed >= TIMER_DURATION) {
         handleTimeUp();
       }
     };
 
-    timerRef.current = setInterval(tick, 50); // Update frequently for smooth animation
+    timerRef.current = setInterval(tick, 50);
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- TIMER_DURATION is a module constant
-  }, [currentIndex, hasItems, selectedAnswer, handleTimeUp]);
+  }, [currentIndex, hasItems, selectedAnswer, handleTimeUp, TIMER_DURATION]);
 
   // Update lifetime high score in database (mode-specific column)
   const highScoreKey: HighScoreKey = getHighScoreKey(
