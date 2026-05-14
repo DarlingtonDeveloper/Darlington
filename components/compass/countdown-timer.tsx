@@ -29,7 +29,7 @@ export function CountdownTimer() {
   const [iterations, setIterations] = useState<number | null>(null);
 
   useEffect(() => {
-    setTime(getTimeLeft());
+    setTime(getTimeLeft()); // eslint-disable-line react-hooks/set-state-in-effect -- timer subscription
     const id = setInterval(() => setTime(getTimeLeft()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -38,7 +38,8 @@ export function CountdownTimer() {
     fetch("/api/github/contributions")
       .then((r) => r.json())
       .then((d) => {
-        if (typeof d.total === "number") setIterations(Math.max(0, 10000 - d.total));
+        if (typeof d.total === "number")
+          setIterations(Math.max(0, 10000 - d.total));
       })
       .catch(() => {});
   }, []);

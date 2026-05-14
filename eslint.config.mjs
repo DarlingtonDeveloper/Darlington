@@ -6,12 +6,9 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["SPEC.jsx"],
     rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
-      "@typescript-eslint/no-empty-object-type": "warn",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
 ]);

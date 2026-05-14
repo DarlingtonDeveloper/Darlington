@@ -1,35 +1,35 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface LinkSettings {
-  baseDifficulty: number
-  wordCount: number
-  showDifficultyScore: boolean
-  viewBy: 'units' | 'word_type'
+  baseDifficulty: number;
+  wordCount: number;
+  showDifficultyScore: boolean;
+  viewBy: "units" | "word_type";
 }
 
 interface SettingsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  settings: LinkSettings
-  onSave: (settings: LinkSettings) => void
-  isSaving?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  settings: LinkSettings;
+  onSave: (settings: LinkSettings) => void;
+  isSaving?: boolean;
 }
 
 const DIFFICULTY_LABELS: Record<number, string> = {
-  1: 'Very Easy',
-  2: 'Easy',
-  3: 'Easy',
-  4: 'Easy-Medium',
-  5: 'Medium',
-  6: 'Medium',
-  7: 'Medium-Hard',
-  8: 'Hard',
-  9: 'Hard',
-  10: 'Expert',
-}
+  1: "Very Easy",
+  2: "Easy",
+  3: "Easy",
+  4: "Easy-Medium",
+  5: "Medium",
+  6: "Medium",
+  7: "Medium-Hard",
+  8: "Hard",
+  9: "Hard",
+  10: "Expert",
+};
 
 export function SettingsModal({
   isOpen,
@@ -38,35 +38,35 @@ export function SettingsModal({
   onSave,
   isSaving = false,
 }: SettingsModalProps) {
-  const [localSettings, setLocalSettings] = useState<LinkSettings>(settings)
+  const [localSettings, setLocalSettings] = useState<LinkSettings>(settings);
 
   // Sync local state when settings prop changes
   useEffect(() => {
-    setLocalSettings(settings)
-  }, [settings])
+    setLocalSettings(settings); // eslint-disable-line react-hooks/set-state-in-effect -- sync from prop
+  }, [settings]);
 
   // Close on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
+      if (e.key === "Escape" && isOpen) {
+        onClose();
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, isOpen])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave(localSettings)
-  }
+    onSave(localSettings);
+  };
 
   const hasChanges =
     localSettings.baseDifficulty !== settings.baseDifficulty ||
     localSettings.wordCount !== settings.wordCount ||
     localSettings.showDifficultyScore !== settings.showDifficultyScore ||
-    localSettings.viewBy !== settings.viewBy
+    localSettings.viewBy !== settings.viewBy;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -115,7 +115,7 @@ export function SettingsModal({
                 <span className="font-mono tabular-nums text-neutral-400">
                   {localSettings.baseDifficulty}
                 </span>
-                {' · '}
+                {" · "}
                 {DIFFICULTY_LABELS[localSettings.baseDifficulty]}
               </span>
             </div>
@@ -125,8 +125,8 @@ export function SettingsModal({
               max={10}
               step={1}
               value={localSettings.baseDifficulty}
-              onChange={e =>
-                setLocalSettings(s => ({
+              onChange={(e) =>
+                setLocalSettings((s) => ({
                   ...s,
                   baseDifficulty: parseInt(e.target.value, 10),
                 }))
@@ -156,7 +156,8 @@ export function SettingsModal({
               <span>10</span>
             </div>
             <p className="mt-2.5 text-xs text-neutral-500 leading-relaxed">
-              Higher difficulty introduces harder words and requires better performance to advance.
+              Higher difficulty introduces harder words and requires better
+              performance to advance.
             </p>
           </div>
 
@@ -176,8 +177,8 @@ export function SettingsModal({
               max={8}
               step={1}
               value={localSettings.wordCount}
-              onChange={e =>
-                setLocalSettings(s => ({
+              onChange={(e) =>
+                setLocalSettings((s) => ({
                   ...s,
                   wordCount: parseInt(e.target.value, 10),
                 }))
@@ -219,24 +220,28 @@ export function SettingsModal({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setLocalSettings(s => ({ ...s, viewBy: 'units' }))}
+                onClick={() =>
+                  setLocalSettings((s) => ({ ...s, viewBy: "units" }))
+                }
                 className={cn(
-                  'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border',
-                  localSettings.viewBy === 'units'
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600'
+                  "py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border",
+                  localSettings.viewBy === "units"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600",
                 )}
               >
                 Units
               </button>
               <button
                 type="button"
-                onClick={() => setLocalSettings(s => ({ ...s, viewBy: 'word_type' }))}
+                onClick={() =>
+                  setLocalSettings((s) => ({ ...s, viewBy: "word_type" }))
+                }
                 className={cn(
-                  'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border',
-                  localSettings.viewBy === 'word_type'
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600'
+                  "py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border",
+                  localSettings.viewBy === "word_type"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-750 hover:border-neutral-600",
                 )}
               >
                 Word Type
@@ -253,8 +258,8 @@ export function SettingsModal({
               <input
                 type="checkbox"
                 checked={localSettings.showDifficultyScore}
-                onChange={e =>
-                  setLocalSettings(s => ({
+                onChange={(e) =>
+                  setLocalSettings((s) => ({
                     ...s,
                     showDifficultyScore: e.target.checked,
                   }))
@@ -263,10 +268,10 @@ export function SettingsModal({
               />
               <div
                 className={cn(
-                  'w-4 h-4 rounded border transition-colors',
+                  "w-4 h-4 rounded border transition-colors",
                   localSettings.showDifficultyScore
-                    ? 'bg-emerald-600 border-emerald-600'
-                    : 'bg-neutral-800 border-neutral-700 group-hover:border-neutral-600'
+                    ? "bg-emerald-600 border-emerald-600"
+                    : "bg-neutral-800 border-neutral-700 group-hover:border-neutral-600",
                 )}
               >
                 {localSettings.showDifficultyScore && (
@@ -308,13 +313,13 @@ export function SettingsModal({
               onClick={handleSave}
               disabled={!hasChanges || isSaving}
               className={cn(
-                'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors',
+                "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors",
                 hasChanges && !isSaving
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-650'
-                  : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                  ? "bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-650"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed",
               )}
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -323,5 +328,5 @@ export function SettingsModal({
         <div className="pb-safe" />
       </div>
     </div>
-  )
+  );
 }

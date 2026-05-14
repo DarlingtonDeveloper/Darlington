@@ -62,7 +62,7 @@ export function DemoClient() {
               { role: step.role!, content: step.content! },
             ]);
             stepRef.current++;
-            runStep();
+            runStep(); // eslint-disable-line react-hooks/immutability -- recursive setTimeout
           }, 1200);
         } else {
           setMessages((prev) => [
@@ -108,7 +108,7 @@ export function DemoClient() {
 
   // Auto-start on mount
   useEffect(() => {
-    startDemo();
+    startDemo(); // eslint-disable-line react-hooks/set-state-in-effect -- start demo on mount
     return clearTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

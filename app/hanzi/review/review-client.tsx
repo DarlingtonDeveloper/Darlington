@@ -1,66 +1,73 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
-import type { WordWithProgress, SentenceWithProgress, HighScoreKey } from '@/lib/hanzi/types'
-import { getHighScoreKey } from '@/lib/hanzi/types'
-import Link from 'next/link'
-import { PinyinInput } from '../components/pinyin-input'
-import { ReviewSettingsModal } from './review-settings-modal'
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import type {
+  WordWithProgress,
+  SentenceWithProgress,
+  HighScoreKey,
+} from "@/lib/hanzi/types";
+import { getHighScoreKey } from "@/lib/hanzi/types";
+import Link from "next/link";
+import { PinyinInput } from "../components/pinyin-input";
+import { ReviewSettingsModal } from "./review-settings-modal";
 
 interface ReviewClientProps {
-  contentMode: 'words' | 'sentences'
+  contentMode: "words" | "sentences";
   // Word mode props
-  initialWords: WordWithProgress[]
-  allHanzi: string[]
+  initialWords: WordWithProgress[];
+  allHanzi: string[];
   // Sentence mode props
-  initialSentences: SentenceWithProgress[]
-  allEnglish: string[]
+  initialSentences: SentenceWithProgress[];
+  allEnglish: string[];
   // Common props
-  userId: string
-  initialLifetimeHighScore: number
-  inputMethod: 'tap' | 'type'
+  userId: string;
+  initialLifetimeHighScore: number;
+  inputMethod: "tap" | "type";
 }
 
 // Shuffle array helper
 function shuffle<T>(array: T[]): T[] {
-  const result = [...array]
+  const result = [...array];
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-      ;[result[i], result[j]] = [result[j], result[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
   }
-  return result
+  return result;
 }
 
 // Sort items by score (highest first) but shuffle within similar scores
-function sortByScoreWithVariation<T extends { progress: { score: number } | null }>(items: T[]): T[] {
+function sortByScoreWithVariation<
+  T extends { progress: { score: number } | null },
+>(items: T[]): T[] {
   // Group items by score buckets (e.g., 10+, 8-9, 6-7)
-  const buckets: Map<number, T[]> = new Map()
+  const buckets: Map<number, T[]> = new Map();
 
-  items.forEach(item => {
-    const score = item.progress?.score ?? 0
+  items.forEach((item) => {
+    const score = item.progress?.score ?? 0;
     // Create buckets of 2 points each
-    const bucket = Math.floor(score / 2) * 2
+    const bucket = Math.floor(score / 2) * 2;
     if (!buckets.has(bucket)) {
-      buckets.set(bucket, [])
+      buckets.set(bucket, []);
     }
-    buckets.get(bucket)!.push(item)
-  })
+    buckets.get(bucket)!.push(item);
+  });
 
   // Sort buckets by score (highest first), shuffle within each bucket
-  const sortedBuckets = Array.from(buckets.entries())
-    .sort((a, b) => b[0] - a[0])
+  const sortedBuckets = Array.from(buckets.entries()).sort(
+    (a, b) => b[0] - a[0],
+  );
 
   // Flatten with shuffled buckets
-  return sortedBuckets.flatMap(([, items]) => shuffle(items))
+  return sortedBuckets.flatMap(([, items]) => shuffle(items));
 }
 
 // Timer durations by mode
-const TIMER_WORDS_TAP = 5000       // 5 seconds for words tap
-const TIMER_WORDS_TYPE = 10000     // 10 seconds for words typing
-const TIMER_SENTENCES_TAP = 10000  // 10 seconds for sentences tap
-const TIMER_SENTENCES_TYPE = 20000 // 20 seconds for sentences typing
+const TIMER_WORDS_TAP = 5000; // 5 seconds for words tap
+const TIMER_WORDS_TYPE = 10000; // 10 seconds for words typing
+const TIMER_SENTENCES_TAP = 10000; // 10 seconds for sentences tap
+const TIMER_SENTENCES_TYPE = 20000; // 20 seconds for sentences typing
 
 export function ReviewClient({
   contentMode,
@@ -70,147 +77,162 @@ export function ReviewClient({
   allEnglish,
   userId,
   initialLifetimeHighScore,
-  inputMethod
+  inputMethod,
 }: ReviewClientProps) {
-  const supabase = createClient()
-  const [currentInputMethod, setCurrentInputMethod] = useState<'tap' | 'type'>(inputMethod)
-  const [showSettings, setShowSettings] = useState(false)
-  const isTypingMode = currentInputMethod === 'type'
-  const isSentenceMode = contentMode === 'sentences'
+  const supabase = createClient();
+  const [currentInputMethod, setCurrentInputMethod] = useState<"tap" | "type">(
+    inputMethod,
+  );
+  const [showSettings, setShowSettings] = useState(false);
+  const isTypingMode = currentInputMethod === "type";
+  const isSentenceMode = contentMode === "sentences";
   const TIMER_DURATION = isSentenceMode
-    ? (isTypingMode ? TIMER_SENTENCES_TYPE : TIMER_SENTENCES_TAP)
-    : (isTypingMode ? TIMER_WORDS_TYPE : TIMER_WORDS_TAP)
+    ? isTypingMode
+      ? TIMER_SENTENCES_TYPE
+      : TIMER_SENTENCES_TAP
+    : isTypingMode
+      ? TIMER_WORDS_TYPE
+      : TIMER_WORDS_TAP;
 
   // Sort items: highest score first, but randomized within score bands
-  const [words] = useState<WordWithProgress[]>(() => sortByScoreWithVariation(initialWords))
-  const [sentences] = useState<SentenceWithProgress[]>(() => sortByScoreWithVariation(initialSentences))
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [words] = useState<WordWithProgress[]>(() =>
+    sortByScoreWithVariation(initialWords),
+  );
+  const [sentences] = useState<SentenceWithProgress[]>(() =>
+    sortByScoreWithVariation(initialSentences),
+  );
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Streak tracking (replaces session score)
-  const [currentStreak, setCurrentStreak] = useState(0)
-  const [bestStreak, setBestStreak] = useState(0)
-  const [totalCorrect, setTotalCorrect] = useState(0)
-  const [totalAttempted, setTotalAttempted] = useState(0)
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [totalAttempted, setTotalAttempted] = useState(0);
 
   // High score tracking
-  const [lifetimeHighScore, setLifetimeHighScore] = useState(initialLifetimeHighScore)
+  const [lifetimeHighScore, setLifetimeHighScore] = useState(
+    initialLifetimeHighScore,
+  );
 
   // Timer state
-  const [timeRemaining, setTimeRemaining] = useState(TIMER_DURATION)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const startTimeRef = useRef<number>(Date.now())
+  const [timeRemaining, setTimeRemaining] = useState(TIMER_DURATION);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // Current item (word or sentence)
-  const currentWord = !isSentenceMode ? words[currentIndex] : null
-  const currentSentence = isSentenceMode ? sentences[currentIndex] : null
-  const hasItems = isSentenceMode ? sentences.length > 0 : words.length > 0
-  const itemCount = isSentenceMode ? sentences.length : words.length
+  const currentWord = !isSentenceMode ? words[currentIndex] : null;
+  const currentSentence = isSentenceMode ? sentences[currentIndex] : null;
+  const hasItems = isSentenceMode ? sentences.length > 0 : words.length > 0;
+  const itemCount = isSentenceMode ? sentences.length : words.length;
 
   // Generate options for tap mode
   // For words: 12 hanzi options
   // For sentences: 4 English options
   const options = useMemo(() => {
     if (isSentenceMode) {
-      if (!currentSentence) return []
-      const otherEnglish = allEnglish.filter(e => e !== currentSentence.english)
-      const wrongAnswers = shuffle(otherEnglish).slice(0, 3)
-      return shuffle([currentSentence.english, ...wrongAnswers])
+      if (!currentSentence) return [];
+      const otherEnglish = allEnglish.filter(
+        (e) => e !== currentSentence.english,
+      );
+      const wrongAnswers = shuffle(otherEnglish).slice(0, 3);
+      return shuffle([currentSentence.english, ...wrongAnswers]);
     } else {
-      if (!currentWord) return []
-      const otherHanzi = allHanzi.filter(h => h !== currentWord.hanzi)
-      const wrongAnswers = shuffle(otherHanzi).slice(0, 11)
-      return shuffle([currentWord.hanzi, ...wrongAnswers])
+      if (!currentWord) return [];
+      const otherHanzi = allHanzi.filter((h) => h !== currentWord.hanzi);
+      const wrongAnswers = shuffle(otherHanzi).slice(0, 11);
+      return shuffle([currentWord.hanzi, ...wrongAnswers]);
     }
-  }, [isSentenceMode, currentWord, currentSentence, allHanzi, allEnglish])
+  }, [isSentenceMode, currentWord, currentSentence, allHanzi, allEnglish]);
 
   // Handle timer expiration
   const handleTimeUp = useCallback(() => {
-    if (selectedAnswer || isLoading) return
+    if (selectedAnswer || isLoading) return;
 
     if (timerRef.current) {
-      clearInterval(timerRef.current)
+      clearInterval(timerRef.current);
     }
 
     // Break streak on timeout
-    setCurrentStreak(0)
-    setTotalAttempted(prev => prev + 1)
+    setCurrentStreak(0);
+    setTotalAttempted((prev) => prev + 1);
 
     // Show the correct answer briefly
-    setSelectedAnswer('timeout')
+    setSelectedAnswer("timeout");
 
     // Move to next after delay (wrap around for infinite play)
     setTimeout(() => {
-      setCurrentIndex((currentIndex + 1) % itemCount)
-      setSelectedAnswer(null)
-    }, 1500)
-  }, [selectedAnswer, isLoading, currentIndex, itemCount])
+      setCurrentIndex((currentIndex + 1) % itemCount);
+      setSelectedAnswer(null);
+    }, 1500);
+  }, [selectedAnswer, isLoading, currentIndex, itemCount]);
 
   // Timer logic
   useEffect(() => {
-    if (!hasItems || selectedAnswer) return
+    if (!hasItems || selectedAnswer) return;
 
-    startTimeRef.current = Date.now()
-    setTimeRemaining(TIMER_DURATION)
+    startTimeRef.current = Date.now();
+    setTimeRemaining(TIMER_DURATION); // eslint-disable-line react-hooks/set-state-in-effect -- timer subscription
 
     const tick = () => {
-      const elapsed = Date.now() - startTimeRef.current
-      const remaining = Math.max(0, TIMER_DURATION - elapsed)
-      setTimeRemaining(remaining)
+      const elapsed = Date.now() - startTimeRef.current;
+      const remaining = Math.max(0, TIMER_DURATION - elapsed);
+      setTimeRemaining(remaining);
 
       if (remaining <= 0) {
         // Time's up - count as miss, break streak
-        handleTimeUp()
+        handleTimeUp();
       }
-    }
+    };
 
-    timerRef.current = setInterval(tick, 50) // Update frequently for smooth animation
+    timerRef.current = setInterval(tick, 50); // Update frequently for smooth animation
 
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        clearInterval(timerRef.current);
       }
-    }
-  }, [currentIndex, hasItems, selectedAnswer, handleTimeUp])
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- TIMER_DURATION is a module constant
+  }, [currentIndex, hasItems, selectedAnswer, handleTimeUp]);
 
   // Update lifetime high score in database (mode-specific column)
   const highScoreKey: HighScoreKey = getHighScoreKey(
     contentMode,
-    currentInputMethod
-  )
+    currentInputMethod,
+  );
 
   const updateLifetimeHighScore = useCallback(
     async (newHighScore: number) => {
       try {
         await supabase
-          .from('hanzi_profiles')
+          .from("hanzi_profiles")
           .update({
             [highScoreKey]: newHighScore,
             updated_at: new Date().toISOString(),
           })
-          .eq('user_id', userId)
+          .eq("user_id", userId);
       } catch (error) {
-        console.error('Error updating lifetime high score:', error)
+        console.error("Error updating lifetime high score:", error);
       }
     },
-    [supabase, userId, highScoreKey]
-  )
+    [supabase, userId, highScoreKey],
+  );
 
   const updateProgress = useCallback(
     async (wasCorrect: boolean) => {
-      if (isLoading) return
-      if (isSentenceMode && !currentSentence) return
-      if (!isSentenceMode && !currentWord) return
+      if (isLoading) return;
+      if (isSentenceMode && !currentSentence) return;
+      if (!isSentenceMode && !currentWord) return;
 
-      setIsLoading(true)
+      setIsLoading(true);
 
       try {
         if (isSentenceMode && currentSentence) {
           // Update sentence progress
           if (currentSentence.progress?.id) {
             await supabase
-              .from('user_sentence_progress')
+              .from("user_sentence_progress")
               .update({
                 attempts: (currentSentence.progress?.attempts ?? 0) + 1,
                 correct_streak: wasCorrect
@@ -219,26 +241,24 @@ export function ReviewClient({
                 last_seen: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               })
-              .eq('id', currentSentence.progress.id)
+              .eq("id", currentSentence.progress.id);
           } else {
             // Insert new progress record for sentence
-            await supabase
-              .from('user_sentence_progress')
-              .insert({
-                user_id: userId,
-                sentence_id: currentSentence.id,
-                score: 0,
-                attempts: 1,
-                correct_streak: wasCorrect ? 1 : 0,
-                last_seen: new Date().toISOString(),
-                introduced_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              })
+            await supabase.from("user_sentence_progress").insert({
+              user_id: userId,
+              sentence_id: currentSentence.id,
+              score: 0,
+              attempts: 1,
+              correct_streak: wasCorrect ? 1 : 0,
+              last_seen: new Date().toISOString(),
+              introduced_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
           }
         } else if (currentWord?.progress?.id) {
           // Update word progress
           await supabase
-            .from('user_word_progress')
+            .from("user_word_progress")
             .update({
               attempts: (currentWord.progress?.attempts ?? 0) + 1,
               correct_streak: wasCorrect
@@ -247,122 +267,147 @@ export function ReviewClient({
               last_seen: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })
-            .eq('id', currentWord.progress.id)
+            .eq("id", currentWord.progress.id);
         }
       } catch (error) {
-        console.error('Error updating progress:', error)
+        console.error("Error updating progress:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     },
-    [isSentenceMode, currentWord, currentSentence, isLoading, supabase, userId]
-  )
+    [isSentenceMode, currentWord, currentSentence, isLoading, supabase, userId],
+  );
 
   const handleSelectAnswer = useCallback(
     async (answer: string) => {
-      if (selectedAnswer || isLoading) return
-      if (isSentenceMode && !currentSentence) return
-      if (!isSentenceMode && !currentWord) return
+      if (selectedAnswer || isLoading) return;
+      if (isSentenceMode && !currentSentence) return;
+      if (!isSentenceMode && !currentWord) return;
 
       // Stop timer
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        clearInterval(timerRef.current);
       }
 
-      setSelectedAnswer(answer)
+      setSelectedAnswer(answer);
 
       // Check correctness based on mode
       const isCorrect = isSentenceMode
         ? answer === currentSentence!.english
-        : answer === currentWord!.hanzi
+        : answer === currentWord!.hanzi;
 
       // Update streak
-      setTotalAttempted(prev => prev + 1)
+      setTotalAttempted((prev) => prev + 1);
       if (isCorrect) {
-        setTotalCorrect(prev => prev + 1)
-        setCurrentStreak(prev => {
-          const newStreak = prev + 1
+        setTotalCorrect((prev) => prev + 1);
+        setCurrentStreak((prev) => {
+          const newStreak = prev + 1;
           // Update session best
-          setBestStreak(best => Math.max(best, newStreak))
+          setBestStreak((best) => Math.max(best, newStreak));
           // Check and update lifetime high score
           if (newStreak > lifetimeHighScore) {
-            setLifetimeHighScore(newStreak)
-            updateLifetimeHighScore(newStreak)
+            setLifetimeHighScore(newStreak);
+            updateLifetimeHighScore(newStreak);
           }
-          return newStreak
-        })
+          return newStreak;
+        });
       } else {
-        setCurrentStreak(0)
+        setCurrentStreak(0);
       }
 
       // Update database (no score changes, just tracking)
-      await updateProgress(isCorrect)
+      await updateProgress(isCorrect);
 
       // Move to next after delay (wrap around for infinite play)
       setTimeout(() => {
-        setCurrentIndex((currentIndex + 1) % itemCount)
-        setSelectedAnswer(null)
-      }, 1500)
+        setCurrentIndex((currentIndex + 1) % itemCount);
+        setSelectedAnswer(null);
+      }, 1500);
     },
-    [selectedAnswer, isLoading, isSentenceMode, currentWord, currentSentence, currentIndex, itemCount, updateProgress, lifetimeHighScore, updateLifetimeHighScore]
-  )
+    [
+      selectedAnswer,
+      isLoading,
+      isSentenceMode,
+      currentWord,
+      currentSentence,
+      currentIndex,
+      itemCount,
+      updateProgress,
+      lifetimeHighScore,
+      updateLifetimeHighScore,
+    ],
+  );
 
   // Handle typing mode submission (words only - sentences don't use typing mode)
   const handleTypingSubmit = useCallback(
     async (inputPinyin: string) => {
-      if (selectedAnswer || isLoading || !currentWord || isSentenceMode) return
+      if (selectedAnswer || isLoading || !currentWord || isSentenceMode) return;
 
       // Stop timer
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        clearInterval(timerRef.current);
       }
 
       // Check if input matches - accept either pinyin or hanzi
-      const normalizedInput = inputPinyin.toLowerCase().replace(/\s+/g, '')
-      const normalizedPinyin = currentWord.pinyin_numbered.toLowerCase().replace(/\s+/g, '')
-      const normalizedHanzi = currentWord.hanzi.replace(/\s+/g, '')
-      const isCorrect = normalizedInput === normalizedPinyin || normalizedInput === normalizedHanzi
+      const normalizedInput = inputPinyin.toLowerCase().replace(/\s+/g, "");
+      const normalizedPinyin = currentWord.pinyin_numbered
+        .toLowerCase()
+        .replace(/\s+/g, "");
+      const normalizedHanzi = currentWord.hanzi.replace(/\s+/g, "");
+      const isCorrect =
+        normalizedInput === normalizedPinyin ||
+        normalizedInput === normalizedHanzi;
 
-      setSelectedAnswer(isCorrect ? 'correct' : 'incorrect')
+      setSelectedAnswer(isCorrect ? "correct" : "incorrect");
 
       // Update streak
-      setTotalAttempted(prev => prev + 1)
+      setTotalAttempted((prev) => prev + 1);
       if (isCorrect) {
-        setTotalCorrect(prev => prev + 1)
-        setCurrentStreak(prev => {
-          const newStreak = prev + 1
-          setBestStreak(best => Math.max(best, newStreak))
+        setTotalCorrect((prev) => prev + 1);
+        setCurrentStreak((prev) => {
+          const newStreak = prev + 1;
+          setBestStreak((best) => Math.max(best, newStreak));
           if (newStreak > lifetimeHighScore) {
-            setLifetimeHighScore(newStreak)
-            updateLifetimeHighScore(newStreak)
+            setLifetimeHighScore(newStreak);
+            updateLifetimeHighScore(newStreak);
           }
-          return newStreak
-        })
+          return newStreak;
+        });
       } else {
-        setCurrentStreak(0)
+        setCurrentStreak(0);
       }
 
       // Update database
-      await updateProgress(isCorrect)
+      await updateProgress(isCorrect);
 
       // Move to next after delay
       setTimeout(() => {
-        setCurrentIndex((currentIndex + 1) % itemCount)
-        setSelectedAnswer(null)
-      }, 1500)
+        setCurrentIndex((currentIndex + 1) % itemCount);
+        setSelectedAnswer(null);
+      }, 1500);
     },
-    [selectedAnswer, isLoading, currentWord, isSentenceMode, currentIndex, itemCount, updateProgress, lifetimeHighScore, updateLifetimeHighScore]
-  )
+    [
+      selectedAnswer,
+      isLoading,
+      currentWord,
+      isSentenceMode,
+      currentIndex,
+      itemCount,
+      updateProgress,
+      lifetimeHighScore,
+      updateLifetimeHighScore,
+    ],
+  );
 
   // Timer progress (0 to 1)
-  const timerProgress = timeRemaining / TIMER_DURATION
+  const timerProgress = timeRemaining / TIMER_DURATION;
 
   // Handle input method change (requires page reload)
-  const handleInputMethodChange = useCallback((method: 'tap' | 'type') => {
-    setCurrentInputMethod(method)
+  const handleInputMethodChange = useCallback((method: "tap" | "type") => {
+    setCurrentInputMethod(method);
     // Reload to apply the change (server needs to re-fetch with new mode)
-    window.location.reload()
-  }, [])
+    window.location.reload();
+  }, []);
 
   // Empty state
   if (!hasItems) {
@@ -385,13 +430,13 @@ export function ReviewClient({
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-neutral-50 mb-2">
-            {isSentenceMode ? 'No Sentences Available' : 'No Mastered Words Yet'}
+            {isSentenceMode
+              ? "No Sentences Available"
+              : "No Mastered Words Yet"}
           </h2>
           <p className="text-neutral-400 mb-6">
             {isSentenceMode ? (
-              <>
-                Run the sentence seed migration to add HSK 1 sentences.
-              </>
+              <>Run the sentence seed migration to add HSK 1 sentences.</>
             ) : (
               <>
                 Keep practicing in Link Mode to master words.
@@ -408,7 +453,7 @@ export function ReviewClient({
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -451,10 +496,12 @@ export function ReviewClient({
           {/* Current streak */}
           <div className="flex items-center gap-1">
             <span className="text-amber-400">🔥</span>
-            <span className={cn(
-              'text-sm font-medium font-mono tabular-nums',
-              currentStreak > 0 ? 'text-amber-400' : 'text-neutral-500'
-            )}>
+            <span
+              className={cn(
+                "text-sm font-medium font-mono tabular-nums",
+                currentStreak > 0 ? "text-amber-400" : "text-neutral-500",
+              )}
+            >
               {currentStreak}
             </span>
           </div>
@@ -466,10 +513,14 @@ export function ReviewClient({
           )}
           {/* Lifetime high score */}
           {lifetimeHighScore > 0 && (
-            <span className={cn(
-              'text-xs font-mono tabular-nums',
-              currentStreak >= lifetimeHighScore ? 'text-emerald-400' : 'text-neutral-500'
-            )}>
+            <span
+              className={cn(
+                "text-xs font-mono tabular-nums",
+                currentStreak >= lifetimeHighScore
+                  ? "text-emerald-400"
+                  : "text-neutral-500",
+              )}
+            >
               Record: {lifetimeHighScore}
             </span>
           )}
@@ -501,19 +552,27 @@ export function ReviewClient({
               strokeLinecap="round"
               strokeDasharray={`${timerProgress * 100.53} 100.53`}
               className={cn(
-                'transition-all duration-100',
-                timerProgress > 0.5 ? 'text-emerald-500' :
-                  timerProgress > 0.25 ? 'text-amber-500' : 'text-red-500'
+                "transition-all duration-100",
+                timerProgress > 0.5
+                  ? "text-emerald-500"
+                  : timerProgress > 0.25
+                    ? "text-amber-500"
+                    : "text-red-500",
               )}
             />
           </svg>
           {/* Time text */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn(
-              'text-sm font-mono font-medium',
-              timerProgress > 0.5 ? 'text-emerald-400' :
-                timerProgress > 0.25 ? 'text-amber-400' : 'text-red-400'
-            )}>
+            <span
+              className={cn(
+                "text-sm font-mono font-medium",
+                timerProgress > 0.5
+                  ? "text-emerald-400"
+                  : timerProgress > 0.25
+                    ? "text-amber-400"
+                    : "text-red-400",
+              )}
+            >
               {(timeRemaining / 1000).toFixed(1)}
             </span>
           </div>
@@ -523,8 +582,8 @@ export function ReviewClient({
       {/* Card */}
       <div
         className={cn(
-          'relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[220px] flex flex-col items-center justify-center transition-all duration-300',
-          selectedAnswer && 'border-neutral-700'
+          "relative bg-neutral-900 rounded-2xl border border-neutral-800 p-8 min-h-[220px] flex flex-col items-center justify-center transition-all duration-300",
+          selectedAnswer && "border-neutral-700",
         )}
       >
         <div className="text-center w-full">
@@ -544,16 +603,23 @@ export function ReviewClient({
               {/* Show answer on selection or timeout */}
               {selectedAnswer && (
                 <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <div className="text-xl text-neutral-200">{currentSentence.english}</div>
-                  {selectedAnswer === 'timeout' && (
-                    <div className="text-red-400 text-sm mt-2">Time&apos;s up!</div>
+                  <div className="text-xl text-neutral-200">
+                    {currentSentence.english}
+                  </div>
+                  {selectedAnswer === "timeout" && (
+                    <div className="text-red-400 text-sm mt-2">
+                      Time&apos;s up!
+                    </div>
                   )}
                   {selectedAnswer === currentSentence.english && (
-                    <div className="text-emerald-400 text-sm mt-2">Correct!</div>
+                    <div className="text-emerald-400 text-sm mt-2">
+                      Correct!
+                    </div>
                   )}
-                  {selectedAnswer !== 'timeout' && selectedAnswer !== currentSentence.english && (
-                    <div className="text-red-400 text-sm mt-2">Incorrect</div>
-                  )}
+                  {selectedAnswer !== "timeout" &&
+                    selectedAnswer !== currentSentence.english && (
+                      <div className="text-red-400 text-sm mt-2">Incorrect</div>
+                    )}
                 </div>
               )}
             </>
@@ -561,12 +627,16 @@ export function ReviewClient({
             // Word mode
             <>
               <div className="text-sm text-neutral-500 mb-4">
-                {isTypingMode ? 'Type the character or pinyin:' : 'What character is this?'}
+                {isTypingMode
+                  ? "Type the character or pinyin:"
+                  : "What character is this?"}
               </div>
               {isTypingMode ? (
                 // Typing mode: show hanzi, user types pinyin
                 <>
-                  <span className="text-6xl sm:text-7xl">{currentWord.hanzi}</span>
+                  <span className="text-6xl sm:text-7xl">
+                    {currentWord.hanzi}
+                  </span>
                   <div className="text-lg text-neutral-500 mt-2">
                     {currentWord.english}
                   </div>
@@ -589,20 +659,28 @@ export function ReviewClient({
                   {isTypingMode ? (
                     // Typing mode: show pinyin as answer
                     <>
-                      <div className="text-3xl text-neutral-200">{currentWord.pinyin}</div>
-                      <div className="text-sm text-neutral-500 mt-1">{currentWord.pinyin_numbered}</div>
+                      <div className="text-3xl text-neutral-200">
+                        {currentWord.pinyin}
+                      </div>
+                      <div className="text-sm text-neutral-500 mt-1">
+                        {currentWord.pinyin_numbered}
+                      </div>
                     </>
                   ) : (
                     // Tap mode: show hanzi as answer
                     <div className="text-7xl">{currentWord.hanzi}</div>
                   )}
-                  {selectedAnswer === 'timeout' && (
-                    <div className="text-red-400 text-sm mt-2">Time&apos;s up!</div>
+                  {selectedAnswer === "timeout" && (
+                    <div className="text-red-400 text-sm mt-2">
+                      Time&apos;s up!
+                    </div>
                   )}
-                  {selectedAnswer === 'correct' && (
-                    <div className="text-emerald-400 text-sm mt-2">Correct!</div>
+                  {selectedAnswer === "correct" && (
+                    <div className="text-emerald-400 text-sm mt-2">
+                      Correct!
+                    </div>
                   )}
-                  {selectedAnswer === 'incorrect' && (
+                  {selectedAnswer === "incorrect" && (
                     <div className="text-red-400 text-sm mt-2">Incorrect</div>
                   )}
                 </div>
@@ -618,9 +696,9 @@ export function ReviewClient({
           // Sentence mode: show 4 English options
           <div className="grid grid-cols-1 gap-3">
             {options.map((english, i) => {
-              const isCorrect = english === currentSentence?.english
-              const isSelected = selectedAnswer === english
-              const showResult = !!selectedAnswer
+              const isCorrect = english === currentSentence?.english;
+              const isSelected = selectedAnswer === english;
+              const showResult = !!selectedAnswer;
 
               return (
                 <button
@@ -628,17 +706,26 @@ export function ReviewClient({
                   onClick={() => handleSelectAnswer(english)}
                   disabled={!!selectedAnswer || isLoading}
                   className={cn(
-                    'py-4 px-4 rounded-xl border text-base text-left transition-all duration-150',
-                    !showResult && 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700',
-                    showResult && isCorrect && 'bg-emerald-500/20 border-emerald-500 text-emerald-50',
-                    showResult && isSelected && !isCorrect && 'bg-red-500/20 border-red-500 text-red-50',
-                    showResult && !isCorrect && !isSelected && 'bg-neutral-900 border-neutral-800 opacity-50',
-                    (!!selectedAnswer || isLoading) && 'pointer-events-none'
+                    "py-4 px-4 rounded-xl border text-base text-left transition-all duration-150",
+                    !showResult &&
+                      "bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700",
+                    showResult &&
+                      isCorrect &&
+                      "bg-emerald-500/20 border-emerald-500 text-emerald-50",
+                    showResult &&
+                      isSelected &&
+                      !isCorrect &&
+                      "bg-red-500/20 border-red-500 text-red-50",
+                    showResult &&
+                      !isCorrect &&
+                      !isSelected &&
+                      "bg-neutral-900 border-neutral-800 opacity-50",
+                    (!!selectedAnswer || isLoading) && "pointer-events-none",
                   )}
                 >
                   {english}
                 </button>
-              )
+              );
             })}
           </div>
         ) : isTypingMode && currentWord ? (
@@ -654,9 +741,9 @@ export function ReviewClient({
           // Word tap mode: show hanzi grid
           <div className="grid grid-cols-4 gap-3">
             {options.map((hanzi, i) => {
-              const isCorrect = hanzi === currentWord?.hanzi
-              const isSelected = selectedAnswer === hanzi
-              const showResult = !!selectedAnswer
+              const isCorrect = hanzi === currentWord?.hanzi;
+              const isSelected = selectedAnswer === hanzi;
+              const showResult = !!selectedAnswer;
 
               return (
                 <button
@@ -664,17 +751,26 @@ export function ReviewClient({
                   onClick={() => handleSelectAnswer(hanzi)}
                   disabled={!!selectedAnswer || isLoading}
                   className={cn(
-                    'py-4 rounded-xl border text-3xl font-normal transition-all duration-150',
-                    !showResult && 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700',
-                    showResult && isCorrect && 'bg-emerald-500/20 border-emerald-500 text-emerald-50',
-                    showResult && isSelected && !isCorrect && 'bg-red-500/20 border-red-500 text-red-50',
-                    showResult && !isCorrect && !isSelected && 'bg-neutral-900 border-neutral-800 opacity-50',
-                    (!!selectedAnswer || isLoading) && 'pointer-events-none'
+                    "py-4 rounded-xl border text-3xl font-normal transition-all duration-150",
+                    !showResult &&
+                      "bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700",
+                    showResult &&
+                      isCorrect &&
+                      "bg-emerald-500/20 border-emerald-500 text-emerald-50",
+                    showResult &&
+                      isSelected &&
+                      !isCorrect &&
+                      "bg-red-500/20 border-red-500 text-red-50",
+                    showResult &&
+                      !isCorrect &&
+                      !isSelected &&
+                      "bg-neutral-900 border-neutral-800 opacity-50",
+                    (!!selectedAnswer || isLoading) && "pointer-events-none",
                   )}
                 >
                   {hanzi}
                 </button>
-              )
+              );
             })}
           </div>
         )}
@@ -683,18 +779,23 @@ export function ReviewClient({
       {/* Info hint */}
       <div className="mt-4 text-center text-xs text-neutral-600">
         {isSentenceMode
-          ? 'Select the correct translation'
+          ? "Select the correct translation"
           : isTypingMode
-            ? 'Use tone numbers (1-5) after the syllable'
-            : 'Answer quickly to build your streak!'}
+            ? "Use tone numbers (1-5) after the syllable"
+            : "Answer quickly to build your streak!"}
       </div>
 
       {/* Item info */}
       <div className="mt-2 text-center text-xs text-neutral-600">
         {isSentenceMode && currentSentence ? (
-          <>Difficulty: {currentSentence.difficulty} · {currentSentence.category}</>
+          <>
+            Difficulty: {currentSentence.difficulty} ·{" "}
+            {currentSentence.category}
+          </>
         ) : currentWord ? (
-          <>Unit {currentWord.unit}: {currentWord.unit_name}</>
+          <>
+            Unit {currentWord.unit}: {currentWord.unit_name}
+          </>
         ) : null}
       </div>
 
@@ -709,5 +810,5 @@ export function ReviewClient({
         />
       )}
     </div>
-  )
+  );
 }

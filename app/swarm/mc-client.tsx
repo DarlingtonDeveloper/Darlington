@@ -63,12 +63,12 @@ export function MCClient() {
 
   // Fetch on mount
   useEffect(() => {
-    fetchGraph();
+    fetchGraph(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
   }, [fetchGraph]);
 
   // Use graph from WS sync if available
   useEffect(() => {
-    if (mcState.graph) setGraphData(mcState.graph);
+    if (mcState.graph) setGraphData(mcState.graph); // eslint-disable-line react-hooks/set-state-in-effect -- sync from WS
   }, [mcState.graph]);
 
   // Re-fetch when tasks change (debounced)
@@ -131,7 +131,7 @@ export function MCClient() {
   // Poll swarm data when on swarm view
   useEffect(() => {
     if (view !== "swarm") return;
-    fetchSwarm();
+    fetchSwarm(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on tab switch
     const interval = setInterval(fetchSwarm, 30_000);
     return () => clearInterval(interval);
   }, [view, fetchSwarm]);
