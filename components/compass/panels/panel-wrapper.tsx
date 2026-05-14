@@ -1,82 +1,99 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { X } from 'lucide-react'
-import { useCompass } from '@/contexts/compass-context'
+import { useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { useCompass } from "@/contexts/compass-context";
 
-type Direction = 'left' | 'right' | 'zoom-out' | 'zoom-in'
+type Direction = "left" | "right" | "zoom-out" | "zoom-in";
 
-type MotionState = { x?: string | number; y?: string | number; scale?: number; opacity: number }
+type MotionState = {
+  x?: string | number;
+  y?: string | number;
+  scale?: number;
+  opacity: number;
+};
 
-const MOTION_VARIANTS: Record<Direction, { initial: MotionState; animate: MotionState; exit: MotionState }> = {
+const MOTION_VARIANTS: Record<
+  Direction,
+  { initial: MotionState; animate: MotionState; exit: MotionState }
+> = {
   left: {
-    initial: { x: '-100%', opacity: 0 },
+    initial: { x: "-100%", opacity: 0 },
     animate: { x: 0, opacity: 1 },
-    exit: { x: '-100%', opacity: 0 },
+    exit: { x: "-100%", opacity: 0 },
   },
   right: {
-    initial: { x: '100%', opacity: 0 },
+    initial: { x: "100%", opacity: 0 },
     animate: { x: 0, opacity: 1 },
-    exit: { x: '100%', opacity: 0 },
+    exit: { x: "100%", opacity: 0 },
   },
-  'zoom-out': {
+  "zoom-out": {
     initial: { scale: 0.8, opacity: 0 },
     animate: { scale: 1, opacity: 1 },
     exit: { scale: 0.8, opacity: 0 },
   },
-  'zoom-in': {
+  "zoom-in": {
     initial: { scale: 1.2, opacity: 0 },
     animate: { scale: 1, opacity: 1 },
     exit: { scale: 1.2, opacity: 0 },
   },
-}
+};
 
 interface PanelWrapperProps {
-  direction: Direction
-  children: React.ReactNode
-  className?: string
-  noScroll?: boolean
+  direction: Direction;
+  children: React.ReactNode;
+  className?: string;
+  noScroll?: boolean;
 }
 
-export function PanelWrapper({ direction, children, className = '', noScroll = false }: PanelWrapperProps) {
-  const { closePanel } = useCompass()
-  const panelRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+export function PanelWrapper({
+  direction,
+  children,
+  className = "",
+  noScroll = false,
+}: PanelWrapperProps) {
+  const { closePanel } = useCompass();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closePanel()
+      if (e.key === "Escape") closePanel();
     },
-    [closePanel]
-  )
+    [closePanel],
+  );
 
-  const isSlide = direction === 'left' || direction === 'right'
+  const isSlide = direction === "left" || direction === "right";
 
   // For slide panels: click outside the panel closes it
   const handleClickOutside = useCallback(
     (e: MouseEvent) => {
-      if (isSlide && panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        closePanel()
+      if (
+        isSlide &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node)
+      ) {
+        closePanel();
       }
     },
-    [closePanel, isSlide]
-  )
+    [closePanel, isSlide],
+  );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleEscape)
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("keydown", handleEscape);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [handleEscape, handleClickOutside])
+      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [handleEscape, handleClickOutside]);
 
   useEffect(() => {
-    panelRef.current?.focus()
-  }, [])
+    panelRef.current?.focus();
+  }, []);
 
-  const variants = MOTION_VARIANTS[direction]
+  const variants = MOTION_VARIANTS[direction];
 
   // For zoom panels: backdrop click closes, content click doesn't
   if (!isSlide) {
@@ -87,7 +104,10 @@ export function PanelWrapper({ direction, children, className = '', noScroll = f
         initial={variants.initial}
         animate={variants.animate}
         exit={variants.exit}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        transition={{
+          duration: 0.6,
+          ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+        }}
         className={`absolute inset-0 z-50 outline-none flex items-center justify-center ${className}`}
         onClick={closePanel}
       >
@@ -110,7 +130,7 @@ export function PanelWrapper({ direction, children, className = '', noScroll = f
           {children}
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (
@@ -120,17 +140,20 @@ export function PanelWrapper({ direction, children, className = '', noScroll = f
       initial={variants.initial}
       animate={variants.animate}
       exit={variants.exit}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={{
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+      }}
       className={`absolute z-50 outline-none
-        top-0 ${direction === 'left' ? 'left-0' : 'right-0'} h-full w-full md:w-[60vw] max-w-[900px]
+        top-0 ${direction === "left" ? "left-0" : "right-0"} h-full w-full md:w-[60vw] max-w-[900px]
         ${className}`}
     >
       <div
         className={`h-full bg-[#07070e]/90 backdrop-blur-xl border-r border-white/5 p-6 pb-14 md:p-8 md:pb-16
-          ${noScroll ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}`}
+          ${noScroll ? "overflow-hidden" : "overflow-y-auto no-scrollbar"}`}
       >
         {children}
       </div>
     </motion.div>
-  )
+  );
 }
