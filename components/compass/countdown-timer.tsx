@@ -24,15 +24,18 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
+// useSyncExternalStore snapshot must return a primitive (Object.is comparison).
+// Returning an object causes infinite re-renders (React error #185).
 const subscribe = (cb: () => void) => {
   const id = setInterval(cb, 1000);
   return () => clearInterval(id);
 };
-const getSnapshot = () => getTimeLeft();
-const getServerSnapshot = () => null;
+const getSnapshot = () => Math.floor(Date.now() / 1000);
+const getServerSnapshot = () => 0;
 
 export function CountdownTimer() {
-  const time = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const tick = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const time = tick > 0 ? getTimeLeft() : null;
   const [iterations, setIterations] = useState<number | null>(null);
 
   useEffect(() => {
