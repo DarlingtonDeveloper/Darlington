@@ -1,6 +1,6 @@
 # Darlington
 
-**Personal OS** — a unified operating system for life, built with Next.js 15 and deployed on Vercel.
+**Personal OS** — a unified operating system for life, built with Next.js 16 and deployed on Vercel.
 
 [darlington.dev](https://darlington.dev)
 
@@ -12,7 +12,7 @@ Darlington is a full-stack personal productivity platform that consolidates habi
 
 ## Stack
 
-- **Framework:** Next.js 15 (App Router), React 19, TypeScript
+- **Framework:** Next.js 16 (App Router), React 19, TypeScript
 - **Database & Auth:** Supabase (Postgres + Row Level Security + OAuth)
 - **Styling:** Tailwind CSS 4, shadcn/ui, Framer Motion
 - **Deployment:** Vercel (Analytics + Speed Insights)

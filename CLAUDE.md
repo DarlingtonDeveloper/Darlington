@@ -14,7 +14,7 @@ npm run test:e2e # E2E tests (playwright, needs dev server running)
 
 ## Architecture
 
-**Stack:** Next.js 15 (App Router), React 19, Tailwind CSS 4, Supabase, TypeScript
+**Stack:** Next.js 16 (App Router), React 19, Tailwind CSS 4, Supabase, TypeScript
 
 ### Routes
 
