@@ -31,9 +31,9 @@ export async function GET() {
     return NextResponse.json(cache.value, { headers: CACHE_HEADERS });
   }
 
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
   if (!token) {
-    return NextResponse.json({ error: "No GitHub token" }, { status: 500 });
+    return NextResponse.json([]);
   }
 
   try {

@@ -2,16 +2,21 @@ import { NextResponse } from "next/server";
 
 let cache: { value: number; ts: number } | null = null;
 const TTL_MS = 60 * 60 * 1000; // 1 hour
-const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=300" };
+const CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=300",
+};
 
 export async function GET() {
   if (cache && Date.now() - cache.ts < TTL_MS) {
-    return NextResponse.json({ total: cache.value }, { headers: CACHE_HEADERS });
+    return NextResponse.json(
+      { total: cache.value },
+      { headers: CACHE_HEADERS },
+    );
   }
 
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
   if (!token) {
-    return NextResponse.json({ error: "No GitHub token" }, { status: 500 });
+    return NextResponse.json({ total: 0, error: "no_token" });
   }
 
   try {
@@ -27,14 +32,13 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: "GitHub API error" }, { status: 502 });
+      return NextResponse.json({ total: 0, error: "github_api_error" });
     }
 
     const json = await res.json();
 
     if (json.errors) {
-      console.error("GraphQL errors:", json.errors);
-      return NextResponse.json({ error: "GraphQL query failed" }, { status: 502 });
+      return NextResponse.json({ total: 0, error: "graphql_error" });
     }
 
     const total =
@@ -44,6 +48,6 @@ export async function GET() {
     cache = { value: total, ts: Date.now() };
     return NextResponse.json({ total }, { headers: CACHE_HEADERS });
   } catch {
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+    return NextResponse.json({ total: 0, error: "fetch_failed" });
   }
 }
